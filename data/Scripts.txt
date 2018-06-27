@@ -1,0 +1,134 @@
+::script-name Aegean
+::script-name Ahom
+::script-name Anatolian Hieroglyph
+::script-name Arabic ::direction right-to-left
+::script-name Armenian
+::script-name Avestan
+::script-name Balinese
+::script-name Bamum
+::script-name Bassa Vah
+::script-name Batak
+::script-name Bengali ::abugida-default-vowel a
+::script-name Bhaiksuki
+::script-name Bopomofo ::language Chinese
+::script-name Brahmi ::abugida-default-vowel a
+::script-name Buginese
+::script-name Buhid
+::script-name Canadian Syllabics
+::script-name Carian
+::script-name Caucasian Albanian
+::script-name Chakma
+::script-name Cham
+::script-name Cherokee
+::script-name Coptic
+::script-name Cuneiform
+::script-name Cypriot
+::script-name Cyrillic
+::script-name CJK ::alt-script-name Chinese, Kanji ::language Chinese, Japanese, Korean, Mandarin
+::script-name Deseret
+::script-name Devanagari ::abugida-default-vowel a
+::script-name Duployan
+::script-name Egyptian Hieroglyph
+::script-name Elbasan
+::script-name Ethiopic
+::script-name Georgian
+::script-name Glagolitic
+::script-name Gothic
+::script-name Grantha
+::script-name Greek
+::script-name Gujarati ::abugida-default-vowel a
+::script-name Gurmukhi ::abugida-default-vowel a
+::script-name Hangul ::language Korean
+::script-name Hanunoo
+::script-name Hatran
+::script-name Hebrew ::direction right-to-left
+::script-name Hiragana ::language Japanese
+::script-name Imperial Aramaic
+::script-name Inscriptional Pahlavi
+::script-name Inscriptional Parthian
+::script-name Javanese
+::script-name Kaithi
+::script-name Kannada ::abugida-default-vowel a
+::script-name Katakana ::language Japanese
+::script-name Kayah Li
+::script-name Kharoshthi
+::script-name Khmer ::abugida-default-vowel a, o
+::script-name Khojki
+::script-name Khudawadi
+::script-name Klingon
+::script-name Lao
+::script-name Lepcha
+::script-name Latin
+::script-name Limbu
+::script-name Linear A
+::script-name Linear B
+::script-name Lycian
+::script-name Lydian
+::script-name Mahajani
+::script-name Malayalam ::abugida-default-vowel a
+::script-name Mandaic
+::script-name Manichaean
+::script-name Marchen
+::script-name Meetei Mayek
+::script-name Meroitic Cursive
+::script-name Meroitic Hieroglyphic
+::script-name Miao
+::script-name Modi ::abugida-default-vowel a
+::script-name Mongolian
+::script-name Mro
+::script-name Multani
+::script-name Myanmar ::alt-script-name Burmese ::abugida-default-vowel a
+::script-name Nabataean
+::script-name New Tai Lue
+::script-name Newa
+::script-name Nko ::direction right-to-left
+::script-name Ogham
+::script-name Ol Chiki
+::script-name Old Hungarian
+::script-name Old Italic
+::script-name Old Permic
+::script-name Old Persian
+::script-name Old North Arabian
+::script-name Old South Arabian
+::script-name Old Turkic
+::script-name Oriya ::alt-script-name Odia ::abugida-default-vowel a
+::script-name Osage
+::script-name Osmanya
+::script-name Pahawh Hmong
+::script-name Palmyrene
+::script-name Pau Cin Hau
+::script-name Phags-pa
+::script-name Phaistos Disc
+::script-name Phoenician
+::script-name Psalter Pahlavi
+::script-name Rejang
+::script-name Runic
+::script-name Samaritan
+::script-name Saurashtra
+::script-name Sharada
+::script-name Shavian
+::script-name Siddham
+::script-name Sinhala ::abugida-default-vowel a
+::script-name Sora Sompeng
+::script-name Sundanese ::abugida-default-vowel a
+::script-name Syloti Nagri
+::script-name Syriac
+::script-name Tagalog
+::script-name Tagbanwa
+::script-name Tai Le
+::script-name Tai Tham
+::script-name Tai Viet
+::script-name Takri
+::script-name Tamil ::abugida-default-vowel a
+::script-name Tangut
+::script-name Telugu ::abugida-default-vowel a
+::script-name Thaana ::direction right-to-left
+::script-name Thai
+::script-name Tibetan ::abugida-default-vowel a
+::script-name Tifinagh
+::script-name Tirhuta
+::script-name Ugaritic
+::script-name Vai
+::script-name Vedic
+::script-name Warang Citi
+::script-name Yi
