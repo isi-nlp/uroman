@@ -1,16 +1,25 @@
-uroman version 1.2
-Release date: April 11, 2017
-Author: Ulf Hermjakob, USC Information Sciences Institute
+# URoman
 
-uroman is a universal romanizer. It converts text in any script to the Latin alphabet.
+*uroman* is a *universal romanizer*. It converts text in any script to the Latin alphabet.
 
-Usage: uroman.pl [-l <lang-code>] [--chart] [--no-cache] < STDIN
+Version: 1.2  
+Release date: April 11, 2017  
+Author: Ulf Hermjakob, USC Information Sciences Institute  
+
+
+### Usage: 
+```bash
+$ uroman.pl [-l <lang-code>] [--chart] [--no-cache] < STDIN
        where the optional <lang-code> is a 3-letter languages code, e.g. ara, fas, heb, tur, uig, ukr, yid.
        --chart specifies chart output (in JSON format) to represent alternative romanizations.
        --no-cache disables caching.
-Examples: bin/uroman.pl < text/zho.txt
-          bin/uroman.pl -l tur < text/tur.txt
-	  bin/uroman.pl -l heb --chart < text/heb.txt
+```
+### Examples: 
+```bash
+$ bin/uroman.pl < text/zho.txt
+$ bin/uroman.pl -l tur < text/tur.txt
+$ bin/uroman.pl -l heb --chart < text/heb.txt
+```
 
 Identifying the input as Arabic, Farsi, Hebrew, Turkish, Ukrainian, Uyghur or 
 Yiddish will improve romanization for those languages as some letters in those 
