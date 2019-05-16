@@ -419,6 +419,7 @@ sub romanize_by_token_with_caching {
    my $result = "";
    my @separators = ();
    my @tokens = ();
+   $s =~ s/\n$//; # Added May 2, 2019 as bug-fix (duplicate empty lines)
    while (($sep, $token, $rest) = ($s =~ /^(\s*)(\S+)(.*)$/)) {
       push(@separators, $sep);
       push(@tokens, $token);
@@ -731,6 +732,10 @@ sub romanize {
 	 # ASCII
 	 } elsif ($char =~ /^[\x00-\x7F]$/) {
 	    $this->add_node($char, $i, $i+1, *chart_ht, "", "ASCII"); # ASCII character, incl. control characters
+
+         # Emoji, dingbats, pictographs
+         } elsif ($char =~ /^(\xE2[\x98-\x9E]|\xF0\x9F[\x8C-\xA7])/) {
+            $this->add_node($char, $i, $i+1, *chart_ht, "", "pictograph");
 
          # Hangul (Korean)
          } elsif (($char =~ /^[\xEA-\xED]/)

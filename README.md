@@ -27,6 +27,8 @@ languages have different sound values from other languages using the same script
 (French, Russian, Hebrew respectively).
 No effect for other languages in this version.
 
+Changes in version 1.2.4
+  * Bug-fix that generated two emtpy lines for each empty line in cache mode.
 Changes in version 1.2
  * Run-time improvement based on (1) token-based caching and (2) shortcut 
    romanization (identity) of ASCII strings for default 1-best (non-chart) 

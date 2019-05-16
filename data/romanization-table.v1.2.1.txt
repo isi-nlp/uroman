@@ -690,7 +690,6 @@
 ::s ፣ ::t ,
 ::s ፤ ::t ;
 ::s ፥ ::t :
-::s ፧ ::t ? ::comment Ethiopic question mark
 ::s ፡ ::t " " ::comment Ethiopic wordspace
 ::s ፦ ::t :  ::comment Ethiopic preface colon
 ::s ቸ ::t cha ::comment Ethiopic syllable ca
