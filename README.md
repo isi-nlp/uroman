@@ -7,7 +7,7 @@ Release date: January 6, 2020
 Author: Ulf Hermjakob, USC Information Sciences Institute  
 
 
-### Usage: 
+### Usage
 ```bash
 $ uroman.pl [-l <lang-code>] [--chart] [--no-cache] < STDIN
        where the optional <lang-code> is a 3-letter languages code, e.g. ara, bel, bul, deu, ell, eng, fas,
@@ -15,7 +15,7 @@ $ uroman.pl [-l <lang-code>] [--chart] [--no-cache] < STDIN
        --chart specifies chart output (in JSON format) to represent alternative romanizations.
        --no-cache disables caching.
 ```
-### Examples: 
+### Examples
 ```bash
 $ bin/uroman.pl < text/zho.txt
 $ bin/uroman.pl -l tur < text/tur.txt
@@ -31,8 +31,10 @@ languages have different sound values from other languages using the same script
 (French, Russian, Hebrew respectively).
 No effect for other languages in this version.
 
-Bibliography: Ulf Hermjakob, Jonathan May, and Kevin Knight. 2018. Out-of-the-box universal romanization tool uroman. In Proceedings of the 56th Annual Meeting of Association for Computational Linguistics, Demo Track. (Best Demo Paper Award)
+### Bibliography
+Ulf Hermjakob, Jonathan May, and Kevin Knight. 2018. Out-of-the-box universal romanization tool uroman. In Proceedings of the 56th Annual Meeting of Association for Computational Linguistics, Demo Track. (Best Demo Paper Award)
 
+### Change History
 Changes in version 1.2.7
  * Improved support for Pashto.
 
@@ -139,12 +141,12 @@ New features in version 0.3
  * Maps from native digits to Western numbers
  * Faster for South Asian languages
 
-Other features
+### Other features
  * Web interface: http://www.isi.edu/~ulf/uroman.html
  * Vowelization is provided when locally computable, e.g. for many South Asian
    languages and Tibetan.
 
-Limitations
+### Limitations
  * This version of uroman assumes all CJK ideographs to be Mandarin (Chinese).
    This means that Japanese kanji are incorrectly romanized; however, Japanese
    hiragana and katakana are properly romanized.
