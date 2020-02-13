@@ -33,6 +33,7 @@ No effect for other languages in this version.
 
 Changes in version 1.2.7
  * Improved support for Pashto.
+
 Changes in version 1.2.6
  * Improved support for Ukrainian, Russian and Ogham (ancient Irish script).
  * Added support for English Braille.
@@ -43,6 +44,7 @@ Changes in version 1.2.6
  * When a line starts with "::lcode xyz ", the new uroman version will switch to
    that language for that line. This is used for the new reference test file.
  * Various small improvements.
+
 Changes in version 1.2.5
  * Improved support for Armenian and eight languages using Cyrillic scripts.
    -- For Serbian and Macedonian, which are often written in both Cyrillic
@@ -56,8 +58,10 @@ Changes in version 1.2.5
       alternative uroman language codes "srp2" and "mkd2", which romanize
       both "▒~]и▒~H" and "Niš" to "Nis" to reflect the casual Latin spelling.
  * Various small improvements.
+
 Changes in version 1.2.4
   * Bug-fix that generated two emtpy lines for each empty line in cache mode.
+
 Changes in version 1.2
  * Run-time improvement based on (1) token-based caching and (2) shortcut 
    romanization (identity) of ASCII strings for default 1-best (non-chart) 
@@ -69,6 +73,7 @@ Changes in version 1.2
    to support better matching to romanizations of other languages.
    Changes output only when --chart option is specified. No change in output for
    default 1-best output, which for ASCII characters is always the input string.
+
 Changes in version 1.1 (major upgrade)
  * Offers chart output (in JSON format) to represent alternative romanizations.
    -- Location of first character is defined to be "line: 1, start:0, end:0".
@@ -82,6 +87,7 @@ Changes in version 1.1 (major upgrade)
       script text (as determined line by line).
    -- On-page support for some scripts that are often not pre-installed on users'
       computers (Burmese, Egyptian, Klingon).
+
 Changes in version 1.0 (major upgrade)
  * Upgraded principal internal data structure from string to lattice.
  * Improvements mostly in vowelization of South and Southeast Asian languages.
@@ -96,11 +102,13 @@ Changes in version 1.0 (major upgrade)
  * Fixed bug that in some cases mapped signs (such as dagger or bullet) to their verbal descriptions.
  * Tested against previous version of uroman with a new uroman visual diff tool.
  * Almost an order of magnitude faster.
+
 Changes in version 0.7 (minor upgrade)
  * Added script uroman-quick.pl for Arabic script languages, incl. Uyghur.
    Much faster, pre-caching mapping of Arabic to Latin characters, simple greedy processing.
    Will not convert material from non-Arabic blocks such as any (somewhat unusual) Cyrillic
    or Chinese characters in Uyghur texts.
+
 Changes in version 0.6 (minor upgrade)
  * Added support for two letter characters used in Uzbek:
    (1) character "ʻ" ("modifier letter turned comma", which modifies preceding "g" and "u" letters)
@@ -114,11 +122,14 @@ Changes in version 0.6 (minor upgrade)
    However, it is strongly recommended to normalize any presentation form Arabic letters
    to their non-presentation form before calling uroman.
  * Added force flush directive ($|=1;).
+
 Changes in version 0.5 (minor upgrade)
  * Improvements for Uyghur (make sure to use language option: -l uig)
+
 Changes in version 0.4 (minor upgrade)
  * Improvements for Thai (special cases for vowel/consonant reordering, e.g. for "sara o"; dropped some aspiration 'h's)
  * Minor change for Arabic (added "alef+fathatan" = "an")
+
 New features in version 0.3
  * Covers Mandarin (Chinese)
  * Improved romanization for numerous languages
