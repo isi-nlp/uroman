@@ -31,6 +31,8 @@ languages have different sound values from other languages using the same script
 (French, Russian, Hebrew respectively).
 No effect for other languages in this version.
 
+Bibliography: Ulf Hermjakob, Jonathan May, and Kevin Knight. 2018. Out-of-the-box universal romanization tool uroman. In Proceedings of the 56th Annual Meeting of Association for Computational Linguistics, Demo Track. (Best Demo Paper Award)
+
 Changes in version 1.2.7
  * Improved support for Pashto.
 
