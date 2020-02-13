@@ -49,14 +49,14 @@ Changes in version 1.2.5
  * Improved support for Armenian and eight languages using Cyrillic scripts.
    -- For Serbian and Macedonian, which are often written in both Cyrillic
       and Latin scripts, uroman will map both official versions to the same
-      romanized text, e.g. both "▒~]и▒~H" and "Niš" will be mapped to "Nish" (which
+      romanized text, e.g. both "Ниш" and "Niš" will be mapped to "Nish" (which
       properly reflects the pronunciation of the city's name).
       For both Serbian and Macedonian, casual writers often use a simplified
-      Latin form without diacritics, e.g. "s" to represent not only Cyrillic "▒~A"
-      and Latin "s", but also "▒~H" or "š", even if this conflates "s" and "sh" and
+      Latin form without diacritics, e.g. "s" to represent not only Cyrillic "с"
+      and Latin "s", but also "ш" or "š", even if this conflates "s" and "sh" and
       other such pairs. The casual romanization can be simulated by using
       alternative uroman language codes "srp2" and "mkd2", which romanize
-      both "▒~]и▒~H" and "Niš" to "Nis" to reflect the casual Latin spelling.
+      both "Ниш" and "Niš" to "Nis" to reflect the casual Latin spelling.
  * Various small improvements.
 
 Changes in version 1.2.4
