@@ -7,7 +7,15 @@
 package NLP::utilities;
 
 use File::Spec;
+use Time::HiRes qw(time);
 use Time::Local;
+use NLP::English;
+use NLP::UTF8;
+
+$utf8 = NLP::UTF8;
+$englishPM = NLP::English;
+
+%empty_ht = ();
 
 use constant DEBUGGING => 0;
 
@@ -71,6 +79,12 @@ sub trim2 {
 
    $s =~ s/^\s*//;
    $s =~ s/\s*$//;
+   return $s;
+}
+
+sub trim_left {
+   local($this, $s) = @_;
+   $s =~ s/^\s*//;
    return $s;
 }
 
@@ -202,6 +216,18 @@ sub positions {
    return @positions_in_list;
 }
 
+sub last_position {
+   local($this,$elem,@array) = @_;
+
+   $result = -1;
+   $i = 0;
+   foreach $a (@array) {
+      $result = $i if $elem eq $a;
+      $i++;
+   }
+   return $result;
+}
+
 sub rand_n_digit_number {
    local($this,$n) = @_;
 
@@ -272,14 +298,16 @@ sub html_guarded_p {
    local($this,$string) = @_;
 
    return 0 if $string =~ /[<>"]/;
+   $string .= " ";
    @segs = split('&',$string);
    shift @segs;
    foreach $seg (@segs) {
-      next if $seg =~ /^amp;/;
-      next if $seg =~ /^quot;/;
-      next if $seg =~ /^nbsp;/;
-      next if $seg =~ /^gt;/;
-      next if $seg =~ /^lt;/;
+      next if $seg =~ /^[a-z]{2,6};/i;
+    # next if $seg =~ /^amp;/;
+    # next if $seg =~ /^quot;/;
+    # next if $seg =~ /^nbsp;/;
+    # next if $seg =~ /^gt;/;
+    # next if $seg =~ /^lt;/;
       next if $seg =~ /^#(\d+);/;
       next if $seg =~ /^#x([0-9a-fA-F]+);/;
       return 0;
@@ -311,6 +339,9 @@ sub guard_html {
    } else {
       $guarded_string =~ s/\"/&quot;/g;
    }
+   if ($control_string =~ /escape-slash/) {
+      $guarded_string =~ s/\//&x2F;/g;
+   }
    $guarded_string =~ s/>/&gt;/g;
    $guarded_string =~ s/</&lt;/g;
    return $guarded_string;
@@ -327,6 +358,7 @@ sub unguard_html {
       /^apos$/i       ? "'" :
       /^gt$/i         ? ">" :
       /^lt$/i         ? "<" :
+      /^x2F$/i        ? "/" :
       /^nbsp$/i       ? "\xC2\xA0" :
       /^#(\d+)$/      ? $this->chr($1) :
       /^#x([0-9a-f]+)$/i ? $this->chr(hex($1)) :
@@ -358,11 +390,11 @@ sub unguard_html_r {
       ($x) = ($string =~ /&#x([0-9a-f]+);/i);
    }
    $string0 = $string;
-   ($x) = ($string =~ /(?:http|www|\.com)\S*\%([0-9a-f]{2,2})/i);
+   ($x) = ($string =~ /(?:https?|www|\.com)\S*\%([0-9a-f]{2,2})/i);
    while (defined($x)) {
       $c = $this->chr("%" . hex($x));
       $string =~ s/\%$x/$c/g;
-      ($x) = ($string =~ /(?:http|www|\.com)\S*\%([0-9a-f]{2,2})/i);
+      ($x) = ($string =~ /(?:https?|www|\.com)\S*\%([0-9a-f]{2,2})/i);
    }
    return $string;
 }
@@ -404,6 +436,20 @@ sub unguard_html_quote {
    local($caller,$string) = @_;
 
    $string =~ s/&quot;/"/g;
+   return $string;
+}
+
+sub uri_encode {
+   local($caller,$string) = @_;
+
+   $string =~ s/([^^A-Za-z0-9\-_.!~*()'])/ sprintf "%%%02x", ord $1 /eg;
+   return $string;
+}
+
+sub uri_decode {
+   local($caller,$string) = @_;
+
+   $string =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
    return $string;
 }
 
@@ -454,7 +500,7 @@ sub chr {
 }
 
 sub guard_cgi {
-   local($caller,$string) = @_;
+   local($caller, $string) = @_;
 
    $guarded_string = $string;
    if ($string =~ /[\x80-\xFF]/) {
@@ -464,7 +510,7 @@ sub guard_cgi {
          $string = substr($string, 1);
          if ($char =~ /^[\\ ;\#\&\:\=\"\'\+\?\x00-\x1F\x80-\xFF]$/) {
 	    $hex = sprintf("%2.2x",ord($char));
-	    $guarded_string .= "%$hex";
+	    $guarded_string .= uc "%$hex";
 	 } else {
 	    $guarded_string .= $char;
 	 }
@@ -524,8 +570,6 @@ sub unguard_cgi {
       $unguarded_string =~ s/$percent_code/$hex_code/g;
       ($code) = ($unguarded_string =~ /%([0-9A-F]{2,2})/);
    }
-   # system("echo \"$string $unguarded_string\" >> /nfs/brahms1/ulf/www/.unguard_cgi.log")
-   #    unless $string eq $unguarded_string;
 
    return $unguarded_string;
 }
@@ -540,6 +584,86 @@ sub regex_guard {
    return $guarded_string;
 }
 
+sub g_regex_spec_tok_p {
+   local($this,$string) = @_;
+
+   # specials: ( ) (?: ) [ ]
+   return ($string =~ /^(\(\?:|[()\[\]])$/);
+}
+
+sub regex_guard_norm {
+   local($this,$string) = @_;
+
+   return $string unless $string =~ /[\[\]\\()$@?+]/;
+   my $rest = $string;
+   my @stack = ("");
+   while ($rest ne "") {
+      # specials: ( ) (?: ) [ ] ? +
+      if (($pre, $special, $post) = ($rest =~ /^((?:\\.|[^\[\]()?+])*)(\(\?:|[\[\]()?+])(.*)$/)) {
+       # print STDERR "Special: $pre *$special* $post\n";
+	 unless ($pre eq "") {
+	    push(@stack, $pre);
+	    while (($#stack >= 1) && (! $this->g_regex_spec_tok_p($stack[$#stack-1]))
+	                          && (! $this->g_regex_spec_tok_p($stack[$#stack]))) {
+	       $s1 = pop @stack;
+	       $s2 = pop @stack;
+	       push(@stack, "$s2$s1");
+	    }
+	 }
+	 if ($special =~ /^[?+]$/) {
+	    push(@stack, "\\") if ($stack[$#stack] eq "") 
+	                       || ($this->g_regex_spec_tok_p($stack[$#stack]) && ($stack[$#stack] ne "["));
+	    push(@stack, $special);
+	 } elsif ($special eq "]") {
+	    if (($#stack >= 1) && ($stack[$#stack-1] eq "[") && ! $this->g_regex_spec_tok_p($stack[$#stack])) {
+	       $char_expression = pop @stack;
+	       pop @stack;
+	       push(@stack, "[$char_expression]");
+	    } else {
+	       push(@stack, $special);
+	    }
+	 } elsif (($special =~ /^[()]/) && (($stack[$#stack] eq "[")
+	                                 || (($#stack >= 1)
+				          && ($stack[$#stack-1] eq "[")
+					  && ! $this->g_regex_spec_tok_p($stack[$#stack])))) {
+	    push(@stack, "\\$special");
+	 } elsif ($special eq ")") {
+	    if (($#stack >= 1) && ($stack[$#stack-1] =~ /^\((\?:)?$/) && ! $this->g_regex_spec_tok_p($stack[$#stack])) {
+	       $alt_expression = pop @stack;
+	       $open_para = pop @stack;
+	       if ($open_para eq "(") {
+	          push(@stack, "(?:$alt_expression)");
+	       } else {
+	          push(@stack, "$open_para$alt_expression)");
+	       }
+	    } else {
+	       push(@stack, $special);
+	    }
+	 } else {
+	    push(@stack, $special);
+	 }
+	 while (($#stack >= 1) && (! $this->g_regex_spec_tok_p($stack[$#stack-1])) 
+	                       && (! $this->g_regex_spec_tok_p($stack[$#stack]))) {
+	    $s1 = pop @stack;
+	    $s2 = pop @stack;
+	    push(@stack, "$s2$s1");
+	 }
+	 $rest = $post;
+      } else {
+	 push(@stack, $rest);
+	 $rest = "";
+      }
+   }
+ # print STDERR "Stack: " . join(";", @stack) . "\n";
+   foreach $i ((0 .. $#stack)) {
+      $stack_elem = $stack[$i];
+      if ($stack_elem =~ /^[()\[\]]$/) {
+         $stack[$i] = "\\" . $stack[$i]; 
+      }
+   }
+   return join("", @stack);
+}
+
 sub string_guard {
    local($caller,$string) = @_;
 
@@ -551,11 +675,34 @@ sub string_guard {
    return $guarded_string;
 }
 
+sub json_string_guard {
+   local($caller,$string) = @_;
+
+   return "" unless defined($string);
+   $guarded_string = $string;
+   $guarded_string =~ s/([\\"])/\\$1/g
+      if $guarded_string =~ /[\\"]/;
+   $guarded_string =~ s/\r*\n/\\n/g
+      if $guarded_string =~ /\n/;
+
+   return $guarded_string;
+}
+
+sub json_string_unguard {
+   local($caller,$string) = @_;
+   
+   return "" unless defined($string);
+   $string =~ s/\\n/\n/g
+      if $string =~ /\\n/;
+   return $string;
+}
+
 sub guard_javascript_arg {
    local($caller,$string) = @_;
 
    return "" unless defined($string);
    $guarded_string = $string;
+   $guarded_string =~ s/\\/\\\\/g;
    $guarded_string =~ s/'/\\'/g;
    return $guarded_string;
 }
@@ -825,24 +972,33 @@ sub has_diff_elements_p {
 }
 
 sub init_log {
-   local($this,$logfile) = @_;
-   if (DEBUGGING && $logfile) {
+   local($this,$logfile, $control) = @_;
+
+   $control = "" unless defined($control);
+   if ((DEBUGGING || ($control =~ /debug/i)) && $logfile) {
       system("rm -f $logfile");
       system("date > $logfile; chmod 777 $logfile");
    }
 }
 
 sub time_stamp_log {
-   local($this,$logfile) = @_;
-   if (DEBUGGING && $logfile) {
+   local($this,$logfile, $control) = @_;
+
+   $control = "" unless defined($control);
+   if ((DEBUGGING || ($control =~ /debug/i)) && $logfile) {
       system("date >> $logfile; chmod 777 $logfile");
    }
 }
 
 sub log {
-   local($this,$message,$logfile) = @_;
+   local($this,$message,$logfile,$control) = @_;
 
-   if (DEBUGGING && $logfile) {
+   $control = "" unless defined($control);
+   if ((DEBUGGING || ($control =~ /debug/i)) && $logfile) {
+      $this->init_log($logfile, $control) unless -w $logfile;
+      if ($control =~ /timestamp/i) {
+	 $this->time_stamp_log($logfile, $control);
+      }
       $guarded_message = $message;
       $guarded_message =~ s/"/\\"/g;
       system("echo \"$guarded_message\" >> $logfile");
@@ -872,16 +1028,28 @@ sub month_number_to_month_name {
    }
 }
 
-sub datetime {
-   local($this,$format,$time_in_secs) = @_;
+sub leap_year {
+   local($this,$year) = @_;
 
-   $time_in_secs = time unless defined($time_in_secs);
-   ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime($time_in_secs);
+   return 0 if $year %   4 != 0;
+   return 1 if $year % 400 == 0;
+   return 0 if $year % 100 == 0;
+   return 1;
+}
+
+sub datetime {
+   local($this,$format,$time_in_secs, $command) = @_;
+
+   $command = "" unless defined($command);
+   $time_in_secs = time unless defined($time_in_secs) && $time_in_secs;
+   @time_vector = ($command =~ /\b(gm|utc)\b/i) ? gmtime($time_in_secs) : localtime($time_in_secs);
+   ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=@time_vector;
    $thisyear = $year + 1900;
    $thismon=(Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec)[$mon];
    $thismon2=("Jan.","Febr.","March","April","May","June","July","Aug.","Sept.","Oct.","Nov.","Dec.")[$mon];
    $thismonth = $mon + 1;
    $thisday=(Sun,Mon,Tue,Wed,Thu,Fri,Sat)[$wday];
+   $milliseconds = int(($time_in_secs - int($time_in_secs)) * 1000);
    $date="$thisday $thismon $mday, $thisyear";
    $sdate="$thismon $mday, $thisyear";
    $dashedDate = sprintf("%04d-%02d-%02d",$thisyear,$thismonth,$mday);
@@ -902,13 +1070,23 @@ sub datetime {
       return "$dashedDate";
    } elsif ($format eq "time") {
       return "$time";
+   } elsif ($format eq "dateTtime+ms") {
+      return $dashedDate . "T" . $time . "." . $milliseconds;
    } elsif ($format eq "dateTtime") {
       return $dashedDate . "T" . $time;
+   } elsif ($format eq "yyyymmdd") {
+      return sprintf("%04d%02d%02d",$thisyear,$thismonth,$mday);
    } elsif ($format eq "short date at time") {
       return $shortdatetime;
    } else {
       return "$date at $time";
    }
+}
+
+sub datetime_of_last_file_modification {
+   local($this,$format,$filename) = @_;
+ 
+   return $this->datetime($format,(stat($filename))[9]);
 }
 
 sub add_1sec {
@@ -935,13 +1113,55 @@ sub add_1sec {
    }
 }
 
-sub leap_year {
-   local($this,$year) = @_;
+sub stopwatch {
+   local($this, $function, $id, *ht, *OUT) = @_;
+   # function: start|stop|count|report; start|stop times are absolute (in secs.)
 
-   return 0 if $year %   4 != 0;
-   return 1 if $year % 400 == 0;
-   return 0 if $year % 100 == 0;
-   return 1;
+   my $current_time = time;
+ # print OUT "Point S stopwatch $function $id $current_time\n";
+   if ($function eq "start") {
+      if ($ht{STOPWATCH_START}->{$id}) {
+	 $ht{STOPWATCH_N_RESTARTS}->{$id} = ($ht{STOPWATCH_N_RESTARTS}->{$id} || 0) + 1;
+      } else {
+         $ht{STOPWATCH_START}->{$id} = $current_time;
+      }
+   } elsif ($function eq "end") {
+      if ($start_time = $ht{STOPWATCH_START}->{$id}) {
+         $ht{STOPWATCH_TIME}->{$id} = ($ht{STOPWATCH_TIME}->{$id} || 0) + ($current_time - $start_time);
+         $ht{STOPWATCH_START}->{$id} = "";
+      } else {
+	 $ht{STOPWATCH_N_DEAD_ENDS}->{$id} = ($ht{STOPWATCH_N_DEAD_ENDS}->{$id} || 0) + 1;
+      }
+   } elsif ($function eq "count") {
+      $ht{STOPWATCH_COUNT}->{$id} = ($ht{STOPWATCH_COUNT}->{$id} || 0) + 1;
+   } elsif ($function eq "report") {
+      my $id2;
+      foreach $id2 (keys %{$ht{STOPWATCH_START}}) {
+         if ($start_time = $ht{STOPWATCH_START}->{$id2}) {
+	    $ht{STOPWATCH_TIME}->{$id2} = ($ht{STOPWATCH_TIME}->{$id2} || 0) + ($current_time - $start_time);
+	    $ht{STOPWATCH_START}->{$id2} = $current_time;
+	 }
+      }
+      print OUT "Time report:\n";
+      foreach $id2 (sort { $ht{STOPWATCH_TIME}->{$b} <=> $ht{STOPWATCH_TIME}->{$a} }
+			 keys %{$ht{STOPWATCH_TIME}}) {
+	 my $stopwatch_time = $ht{STOPWATCH_TIME}->{$id2};
+	 $stopwatch_time = $this->round_to_n_decimal_places($stopwatch_time, 3);
+	 my $n_restarts = $ht{STOPWATCH_N_RESTARTS}->{$id2};
+	 my $n_dead_ends = $ht{STOPWATCH_N_DEAD_ENDS}->{$id2};
+         my $start_time = $ht{STOPWATCH_START}->{$id2};
+	 print OUT "   $id2: $stopwatch_time seconds";
+	 print OUT " with $n_restarts restart(s)" if $n_restarts;
+	 print OUT " with $n_dead_ends dead end(s)" if $n_dead_ends;
+	 print OUT " (active)" if $start_time;
+	 print OUT "\n";
+      }
+      foreach $id2 (sort { $ht{STOPWATCH_COUNT}->{$b} <=> $ht{STOPWATCH_COUNT}->{$a} }
+                         keys %{$ht{STOPWATCH_COUNT}}) {
+         $count = $ht{STOPWATCH_COUNT}->{$id2};
+	 print OUT " C $id2: $count\n";
+      }
+   }
 }
 
 sub print_html_banner {
@@ -966,12 +1186,13 @@ sub print_html_head {
    $max_age_clause = "";
    $max_age_clause = "<meta http-equiv=\"cache-control\" content=\"max-age=3600\" \/>"; # if $control =~ /\bexp1hour\b/;
    $css_clause = "";
-   $css_clause = "\n    <link rel=\"stylesheet\" type=\"text/css\" href=\"http://www.isi.edu/~ulf/css/handheld/default.css\" media=\"handheld\"\/>" if $control =~ /css/;
-   $css_clause .= "\n    <link rel=\"stylesheet\" type=\"text/css\" href=\"http://www.isi.edu/~ulf/css/handheld/default.css\" media=\"only screen and (max-device-width:480px)\"\/>" if $control =~ /css/;
-   $css_clause = "\n    <link rel=\"stylesheet\" type=\"text/css\" href=\"http://www.isi.edu/~ulf/css/handheld/default.css\">" if $control =~ /css-handheld/;
+   $css_clause = "\n    <link rel=\"stylesheet\" type=\"text/css\" href=\"https://www.isi.edu/~ulf/css/handheld/default.css\" media=\"handheld\"\/>" if $control =~ /css/;
+   $css_clause .= "\n    <link rel=\"stylesheet\" type=\"text/css\" href=\"https://www.isi.edu/~ulf/css/handheld/default.css\" media=\"only screen and (max-device-width:480px)\"\/>" if $control =~ /css/;
+   $css_clause = "\n    <link rel=\"stylesheet\" type=\"text/css\" href=\"https://www.isi.edu/~ulf/css/handheld/default.css\">" if $control =~ /css-handheld/;
    $icon_clause = "";
-   $icon_clause .= "\n   <link rel=\"shortcut icon\" href=\"http://www.isi.edu/~ulf/amr/images/AMR-favicon.ico\">" if $control =~ /\bAMR\b/i;
-   print OUT "\xEF\xBB\xBF\n"; # utf8 marker
+   $icon_clause .= "\n   <link rel=\"shortcut icon\" href=\"https://www.isi.edu/~ulf/amr/images/AMR-favicon.ico\">" if $control =~ /\bAMR\b/i;
+   $icon_clause .= "\n   <link rel=\"shortcut icon\" href=\"https://www.isi.edu/~ulf/croom/images/CRE-favicon.ico\">" if $control =~ /\bCRE\b/i;
+   print OUT "\xEF\xBB\xBF\n" unless $control =~ /\bno-bom\b/; # utf8 marker byte order mark
    print OUT<<END_OF_HEADER1;
 <html>
   <head>
@@ -1123,6 +1344,9 @@ END_OF_HEADER1
        window.location = url;
     }
 
+    function initialize() {
+    }
+
     $add_javascript
     -->
     </script>
@@ -1137,9 +1361,26 @@ END_OF_HEADER3
 ;
 }
 
+
 sub print_html_foot {
    local($this, *OUT) = @_;
 
+   print OUT "   </body>\n";
+   print OUT "</html>\n";
+}
+
+sub print_html_page {
+   local($this, *OUT, $s) = @_;
+
+   print OUT "\xEF\xBB\xBF\n";
+   print OUT "<html>\n";
+   print OUT "   <head>\n";
+   print OUT "      <title>DEBUG</title>\n";
+   print OUT "      <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" \/>\n";
+   print OUT "      <meta http-equiv=\"cache-control\" content=\"max-age=30\" \/>\n";
+   print OUT "   </head>\n";
+   print OUT "   <body>\n";
+   print OUT "      $s\n";
    print OUT "   </body>\n";
    print OUT "</html>\n";
 }
@@ -1148,7 +1389,7 @@ sub http_catfile {
    local($this, @path) = @_;
 
    $result = File::Spec->catfile(@path);
-   $result =~ s/http:\/([a-zA-Z])/http:\/\/$1/;
+   $result =~ s/(https?):\/([a-zA-Z])/$1:\/\/$2/;
    return $result;
 }
 
@@ -1218,7 +1459,7 @@ sub latin_plus_p {
    local($this, $s, $control) = @_;
 
    $control = "" unless defined($control);
-   return $s =~ /^([\x20-\x7E]|\xC2[\xA1-\xBF]|\xC3[\x80-\xBF]|\xE2\x82[\xA0-\xB5])+$/;
+   return $s =~ /^([\x20-\x7E]|\xC2[\xA1-\xBF]|[\xC3-\xCC][\x80-\xBF]|\xCA[\x80-\xAF]|\xE2[\x80-\xAF][\x80-\xBF])+$/;
 }
 
 sub nth_line_in_file {
@@ -1341,6 +1582,14 @@ sub print_stderr {
 
    $verbose = 1 unless defined($verbose);
    print STDERR $message if $verbose;
+   return 1;
+}
+
+sub print_log {
+   local($this, $message, *LOG, $verbose) = @_;
+
+   $verbose = 1 unless defined($verbose);
+   print LOG $message if $verbose;
    return 1;
 }
 
@@ -1770,20 +2019,205 @@ sub de_accent_string {
    return $s;
 }
 
-sub round_to_n_decimal_places {
-   local($this, $x, $n) = @_;
+sub read_de_accent_case_resource {
+   local($this, $filename, *ht, *LOG, $verbose) = @_;
+   # e.g. data/char-de-accent-lc.txt
 
-   return $x unless defined($x);
-   return $x if $x =~ /^-?\d+$/;
+   if (open(IN, $filename)) {
+      my $mode = "de-accent";
+      my $line_number = 0;
+      my $n_de_accent_targets = 0;
+      my $n_de_accent_sources = 0;
+      my $n_case_entries = 0;
+      while (<IN>) {
+	 s/^\xEF\xBB\xBF//;
+	 s/\s*$//;
+	 $line_number++;
+	 if ($_ =~ /^#+\s*CASE\b/) {
+	    $mode = "case";
+	 } elsif ($_ =~ /^#+\s*PUNCTUATION NORMALIZATION\b/) {
+	    $mode = "punctuation-normalization";
+	 } elsif ($_ =~ /^#/) {
+	    # ignore comment
+	 } elsif ($_ =~ /^\s*$/) {
+	    # ignore empty line
+         } elsif (($mode eq "de-accent") && (($char_without_accent, @chars_with_accent) = split(/\s+/, $_))) {
+	    if (keys %{$ht{DE_ACCENT_INV}->{$char_without_accent}}) {
+	       print LOG "Ignoring duplicate de-accent line for target $char_without_accent in l.$line_number in $filename\n" unless $char_without_accent eq "--";
+	    } elsif (@chars_with_accent) {
+	       $n_de_accent_targets++;
+	       foreach $char_with_accent (@chars_with_accent) {
+		  my @prev_target_chars = keys %{$ht{DE_ACCENT}->{$char_with_accent}};
+		  print LOG "Accent character $char_with_accent has duplicate target $char_without_accent (besides @prev_target_chars) in l.$line_number in $filename\n" if @prev_target_chars && (! ($char_without_accent =~ /^[aou]e$/i));
+		  $char_without_accent = "" if $char_without_accent eq "--";
+	          $ht{DE_ACCENT}->{$char_with_accent}->{$char_without_accent} = 1;
+	          $ht{DE_ACCENT1}->{$char_with_accent} = $char_without_accent 
+		     if (! defined($ht{DE_ACCENT1}->{$char_with_accent}))
+		     && ($char_without_accent =~ /^.[\x80-\xBF]*$/);
+	          $ht{DE_ACCENT_INV}->{$char_without_accent}->{$char_with_accent} = 1;
+	          $ht{UPPER_CASE_OR_ACCENTED}->{$char_with_accent} = 1;
+		  $n_de_accent_sources++;
+	       }
+	    } else {
+	       print LOG "Empty de-accent list for $char_without_accent in l.$line_number in $filename\n";
+	    } 
+	 } elsif (($mode eq "punctuation-normalization") && (($norm_punct, @unnorm_puncts) = split(/\s+/, $_))) {
+	    if (keys %{$ht{NORM_PUNCT_INV}->{$norm_punct}}) {
+	       print LOG "Ignoring duplicate punctuation-normalization line for target $norm_punct in l.$line_number in $filename\n";
+	    } elsif (@unnorm_puncts) {
+	       foreach $unnorm_punct (@unnorm_puncts) {
+		  my $prev_norm_punct = $ht{NORM_PUNCT}->{$unnorm_punct};
+		  if ($prev_norm_punct) {
+		     print LOG "Ignoring duplicate punctuation normalization $unnorm_punct -> $norm_punct (besides $prev_norm_punct) in l.$line_number in $filename\n";
+		  }
+	          $ht{NORM_PUNCT}->{$unnorm_punct} = $norm_punct;
+	          $ht{NORM_PUNCT_INV}->{$norm_punct}->{$unnorm_punct} = 1;
+	          $ht{LC_DE_ACCENT_CHAR_NORM_PUNCT}->{$unnorm_punct} = $norm_punct;
+	       }
+	    }
+	 } elsif (($mode eq "case") && (($uc_char, $lc_char) = ($_ =~ /^(\S+)\s+(\S+)\s*$/))) {
+	    $ht{UPPER_TO_LOWER_CASE}->{$uc_char} = $lc_char;
+	    $ht{LOWER_TO_UPPER_CASE}->{$lc_char} = $uc_char;
+	    $ht{UPPER_CASE_P}->{$uc_char} = 1;
+	    $ht{LOWER_CASE_P}->{$lc_char} = 1;
+	    $ht{UPPER_CASE_OR_ACCENTED}->{$uc_char} = 1;
+	    $n_case_entries++;
+	 } else {
+	    print LOG "Unrecognized l.$line_number in $filename\n";
+	 }
+      }
+      foreach $char (keys %{$ht{UPPER_CASE_OR_ACCENTED}}) {
+	 my $lc_char = $ht{UPPER_TO_LOWER_CASE}->{$char};
+	 $lc_char = $char unless defined($lc_char);
+         my @de_accend_char_results = sort keys %{$ht{DE_ACCENT}->{$lc_char}};
+	 my $new_char = (@de_accend_char_results) ? $de_accend_char_results[0] : $lc_char;
+	 $ht{LC_DE_ACCENT_CHAR}->{$char} = $new_char;
+	 $ht{LC_DE_ACCENT_CHAR_NORM_PUNCT}->{$char} = $new_char;
+      }
+      close(IN);
+      print LOG "Found $n_case_entries case entries, $n_de_accent_sources/$n_de_accent_targets source/target entries in $line_number lines in file $filename\n" if $verbose;
+   } else {
+      print LOG "Can't open $filename\n";
+   }
+}
+
+sub de_accent_char {
+   local($this, $char, *ht, $default) = @_;
+
+   @de_accend_char_results = sort keys %{$ht{DE_ACCENT}->{$char}};
+   return (@de_accend_char_results) ? @de_accend_char_results : ($default);
+}
+
+sub lower_case_char {
+   local($this, $char, *ht, $default) = @_;
+   
+   return (defined($lc = $ht{UPPER_TO_LOWER_CASE}->{$char})) ? $lc : $default;
+}
+
+sub lower_case_and_de_accent_char {
+   local($this, $char, *ht) = @_;
+
+   my $lc_char = $this->lower_case_char($char, *ht, $char);
+   return $this->de_accent_char($lc_char, *ht, $lc_char);
+}
+
+sub lower_case_and_de_accent_string {
+   local($this, $string, *ht, $control) = @_;
+
+ # $this->stopwatch("start", "lower_case_and_de_accent_string", *ht, *LOG);
+   my $norm_punct_p = ($control && ($control =~ /norm-punct/i));
+   my @chars = $this->split_into_utf8_characters($string);
+   my $result = "";
+   foreach $char (@chars) {
+      my @lc_de_accented_chars = $this->lower_case_and_de_accent_char($char, *ht);
+      if ($norm_punct_p
+       && (! @lc_de_accented_chars)) {
+	 my $norm_punct = $ht{NORM_PUNCT}->{$char};
+         @lc_de_accented_chars = ($norm_punct) if $norm_punct;
+      }
+      $result .= ((@lc_de_accented_chars) ? $lc_de_accented_chars[0] : $char);
+   }
+ # $this->stopwatch("end", "lower_case_and_de_accent_string", *ht, *LOG);
+   return $result;
+}
+
+sub lower_case_and_de_accent_norm_punct {
+   local($this, $char, *ht) = @_;
+
+   my $new_char = $ht{LC_DE_ACCENT_CHAR_NORM_PUNCT}->{$char};
+   return (defined($new_char)) ? $new_char : $char;
+}
+
+sub lower_case_and_de_accent_string2 {
+   local($this, $string, *ht, $control) = @_;
+
+   my $norm_punct_p = ($control && ($control =~ /norm-punct/i));
+ # $this->stopwatch("start", "lower_case_and_de_accent_string2", *ht, *LOG);
+   my $s = $string;
+   my $result = "";
+   while (($char, $rest) = ($s =~ /^(.[\x80-\xBF]*)(.*)$/)) {
+      my $new_char = $ht{LC_DE_ACCENT_CHAR}->{$char};
+      if (defined($new_char)) {
+         $result .= $new_char;
+      } elsif ($norm_punct_p && defined($new_char = $ht{NORM_PUNCT}->{$char})) {
+	 $result .= $new_char;
+      } else {
+         $result .= $char;
+      }
+      $s = $rest;
+   }
+ # $this->stopwatch("end", "lower_case_and_de_accent_string2", *ht, *LOG);
+   return $result;
+}
+
+sub lower_case_string {
+   local($this, $string, *ht, $control) = @_;
+
+   my $norm_punct_p = ($control && ($control =~ /norm-punct/i));
+   my $s = $string;
+   my $result = "";
+   while (($char, $rest) = ($s =~ /^(.[\x80-\xBF]*)(.*)$/)) {
+      my $lc_char = $ht{UPPER_TO_LOWER_CASE}->{$char};
+      if (defined($lc_char)) {
+         $result .= $lc_char;
+      } elsif ($norm_punct_p && defined($new_char = $ht{NORM_PUNCT}->{$char})) {
+	 $result .= $new_char;
+      } else {
+         $result .= $char;
+      }
+      $s = $rest;
+   }
+   return $result;
+}
+
+sub round_to_n_decimal_places {
+   local($this, $x, $n, $fill_decimals_p) = @_;
+
+   $fill_decimals_p = 0 unless defined($fill_decimals_p);
+   unless (defined($x)) {
+      return $x;
+   }
+   if (($x =~ /^-?\d+$/) && (! $fill_decimals_p)) {
+      return $x;
+   }
    $factor = 1;
    foreach $i ((1 .. $n)) {
       $factor *= 10;
    }
+   my $rounded_number;
    if ($x > 0) {
-      return (int(($factor * $x) + 0.5) / $factor);
+      $rounded_number = (int(($factor * $x) + 0.5) / $factor);
    } else {
-      return (int(($factor * $x) - 0.5) / $factor);
+      $rounded_number = (int(($factor * $x) - 0.5) / $factor);
    }
+   if ($fill_decimals_p) {
+      ($period, $decimals) = ($rounded_number =~ /^-?\d+(\.?)(\d*)$/);
+      $rounded_number .= "." unless $period || ($n == 0);
+      foreach ((1 .. ($n - length($decimals)))) {
+	 $rounded_number .= 0;
+      }
+   }
+   return $rounded_number;
 }
 
 sub commify {
@@ -2068,16 +2502,45 @@ sub slot_value_in_double_colon_del_list {
    }
 }
 
+sub synt_in_double_colon_del_list {
+   local($this, $s) = @_;
+
+   ($value) = ($s =~ /::synt\s+(\S+|\S.*?\S)(?:\s+::.*)?$/);
+   return (defined($value)) ? $value : "";
+}
+
+sub form_in_double_colon_del_list {
+   local($this, $s) = @_;
+
+   ($value) = ($s =~ /::form\s+(\S+|\S.*?\S)(?:\s+::.*)?$/);
+   return (defined($value)) ? $value : "";
+}
+
+sub lex_in_double_colon_del_list {
+   local($this, $s) = @_;
+
+   ($value) = ($s =~ /::lex\s+(\S+|\S.*?\S)(?:\s+::.*)?$/);
+   return (defined($value)) ? $value : "";
+}
+
 sub multi_slot_value_in_double_colon_del_list {
    # e.g. when there are multiple slot/value pairs in a line, e.g. ::eng ... :eng ...
    local($this, $s, $slot) = @_;
 
    @values = ();
-   while (($value, $rest) = ($s =~ /::$slot\s+(\S.*?\S|\S)(\s+::\S.*|\s*)$/)) {
+   while (($value, $rest) = ($s =~ /::$slot\s+(\S|\S.*?\S)(\s+::\S.*|\s*)$/)) {
       push(@values, $value);
       $s = $rest;
    }
    return @values;
+}
+
+sub remove_slot_in_double_colon_del_list {
+   local($this, $s, $slot) = @_;
+
+   $s =~ s/::$slot(?:|\s+\S|\s+\S.*?\S)(\s+::\S.*|\s*)$/$1/;
+   $s =~ s/^\s*//;
+   return $s;
 }
 
 sub extract_split_info_from_split_dir {
@@ -2323,12 +2786,60 @@ sub likely_valid_url_format {
    return 0;
 }
 
+# see also EnglMorph->special_token_type
+$common_file_suffixes = "aspx?|bmp|cgi|docx?|gif|html?|jpeg|jpg|mp3|mp4|pdf|php|png|pptx?|stm|svg|txt|xml";
+$common_top_domain_suffixes = "museum|info|cat|com|edu|gov|int|mil|net|org|ar|at|au|be|bg|bi|br|ca|ch|cn|co|cz|de|dk|es|eu|fi|fr|gr|hk|hu|id|ie|il|in|ir|is|it|jp|ke|kr|lu|mg|mx|my|nl|no|nz|ph|pl|pt|ro|rs|ru|rw|se|sg|sk|so|tr|tv|tw|tz|ua|ug|uk|us|za";
+
+sub token_is_url_p {
+   local($this, $token) = @_;
+
+   return 1 if $token =~ /^www(\.[a-z0-9]([-a-z0-9_]|\xC3[\x80-\x96\x98-\xB6\xB8-\xBF])+)+\.([a-z]{2,2}|$common_top_domain_suffixes)(\/(\.{1,3}|[a-z0-9]([-a-z0-9_%]|\xC3[\x80-\x96\x98-\xB6\xB8-\xBF])+))*(\/[a-z0-9_][-a-z0-9_]+\.($common_file_suffixes))?$/i;
+   return 1 if $token =~ /^https?:\/\/([a-z]\.)?([a-z0-9]([-a-z0-9_]|\xC3[\x80-\x96\x98-\xB6\xB8-\xBF])+\.)+[a-z]{2,}(\/(\.{1,3}|([-a-z0-9_%]|\xC3[\x80-\x96\x98-\xB6\xB8-\xBF])+))*(\/[a-z_][-a-z0-9_]+\.($common_file_suffixes))?$/i;
+   return 1 if $token =~ /^[a-z][-a-z0-9_]+(\.[a-z][-a-z0-9_]+)*\.($common_top_domain_suffixes)(\/[a-z0-9]([-a-z0-9_%]|\xC3[\x80-\x96\x98-\xB6\xB8-\xBF])+)*(\/[a-z][-a-z0-9_]+\.($common_file_suffixes))?$/i;
+   return 0;
+}
+
+sub token_is_email_p {
+   local($this, $token) = @_;
+
+   return ($token =~ /^[a-z][-a-z0-9_]+(\.[a-z][-a-z0-9_]+)*\@[a-z][-a-z0-9_]+(\.[a-z][-a-z0-9_]+)*\.($common_top_domain_suffixes)$/i);
+}
+
+sub token_is_filename_p {
+   local($this, $token) = @_;
+
+   return 1 if $token =~ /\.($common_file_suffixes)$/;
+   return 0; 
+}
+
+sub token_is_xml_token_p {
+   local($this, $token) = @_;
+
+   return ($token =~ /^&(amp|apos|gt|lt|nbsp|quot|&#\d+|&#x[0-9A-F]+);$/i);
+}
+
+sub token_is_handle_p {
+   local($this, $token) = @_;
+
+   return ($token =~ /^\@[a-z][_a-z0-9]*[a-z0-9]$/i);
+}
+
+sub min {
+   local($this, @list) = @_;
+
+   my $min = "";
+   foreach $item (@list) {
+      $min = $item if ($item =~ /^-?\d+(?:\.\d*)?$/) && (($min eq "") || ($item < $min));
+   }
+   return $min;
+}
+
 sub max {
    local($this, @list) = @_;
 
    my $max = "";
    foreach $item (@list) {
-      $max = $item if ($item =~ /^-?\d+(?:\.\d*)?$/) && (($max eq "") || ($item > $max));
+      $max = $item if defined($item) && ($item =~ /^-?\d+(?:\.\d*)?(e[-+]\d+)?$/) && (($max eq "") || ($item > $max));
    }
    return $max;
 }
@@ -2524,5 +3035,618 @@ sub new_vars_for_surf_amr {
 
    return $new_amr_s2;
 }
+
+sub update_inner_span_for_id {
+   local($this, $html_line, $slot, $new_value) = @_;
+   # e.g. slot: workset-language-name value: Uyghur
+
+   if (defined($new_value)
+    && (($pre, $old_value, $post) = ($html_line =~ /^(.*<span\b[^<>]* id="$slot"[^<>]*>)([^<>]*)(<\/span\b[^<>]*>.*)$/i))
+    && ($old_value ne $new_value)) {
+      # print STDERR "Inserting new $slot $old_value -> $new_value\n";
+      return $pre . $new_value . $post . "\n";
+   } else {
+      # no change
+      return $html_line;
+   } 
+}
+
+sub levenshtein_distance {
+   local($this, $s1, $s2) = @_;
+
+   my $i; 
+   my $j;
+   my @distance;
+   my @s1_chars = $utf8->split_into_utf8_characters($s1, "return only chars", *empty_ht);
+   my $s1_length = $#s1_chars + 1;
+   my @s2_chars = $utf8->split_into_utf8_characters($s2, "return only chars", *empty_ht);
+   my $s2_length = $#s2_chars + 1;
+   for ($i = 0; $i <= $s1_length; $i++) {
+      $distance[$i][0] = $i;
+   }
+   for ($j = 1; $j <= $s2_length; $j++) {
+      $distance[0][$j] = $j;
+   }
+   for ($j = 1; $j <= $s2_length; $j++) {
+      for ($i = 1; $i <= $s1_length; $i++) {
+	 my $substitution_cost = ($s1_chars[$i-1] eq $s2_chars[$j-1]) ? 0 : 1;
+         $distance[$i][$j] = $this->min($distance[$i-1][$j] + 1,
+				        $distance[$i][$j-1] + 1,
+				        $distance[$i-1][$j-1] + $substitution_cost);
+	 # print STDERR "SC($i,$j) = $substitution_cost\n";
+	 # $d = $distance[$i][$j];
+	 # print STDERR "D($i,$j) = $d\n";
+      }
+   }
+   return $distance[$s1_length][$s2_length];
+}
+
+sub markup_parts_of_string_in_common_with_ref {
+   local($this, $s, $ref, $start_markup, $end_markup, $deletion_markup, $verbose) = @_;
+
+   # \x01 temporary start-markup
+   # \x02 temporary end-markup
+   # \x03 temporary deletion-markup
+   $s =~ s/[\x01-\x03]//g;
+   $ref =~ s/[\x01-\x03]//g;
+   my $i; 
+   my $j;
+   my @distance;
+   my @s_chars = $utf8->split_into_utf8_characters($s, "return only chars", *empty_ht);
+   my $s_length = $#s_chars + 1;
+   my @ref_chars = $utf8->split_into_utf8_characters($ref, "return only chars", *empty_ht);
+   my $ref_length = $#ref_chars + 1;
+   $distance[0][0] = 0;
+   $del_ins_subst_op[0][0] = "-";
+   for ($i = 1; $i <= $s_length; $i++) {
+      $distance[$i][0] = $i;
+      $del_ins_subst_op[$i][0] = 0;
+   }
+   for ($j = 1; $j <= $ref_length; $j++) {
+      $distance[0][$j] = $j;
+      $del_ins_subst_op[0][$j] = 1;
+   }
+   for ($j = 1; $j <= $ref_length; $j++) {
+      for ($i = 1; $i <= $s_length; $i++) {
+	 my $substitution_cost = (($s_chars[$i-1] eq $ref_chars[$j-1])) ? 0 : 1;
+	 my @del_ins_subst_list = ($distance[$i-1][$j] + 1,
+	                           $distance[$i][$j-1] + 1,
+			           $distance[$i-1][$j-1] + $substitution_cost);
+         my $min = $this->min(@del_ins_subst_list);
+	 my $del_ins_subst_position = $this->position($min, @del_ins_subst_list);
+	 $distance[$i][$j] = $min;
+	 $del_ins_subst_op[$i][$j] = $del_ins_subst_position;
+      }
+   }
+   $d = $distance[$s_length][$ref_length];
+   print STDERR "markup_parts_of_string_in_common_with_ref LD($s,$ref) = $d\n" if $verbose;
+   for ($j = 0; $j <= $ref_length; $j++) {
+      for ($i = 0; $i <= $s_length; $i++) {
+	 $d = $distance[$i][$j];
+	 $op = $del_ins_subst_op[$i][$j];
+	 print STDERR "$d($op) " if $verbose;
+      }
+      print STDERR "\n" if $verbose;
+   }
+   my $result = "";
+   my $i_end = $s_length;
+   my $j_end = $ref_length;
+   my $cost = $distance[$i_end][$j_end];
+   $i = $i_end;
+   $j = $j_end;
+   while (1) {
+      $result2 = $result;
+      $result2 =~ s/\x01/$start_markup/g;
+      $result2 =~ s/\x02/$end_markup/g;
+      $result2 =~ s/\x03/$deletion_markup/g;
+      print STDERR "i:$i i-end:$i_end  j:$j j-end:$j_end  r: $result2\n" if $verbose;
+      # matching characters
+      if ($i && $j && ($del_ins_subst_op[$i][$j] == 2) && ($distance[$i-1][$j-1] == $distance[$i][$j])) {
+	 $i--;
+	 $j--;
+      } else {
+         # previously matching characters
+	 if (($i < $i_end) && ($j < $j_end)) {
+	    my $sub_s = join("", @s_chars[$i .. $i_end-1]);
+	    $result = "\x01" . $sub_s . "\x02" . $result;
+	 }
+         # character substitution
+         if ($i && $j && ($del_ins_subst_op[$i][$j] == 2)) {
+	    $i--;
+	    $j--;
+	    $result = $s_chars[$i] . $result;
+	 } elsif ($i && ($del_ins_subst_op[$i][$j] == 0)) {
+	    $i--;
+	    $result = $s_chars[$i] . $result;
+	 } elsif ($j && ($del_ins_subst_op[$i][$j] == 1)) {
+	    $j--;
+	    $result = "\x03" . $result;
+	 } else {
+	    last;
+	 }
+	 $i_end = $i;
+	 $j_end = $j;
+      }
+   }
+   $result2 = $result;
+   $result2 =~ s/\x01/$start_markup/g;
+   $result2 =~ s/\x02/$end_markup/g;
+   $result2 =~ s/\x03/$deletion_markup/g;
+   print STDERR "i:$i i-end:$i_end  j:$j j-end:$j_end  r: $result2 *\n" if $verbose;
+   $result =~ s/(\x02)\x03+(\x01)/$1$deletion_markup$2/g;
+   $result =~ s/(\x02)\x03+$/$1$deletion_markup/g;
+   $result =~ s/^\x03+(\x01)/$deletion_markup$1/g;
+   $result =~ s/\x03//g;
+   $result =~ s/\x01/$start_markup/g;
+   $result =~ s/\x02/$end_markup/g;
+   return $result;
+}
+
+sub env_https {
+   my $https = $ENV{'HTTPS'};
+   return 1 if $https && ($https eq "on");
+
+   my $http_via = $ENV{'HTTP_VIA'};
+   return 1 if $http_via && ($http_via =~ /\bHTTPS\b.* \d+(?:\.\d+){3,}:443\b/); # tmp for beta.isi.edu
+
+   return 0;
+}
+
+sub env_http_host {
+   return $ENV{'HTTP_HOST'} || "";
+}
+
+sub env_script_filename {
+   return $ENV{'SCRIPT_FILENAME'} || "";
+}
+
+sub cgi_mt_app_root_dir {
+   local($this, $target) = @_;
+   my $s;
+   if ($target =~ /filename/i) {
+      $s = $ENV{'SCRIPT_FILENAME'} || "";
+   } else {
+      $s = $ENV{'SCRIPT_NAME'} || "";
+   }
+   return "" unless $s;
+   return $d if ($d) = ($s =~ /^(.*?\/(?:amr-editor|chinese-room-editor|utools|romanizer\/version\/[-.a-z0-9]+|romanizer))\//);
+   return $d if ($d) = ($s =~ /^(.*)\/(?:bin|src|scripts?)\/[^\/]*$/);
+   return $d if ($d) = ($s =~ /^(.*)\/[^\/]*$/);
+   return "";
+}
+
+sub parent_dir {
+   local($this, $dir) = @_;
+
+   $dir =~ s/\/[^\/]+\/?$//;
+   return $dir || "/";
+}
+
+sub span_start {
+   local($this, $span, $default) = @_;
+
+   $default = "" unless defined($default);
+   return (($start) = ($span =~ /^(\d+)-\d+$/)) ? $start : $default;
+}
+
+sub span_end {
+   local($this, $span, $default) = @_;
+
+   $default = "" unless defined($default);
+   return (($end) = ($span =~ /^\d+-(\d+)$/)) ? $end : $default;
+}
+
+sub oct_mode {
+   local($this, $filename) = @_;
+
+   @stat = stat($filename);
+   return "" unless @stat;
+   $mode = $stat[2];
+   $oct_mode = sprintf("%04o", $mode & 07777);
+   return $oct_mode;
+}
+
+sub csv_to_list {
+   local($this, $s, $control_string) = @_;
+   # Allow quoted string such as "Wait\, what?" as element with escaped comma inside.
+
+   $control_string = "" unless defined($control_string);
+   $strip_p = ($control_string =~ /\bstrip\b/);
+   $allow_simple_commas_in_quote = ($control_string =~ /\bsimple-comma-ok\b/);
+   $ignore_empty_elem_p = ($control_string =~ /\bno-empty\b/);
+   @cvs_list = ();
+   while ($s ne "") {
+      if ((($elem, $rest) = ($s =~ /^"((?:\\[,\"]|[^,\"][\x80-\xBF]*)*)"(,.*|)$/))
+       || ($allow_simple_commas_in_quote
+        && (($elem, $rest) = ($s =~ /^"((?:\\[,\"]|[^\"][\x80-\xBF]*)*)"(,.*|)$/)))
+       || (($elem, $rest) = ($s =~ /^([^,]*)(,.*|\s*)$/))
+       || (($elem, $rest) = ($s =~ /^(.*)()$/))) {
+	 if ($strip_p) { 
+	    $elem =~ s/^\s*//; 
+	    $elem =~ s/\s*$//;
+	 }
+	 push(@cvs_list, $elem) unless $ignore_empty_elem_p && ($elem eq "");
+	 $rest =~ s/^,//;
+	 $s = $rest;
+      } else {
+	 print STDERR "Error in csv_to_list processing $s\n";
+	 last;
+      }
+   }
+   return @cvs_list;
+}
+
+sub kl_divergence {
+   local($this, $distribution_id, $gold_distribution_id, *ht, $smoothing) = @_;
+
+   my $total_count = $ht{DISTRIBUTION_TOTAL_COUNT}->{$distribution_id};
+   my $total_gold_count = $ht{DISTRIBUTION_TOTAL_COUNT}->{$gold_distribution_id};
+   return unless $total_count && $total_gold_count;
+
+   my @values = keys %{$ht{DISTRIBUTION_VALUE_COUNT}->{$gold_distribution_id}};
+   my $n_values = $#values + 1;
+
+   my $min_total_count = $this->min($total_count, $total_gold_count);
+   $smoothing = 1 - (10000/((100+$min_total_count)**2)) unless defined($smoothing);
+   return unless $smoothing;
+   my $smoothed_n_values = $smoothing * $n_values;
+   my $divergence = 0;
+   foreach $value (@values) {
+      my $count = $ht{DISTRIBUTION_VALUE_COUNT}->{$distribution_id}->{$value} || 0;
+      my $gold_count = $ht{DISTRIBUTION_VALUE_COUNT}->{$gold_distribution_id}->{$value};
+      my $p = ($count + $smoothing) / ($total_count + $smoothed_n_values);
+      my $q = ($gold_count + $smoothing) / ($total_gold_count + $smoothed_n_values);
+      if ($p == 0) {
+         # no impact on divergence
+      } elsif ($q) {
+         my $incr = $p * CORE::log($p/$q);
+         $divergence += $incr;
+	 my $incr2 = $this->round_to_n_decimal_places($incr, 5);
+	 my $p2    = $this->round_to_n_decimal_places($p, 5);
+	 my $q2    = $this->round_to_n_decimal_places($q, 5);
+	 $incr2 = "+" . $incr2 if $incr > 0;
+         $log = "    value: $value count: $count gold_count: $gold_count p: $p2 q: $q2 $incr2\n";
+         $ht{KL_DIVERGENCE_LOG}->{$distribution_id}->{$gold_distribution_id}->{$value} = $log;
+         $ht{KL_DIVERGENCE_INCR}->{$distribution_id}->{$gold_distribution_id}->{$value} = $incr;
+      } else {
+         $divergence += 999;
+      }
+   }
+   return $divergence;
+}
+
+sub read_ISO_8859_named_entities {
+   local($this, *ht, $filename, $verbose) = @_;
+   # e.g. from /nfs/isd/ulf/arabic/data/ISO-8859-1-HTML-named-entities.txt
+   # <!ENTITY quot   CDATA "&#34;"   -- quotation mark, =apl quote, u+0022 ISOnum -->
+   # <!ENTITY nbsp   CDATA "&#160;"  -- no-break space -->
+   # <!ENTITY eacute CDATA "&#233;"  -- small e, acute accent -->
+   # <!ENTITY Alpha  CDATA "&#913;"  -- greek capital letter alpha,  u+0391 -->
+   # <!ENTITY alpha  CDATA "&#945;"  -- greek small letter alpha, u+03B1 ISOgrk3 -->
+   # <!ENTITY dagger CDATA "&#8224;" -- dagger, u+2020 ISOpub -->
+
+   my $n = 0;
+   if (open(IN, $filename)) {
+      while (<IN>) {
+	 s/^\xEF\xBB\xBF//;
+	 if (($name, $dec_unicode) = ($_ =~ /^<!ENTITY\s+([a-z]{2,6})\s+CDATA\s+"&#(\d{1,5});"/)) {
+	    $ht{HTML_ENTITY_NAME_TO_DECUNICODE}->{$name} = $dec_unicode;
+	    $ht{HTML_ENTITY_DECUNICODE_TO_NAME}->{$dec_unicode} = $name;
+	    $ht{HTML_ENTITY_NAME_TO_UTF8}->{$name} = $utf8->unicode2string($dec_unicode);
+	    $n++;
+	  # print STDERR "read_ISO_8859_named_entities $name $dec_unicode .\n" if $name =~ /dash/;
+	 }
+      }
+      close(IN);
+      print STDERR "Loaded $n entries from $filename\n" if $verbose;
+   } else {
+      print STDERR "Could not open $filename\n" if $verbose;
+   }
+}
+
+sub neg {
+   local($this, $x) = @_;
+
+   # robust
+   return (defined($x) && ($x =~ /^-?\d+(?:\.\d+)?$/)) ? (- $x) : $x;
+}
+
+sub read_ttable_gloss_data {
+   local($this, $filename, $lang_code, *ht, $direction) = @_;
+   # e.g. /nfs/isd/ulf/croom/oov-lanpairs/som-eng/som-eng-ttable-glosses.txt
+
+   $direction = "f to e" unless defined($direction);
+   if (open(IN, $filename)) {
+      while (<IN>) {
+	 if (($headword, $gloss) = ($_ =~ /^(.*?)\t(.*?)\s*$/)) {
+	    if ($direction eq "e to f") {
+               $ht{TTABLE_E_GLOSS}->{$lang_code}->{$headword} = $gloss;
+	    } else {
+               $ht{TTABLE_F_GLOSS}->{$lang_code}->{$headword} = $gloss;
+	    }
+	 }
+      }
+      close(IN);
+   }
+}
+
+sub format_gloss_for_tooltop {
+   local($this, $gloss) = @_;
+
+   $gloss =~ s/^\s*/\t/;
+   $gloss =~ s/\s*$//;
+   $gloss =~ s/ /  /g;
+   $gloss =~ s/\t/&#xA;  /g;
+   return $gloss;
+}
+
+sub obsolete_tooltip {
+   local($this, $s, $lang_code, *ht) = @_;
+
+   return $gloss if defined($gloss = $ht{TTABLE_F_GLOSS}->{$lang_code}->{$s});
+   @e_s = sort { $ht{T_TABLE_F_E_C}->{$lang_code}->{$s}->{$b}
+            <=>  $ht{T_TABLE_F_E_C}->{$lang_code}->{$s}->{$a} }
+               keys %{$ht{T_TABLE_F_E_C}->{$lang_code}->{$s}};
+   if (@e_s) {
+      $e = shift @e_s;
+      $count = $ht{T_TABLE_F_E_C}->{$lang_code}->{$s}->{$e};
+      $min_count = $this->max($count * 0.01, 1.0);
+      $count =~ s/(\.\d\d)\d*$/$1/;
+      $result = "$s:&#xA;  $e  ($count)";
+      $n = 1;
+      while (@e_s) {
+         $e = shift @e_s;
+         $count = $ht{T_TABLE_F_E_C}->{$lang_code}->{$s}->{$e};
+	 last if $count < $min_count;
+	 $count =~ s/(\.\d\d)\d*$/$1/;
+	 $result .= "&#xA;  $e  ($count)";
+	 $n++;
+         last if $n >= 10;
+      }
+      $ht{TTABLE_F_GLOSS}->{$lang_code}->{$s} = $result;
+      return $result;
+   } else {
+      return "";
+   }
+}
+
+sub markup_html_line_init {
+   local($this, $s, *ht, $id) = @_;
+
+   my @chars = $utf8->split_into_utf8_characters($s, "return only chars", *empty_ht);
+   $ht{S}->{$id} = $s;
+}
+
+sub markup_html_line_regex {
+   local($this, $id, *ht, $regex, $m_slot, $m_value, *LOG) = @_;
+
+   unless ($regex eq "") {
+      my $s = $ht{S}->{$id};
+      my $current_pos = 0;
+      while (($pre, $match_s, $post) = ($s =~ /^(.*?)($regex)(.*)$/)) {
+         $current_pos += $utf8->length_in_utf8_chars($pre);
+         my $match_len = $utf8->length_in_utf8_chars($match_s);
+         $ht{START}->{$id}->{$current_pos}->{$m_slot}->{$m_value} = 1;
+         $ht{STOP}->{$id}->{($current_pos+$match_len)}->{$m_slot}->{$m_value} = 1;
+         $current_pos += $match_len;
+         $s = $post;
+      }
+   }
+}
+
+sub html_markup_line {
+   local($this, $id, *ht, *LOG) = @_;
+
+   my @titles = ();
+   my @colors = ();
+   my @text_decorations = ();
+
+   my $s = $ht{S}->{$id};
+ # print LOG "html_markup_line $id: $s\n";
+   my @chars = $utf8->split_into_utf8_characters($s, "return only chars", *empty_ht);
+   my $markedup_s = "";
+ 
+   my $new_title = "";
+   my $new_color = "";
+   my $new_text_decoration = "";
+   my $n_spans = 0;
+   my $i;
+   foreach $i ((0 .. ($#chars+1))) {
+      my $stop_span_p = 0;
+      foreach $m_slot (keys %{$ht{STOP}->{$id}->{$i}}) {
+         foreach $m_value (keys %{$ht{STOP}->{$id}->{$i}->{$m_slot}}) {
+	    if ($m_slot eq "title") {
+	       my $last_positition = $this->last_position($m_value, @titles);
+	       splice(@titles, $last_positition, 1) if $last_positition >= 0;
+	       $stop_span_p = 1;
+	    } elsif ($m_slot eq "color") {
+	       my $last_positition = $this->last_position($m_value, @colors);
+	       splice(@colors, $last_positition, 1) if $last_positition >= 0;
+	       $stop_span_p = 1;
+	    } elsif ($m_slot eq "text-decoration") {
+	       my $last_positition = $this->last_position($m_value, @text_decorations);
+	       splice(@text_decorations, $last_positition, 1) if $last_positition >= 0;
+	       $stop_span_p = 1;
+	    }
+	 }
+      }
+      if ($stop_span_p) {
+	 $markedup_s .= "</span>";
+	 $n_spans--;
+      }
+      my $start_span_p = 0;
+      foreach $m_slot (keys %{$ht{START}->{$id}->{$i}}) {
+         foreach $m_value (keys %{$ht{START}->{$id}->{$i}->{$m_slot}}) {
+	    if ($m_slot eq "title") {
+	       push(@titles, $m_value);
+               $start_span_p = 1;
+	    } elsif ($m_slot eq "color") {
+	       push(@colors, $m_value);
+               $start_span_p = 1;
+	    } elsif ($m_slot eq "text-decoration") {
+	       push(@text_decorations, $m_value);
+               $start_span_p = 1;
+	    }
+         }
+      }
+      if ($stop_span_p || $start_span_p) {
+	 my $new_title = (@titles) ? $titles[$#titles] : "";
+	 my $new_color = (@colors) ? $colors[$#colors] : "";
+	 my $new_text_decoration = (@text_decorations) ? $text_decorations[$#text_decorations] : "";
+	 if ($new_title || $new_color || $new_text_decoration) {
+	    my $args = "";
+	    if ($new_title) {
+	       $g_title = $this->guard_html_quote($new_title);
+	       $args .= " title=\"$g_title\"";
+	    }
+	    if ($new_color || $new_text_decoration) {
+	       $g_color = $this->guard_html_quote($new_color);
+	       $g_text_decoration = $this->guard_html_quote($new_text_decoration);
+	       $color_clause = ($new_color) ? "color:$g_color;" : "";
+	       $text_decoration_clause = ($new_text_decoration) ? "text-decoration:$g_text_decoration;" : "";
+	       $text_decoration_clause =~ s/text-decoration:(border-bottom:)/$1/g;
+	       $args .= " style=\"$color_clause$text_decoration_clause\"";
+	    }
+	    if ($n_spans) {
+	       $markedup_s .= "</span>";
+	       $n_spans--;
+	    }
+	    $markedup_s .= "<span$args>";
+            $n_spans++;
+         }
+      }
+      $markedup_s .= $chars[$i] if $i <= $#chars;
+   }
+   print LOG "Error in html_markup_line $id final no. of open spans: $n_spans\n" if $n_spans && $tokenization_log_verbose;
+   return $markedup_s;
+}
+
+sub offset_adjustment {
+   local($this, $g, $s, $offset, $snt_id, *ht, *LOG, $control) = @_;
+   # s(tring)        e.g. "can't"
+   # g(old string)   e.g. "can not"
+   # Typically when s is a slight variation of g (e.g. with additional tokenization spaces in s)
+   # returns mapping 0->0, 1->1, 2->2, 3->3, 6->4, 7->5
+
+   $control = "" unless defined($control);
+   my $verbose = ($control =~ /\bverbose\b/);
+   my $s_offset = 0;
+   my $g_offset = 0;
+   my @s_chars = $utf8->split_into_utf8_characters($s, "return only chars", *ht);
+   my @g_chars = $utf8->split_into_utf8_characters($g, "return only chars", *ht);
+   my $s_len = $#s_chars + 1;
+   my $g_len = $#g_chars + 1;
+   $ht{OFFSET_MAP}->{$snt_id}->{$offset}->{$s_offset} = $g_offset;
+   $ht{OFFSET_MAP}->{$snt_id}->{$offset}->{($s_offset+$s_len)} = $g_offset+$g_len;
+
+   while (($s_offset < $s_len) && ($g_offset < $g_len)) {
+      if ($s_chars[$s_offset] eq $g_chars[$g_offset]) {
+	 $s_offset++;
+	 $g_offset++;
+	 $ht{OFFSET_MAP}->{$snt_id}->{$offset}->{$s_offset} = $g_offset;
+      } else {
+         my $best_gm = 0;
+         my $best_sm = 0;
+         my $best_match_len = 0;
+         foreach $max_m ((1 .. 4)) {
+            foreach $sm ((0 .. $max_m)) {
+	       $max_match_len = 0;
+	       while ((($s_index = $s_offset+$sm+$max_match_len) < $s_len)
+	           && (($g_index = $g_offset+$max_m+$max_match_len) < $g_len)) {
+	          if ($s_chars[$s_index] eq $g_chars[$g_index]) {
+	             $max_match_len++;
+	          } else {
+	             last;
+	          }
+	       }
+	       if ($max_match_len > $best_match_len) {
+	          $best_match_len = $max_match_len;
+	          $best_sm = $sm;
+	          $best_gm = $max_m;
+               }
+	    }
+            foreach $gm ((0 .. $max_m)) {
+	       $max_match_len = 0;
+	       while ((($s_index = $s_offset+$max_m+$max_match_len) < $s_len)
+	           && (($g_index = $g_offset+$gm+$max_match_len) < $g_len)) {
+	          if ($s_chars[$s_index] eq $g_chars[$g_index]) {
+	             $max_match_len++;
+	          } else {
+	             last;
+	          }
+	       }
+	       if ($max_match_len > $best_match_len) {
+	          $best_match_len = $max_match_len;
+	          $best_sm = $max_m;
+	          $best_gm = $gm;
+	       }
+	    }
+         }
+	 if ($best_match_len) {
+	    $s_offset += $best_sm;
+	    $g_offset += $best_gm;
+	    $ht{OFFSET_MAP}->{$snt_id}->{$offset}->{$s_offset} = $g_offset;
+	 } else {
+	    last;
+	 }
+      }
+   }
+   if ($verbose) {
+      foreach $s_offset (sort { $a <=> $b }
+			      keys %{$ht{OFFSET_MAP}->{$snt_id}->{$offset}}) {
+         my $g_offset = $ht{OFFSET_MAP}->{$snt_id}->{$offset}->{$s_offset};
+         print LOG "   OFFSET_MAP $snt_id.$offset $s/$g $s_offset -> $g_offset\n" if $tokenization_log_verbose;
+      }
+   }
+}
+
+sub length_in_utf8_chars {
+   local($this, $s) = @_;
+
+   $s =~ s/[\x80-\xBF]//g;
+   $s =~ s/[\x00-\x7F\xC0-\xFF]/c/g;
+   return length($s);
+}
+
+sub split_into_utf8_characters {
+   local($this, $text) = @_;
+   # "return only chars; return trailing whitespaces"
+
+   @characters = ();
+   while (($char, $rest) = ($text =~ /^(.[\x80-\xBF]*)(.*)$/)) {
+      push(@characters, $char);
+      $text = $rest;
+   }
+   return @characters;
+}
+
+sub first_char_of_string {
+   local($this, $s) = @_;
+
+   $s =~ s/^(.[\x80-\xBF]*).*$/$1/;
+   return $s;
+}
+
+sub last_char_of_string {
+   local($this, $s) = @_;
+
+   $s =~ s/^.*([^\x80-\xBF][\x80-\xBF]*)$/$1/;
+   return $s;
+}
+
+sub first_n_chars_of_string {
+   local($this, $s, $n) = @_;
+
+   $s =~ s/^((?:.[\x80-\xBF]*){$n,$n}).*$/$1/;
+   return $s;
+}
+
+sub last_n_chars_of_string {
+   local($this, $s, $n) = @_;
+
+   $s =~ s/^.*((?:[^\x80-\xBF][\x80-\xBF]*){$n,$n})$/$1/;
+   return $s;
+}
+
 
 1;

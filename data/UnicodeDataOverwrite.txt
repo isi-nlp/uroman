@@ -2,6 +2,7 @@
 ::u 00A0 ::r " "  ::comment no-break space
 ::u 01BF ::r w  ::comment ƿ Latin Character Wynn (Old English)
 ::u 0294 ::r ' ::comment gottal stop
+::u 0295 ::r ' ::comment ʕ voiced pharyngeal fricative
 ::u 0305 ::r ""  ::comment ̅ Combining overline
 ::u 0306 ::r ""  ::comment ̆ Combining breve
 ::u 0307 ::r ""  ::comment ̇ Combining dot above
@@ -58,7 +59,6 @@
 ::u 0C83 ::r +h  ::comment Kannada sign visarga
 ::u 0D02 ::r +m  ::comment Malayalam sign anusvara
 ::u 0D03 ::r +h  ::comment Malayalam sign visarga
-
 ::u 0D82 ::r +n  ::comment Sinhala sign anusvaraya
 ::u 0DA4 ::r ny ::comment Sinhala ඤ
 ::u 0DA5 ::r gn ::comment Sinhala ඥ
@@ -235,6 +235,66 @@
 ::u 2009 ::r " "  ::comment thin space
 ::u 200A ::r " "  ::comment hair space
 ::u 202F ::r " "  ::comment narrow no-break space
+
+::u 2D30 ::r a ::comment TIFINAGH LETTER YA ⴰ
+::u 2D31 ::r b ::comment TIFINAGH LETTER YAB ⴱ
+::u 2D32 ::r bh ::comment TIFINAGH LETTER YABH ⴲ
+::u 2D33 ::r g ::comment TIFINAGH LETTER YAG ⴳ
+::u 2D34 ::r ghh ::comment TIFINAGH LETTER YAGHH ⴴ
+::u 2D35 ::r j ::comment TIFINAGH LETTER BERBER ACADEMY YAJ ⴵ
+::u 2D36 ::r j ::comment TIFINAGH LETTER YAJ ⴶ
+::u 2D37 ::r d ::comment TIFINAGH LETTER YAD ⴷ
+::u 2D38 ::r dh ::comment TIFINAGH LETTER YADH ⴸ
+::u 2D39 ::r dd ::comment TIFINAGH LETTER YADD ⴹ
+::u 2D3A ::r ddh ::comment TIFINAGH LETTER YADDH ⴺ
+::u 2D3B ::r e ::comment TIFINAGH LETTER YEY ⴻ
+::u 2D3C ::r f ::comment TIFINAGH LETTER YAF ⴼ
+::u 2D3D ::r k ::comment TIFINAGH LETTER YAK ⴽ
+::u 2D3E ::r k ::comment TIFINAGH LETTER TUAREG YAK ⴾ
+::u 2D3F ::r khh ::comment TIFINAGH LETTER YAKHH ⴿ
+::u 2D40 ::r h ::comment TIFINAGH LETTER YAH ⵀ
+::u 2D41 ::r h ::comment TIFINAGH LETTER BERBER ACADEMY YAH ⵁ
+::u 2D42 ::r h ::comment TIFINAGH LETTER TUAREG YAH ⵂ
+::u 2D43 ::r hh ::comment TIFINAGH LETTER YAHH ⵃ
+::u 2D44 ::r ' ::comment TIFINAGH LETTER YAA ⵄ
+::u 2D45 ::r kh ::comment TIFINAGH LETTER YAKH ⵅ
+::u 2D46 ::r kh ::comment TIFINAGH LETTER TUAREG YAKH ⵆ
+::u 2D47 ::r q ::comment TIFINAGH LETTER YAQ ⵇ
+::u 2D48 ::r q ::comment TIFINAGH LETTER TUAREG YAQ ⵈ
+::u 2D49 ::r i ::comment TIFINAGH LETTER YI ⵉ
+::u 2D4A ::r zh ::comment TIFINAGH LETTER YAZH ⵊ
+::u 2D4B ::r zh ::comment TIFINAGH LETTER AHAGGAR YAZH ⵋ
+::u 2D4C ::r zh ::comment TIFINAGH LETTER TUAREG YAZH ⵌ
+::u 2D4D ::r l ::comment TIFINAGH LETTER YAL ⵍ
+::u 2D4E ::r m ::comment TIFINAGH LETTER YAM ⵎ
+::u 2D4F ::r n ::comment TIFINAGH LETTER YAN ⵏ
+::u 2D50 ::r gn ::comment TIFINAGH LETTER TUAREG YAGN ⵐ
+::u 2D51 ::r ng ::comment TIFINAGH LETTER TUAREG YANG ⵑ
+::u 2D52 ::r p ::comment TIFINAGH LETTER YAP ⵒ
+::u 2D53 ::r u ::comment TIFINAGH LETTER YU ⵓ
+::u 2D54 ::r r ::comment TIFINAGH LETTER YAR ⵔ
+::u 2D55 ::r rr ::comment TIFINAGH LETTER YARR ⵕ
+::u 2D56 ::r gh ::comment TIFINAGH LETTER YAGH ⵖ
+::u 2D57 ::r gh ::comment TIFINAGH LETTER TUAREG YAGH ⵗ
+::u 2D58 ::r gh ::comment TIFINAGH LETTER AYER YAGH ⵘ
+::u 2D59 ::r s ::comment TIFINAGH LETTER YAS ⵙ
+::u 2D5A ::r ss ::comment TIFINAGH LETTER YASS ⵚ
+::u 2D5B ::r sh ::comment TIFINAGH LETTER YASH ⵛ
+::u 2D5C ::r t ::comment TIFINAGH LETTER YAT ⵜ
+::u 2D5D ::r th ::comment TIFINAGH LETTER YATH ⵝ
+::u 2D5E ::r ch ::comment TIFINAGH LETTER YACH ⵞ
+::u 2D5F ::r tt ::comment TIFINAGH LETTER YATT ⵟ
+::u 2D60 ::r v ::comment TIFINAGH LETTER YAV ⵠ
+::u 2D61 ::r w ::comment TIFINAGH LETTER YAW ⵡ
+::u 2D62 ::r y ::comment TIFINAGH LETTER YAY ⵢ
+::u 2D63 ::r z ::comment TIFINAGH LETTER YAZ ⵣ
+::u 2D64 ::r z ::comment TIFINAGH LETTER TAWELLEMET YAZ ⵤ
+::u 2D65 ::r zz ::comment TIFINAGH LETTER YAZZ ⵥ
+::u 2D66 ::r ye ::comment TIFINAGH LETTER YE ⵦ
+::u 2D67 ::r yo ::comment TIFINAGH LETTER YO ⵧ
+::u 2D6F ::r "" ::comment TIFINAGH MODIFIER LETTER LABIALIZATION MARK ⵯ
+::u 2D70 ::r "" ::comment TIFINAGH SEPARATOR MARK ⵰
+::u 2D7F ::r "" ::comment TIFINAGH CONSONANT JOINER ⵿
 
 ::u 3063 ::r tsu ::comment Hiragana letter small tsu
 ::u 30C3 ::r tsu ::comment Katakana letter small tsu

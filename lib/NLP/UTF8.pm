@@ -6,6 +6,11 @@
 
 package NLP::UTF8;
 
+use NLP::utilities;
+$util = NLP::utilities;
+
+%empty_ht = ();
+
 sub new {
    local($caller) = @_;
 
@@ -27,7 +32,7 @@ sub unicode_string2string {
    my $r2; 
    my $r3;
 
-   ($pre,$unicode,$post) = ($s =~ /^(.*)U\+([0-9A-F][0-9A-F][0-9A-F][0-9A-F])(.*)$/);
+   ($pre,$unicode,$post) = ($s =~ /^(.*)(?:U\+|\\u)([0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])(.*)$/);
    return $s unless defined($post);
    $r1 = $caller->unicode_string2string($pre);
    $r2 = $caller->unicode_hex_string2string($unicode);
@@ -177,7 +182,7 @@ sub enforcer {
 sub split_into_utf8_characters {
 # input: utf8 string
 # output: list of sub-strings, each representing a utf8 character
-   local($caller,$string,$group_control) = @_;
+   local($caller,$string,$group_control, *ht) = @_;
 
    @characters = ();
    $end_of_token_p_string = "";
@@ -187,6 +192,8 @@ sub split_into_utf8_characters {
    $group_ascii_spaces = ($group_control =~ /ASCII spaces/);
    $group_ascii_punct = ($group_control =~ /ASCII punct/);
    $group_ascii_chars = ($group_control =~ /ASCII chars/);
+   $group_xml_chars = ($group_control =~ /XML chars/);
+   $group_xml_tags = ($group_control =~ /XML tags/);
    $return_only_chars = ($group_control =~ /return only chars/);
    $return_trailing_whitespaces = ($group_control =~ /return trailing whitespaces/);
    if ($group_control =~ /ASCII all/) {
@@ -195,11 +202,37 @@ sub split_into_utf8_characters {
       $group_ascii_chars = 1;
       $group_ascii_punct = 1;
    }
+   if ($group_control =~ /(XML chars and tags|XML tags and chars)/) {
+      $group_xml_chars = 1;
+      $group_xml_tags = 1;
+   }
+   $orig_string = $string;
    $string .= " ";
    while ($string =~ /\S/) {
       # one-character UTF-8 = ASCII
       if ($string =~ /^[\x00-\x7F]/) {
-	 if ($group_ascii_numbers && ($string =~ /^[12]\d\d\d\.[01]?\d.[0-3]?\d([^0-9].*)?$/)) {
+	 if ($group_xml_chars
+	  && (($dec_unicode, $rest) = ($string =~ /^&#(\d+);(.*)$/s))
+	  && ($utf8_char = $caller->unicode2string($dec_unicode))) {
+	    push(@characters, $utf8_char);
+	    $string = $rest;
+	 } elsif ($group_xml_chars
+	  && (($hex_unicode, $rest) = ($string =~ /^&#x([0-9a-f]{1,6});(.*)$/is))
+	  && ($utf8_char = $caller->unicode_hex_string2string($hex_unicode))) {
+	    push(@characters, $utf8_char);
+	    $string = $rest;
+	 } elsif ($group_xml_chars
+	  && (($html_entity_name, $rest) = ($string =~ /^&([a-z]{1,6});(.*)$/is))
+	  && ($dec_unicode = $ht{HTML_ENTITY_NAME_TO_DECUNICODE}->{$html_entity_name})
+	  && ($utf8_char = $caller->unicode2string($dec_unicode))
+	  ) {
+	    push(@characters, $utf8_char);
+	    $string = $rest;
+	 } elsif ($group_xml_tags
+	       && (($tag, $rest) = ($string =~ /^(<\/?[a-zA-Z][-_:a-zA-Z0-9]*(\s+[a-zA-Z][-_:a-zA-Z0-9]*=\"[^"]*\")*\s*\/?>)(.*)$/s))) {
+            push(@characters, $tag);
+	    $string = $rest;
+	 } elsif ($group_ascii_numbers && ($string =~ /^[12]\d\d\d\.[01]?\d.[0-3]?\d([^0-9].*)?$/)) {
 	    ($date) = ($string =~ /^(\d\d\d\d\.\d?\d.\d?\d)([^0-9].*)?$/);
 	    push(@characters,$date);
 	    $string = substr($string, length($date));
@@ -285,6 +318,7 @@ sub split_into_utf8_characters {
          push(@characters,substr($string, 0, 1));
          $string = substr($string, 1);
       }
+      push(@characters, "\n") if $orig_string =~ /\n$/;
    }
    return ($return_only_chars) ? @characters : ($skipped_bytes, $end_of_token_p_string, @characters);
 }
@@ -292,8 +326,8 @@ sub split_into_utf8_characters {
 sub max_substring_info {
    local($caller,$s1,$s2,$info_type) = @_;
 
-   ($skipped_bytes1, $end_of_token_p_string1, @char_list1) = $caller->split_into_utf8_characters($s1);
-   ($skipped_bytes2, $end_of_token_p_string2, @char_list2) = $caller->split_into_utf8_characters($s2);
+   ($skipped_bytes1, $end_of_token_p_string1, @char_list1) = $caller->split_into_utf8_characters($s1, "", *empty_ht);
+   ($skipped_bytes2, $end_of_token_p_string2, @char_list2) = $caller->split_into_utf8_characters($s2, "", *empty_ht);
    return 0 if $skipped_bytes1 || $skipped_bytes2;
 
    $best_substring_start1 = 0;
@@ -336,6 +370,24 @@ sub max_substring_info {
       $info .= ";length2=$length2";
       return $info;
    }
+}
+
+sub n_shared_chars_at_start {
+   local($caller,$s1,$s2) = @_;
+
+   my $n = 0;
+   while (($s1 ne "") && ($s2 ne "")) {
+      ($c1, $rest1) = ($s1 =~ /^(.[\x80-\xBF]*)(.*)$/);
+      ($c2, $rest2) = ($s2 =~ /^(.[\x80-\xBF]*)(.*)$/);
+      if ($c1 eq $c2) {
+	 $n++;
+	 $s1 = $rest1;
+	 $s2 = $rest2;
+      } else {
+	 last;
+      }
+   }
+   return $n;
 }
 
 sub char_length {
@@ -406,6 +458,12 @@ sub valid_utf8_string_p {
    return $string =~ /^(?:[\x09\x0A\x20-\x7E]|[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF][\x80-\xBF]|[\xF0-\xF7][\x80-\xBF][\x80-\xBF][\x80-\xBF])*$/;
 }
 
+sub valid_utf8_string_incl_ascii_control_p {
+   local($caller,$string) = @_;
+
+   return $string =~ /^(?:[\x00-\x7F]|[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF][\x80-\xBF]|[\xF0-\xF7][\x80-\xBF][\x80-\xBF][\x80-\xBF])*$/;
+}
+
 sub utf8_to_hex {
    local($caller,$s) = @_;
 
@@ -414,6 +472,18 @@ sub utf8_to_hex {
       $hex .= uc sprintf("%2.2x",ord(substr($s, $i, 1)));
    }
    return $hex;
+}
+
+sub hex_to_utf8 {
+   local($caller,$s) = @_;
+   # surface string \xE2\x80\xBA to UTF8
+
+   my $utf8 = "";
+   while (($hex, $rest) = ($s =~ /^(?:\\x)?([0-9A-Fa-f]{2,2})(.*)$/)) {
+      $utf8 .= sprintf("%c", hex($hex));
+      $s = $rest;
+   }
+   return $utf8;
 }
 
 sub utf8_to_4hex_unicode {
@@ -464,27 +534,28 @@ sub charhex {
 }
 
 sub windows1252_to_utf8 {
-   local($caller,$s, $norm_to_ascii_p) = @_;
+   local($caller,$s, $norm_to_ascii_p, $preserve_potential_utf8s_p) = @_;
 
    return $s if $s =~ /^[\x00-\x7F]*$/; # all ASCII
 
    $norm_to_ascii_p = 1 unless defined($norm_to_ascii_p);
+   $preserve_potential_utf8s_p = 1 unless defined($preserve_potential_utf8s_p);
    my $result = "";
    my $c = "";
    while ($s ne "") {
       $n_bytes = 1;
       if ($s =~ /^[\x00-\x7F]/) {
 	 $result .= substr($s, 0, 1);  # ASCII
-      } elsif ($s =~ /^[\xC0-\xDF][\x80-\xBF]/) {
+      } elsif ($preserve_potential_utf8s_p && ($s =~ /^[\xC0-\xDF][\x80-\xBF]/)) {
 	 $result .= substr($s, 0, 2);  # valid 2-byte UTF8
          $n_bytes = 2;
-      } elsif ($s =~ /^[\xE0-\xEF][\x80-\xBF][\x80-\xBF]/) {
+      } elsif ($preserve_potential_utf8s_p && ($s =~ /^[\xE0-\xEF][\x80-\xBF][\x80-\xBF]/)) {
 	 $result .= substr($s, 0, 3);  # valid 3-byte UTF8
          $n_bytes = 3;
-      } elsif ($s =~ /^[\xF0-\xF7][\x80-\xBF][\x80-\xBF][\x80-\xBF]/) {
+      } elsif ($preserve_potential_utf8s_p && ($s =~ /^[\xF0-\xF7][\x80-\xBF][\x80-\xBF][\x80-\xBF]/)) {
 	 $result .= substr($s, 0, 4);  # valid 4-byte UTF8
          $n_bytes = 4;
-      } elsif ($s =~ /^[\xF8-\xFB][\x80-\xBF][\x80-\xBF][\x80-\xBF][\x80-\xBF]/) {
+      } elsif ($preserve_potential_utf8s_p && ($s =~ /^[\xF8-\xFB][\x80-\xBF][\x80-\xBF][\x80-\xBF][\x80-\xBF]/)) {
 	 $result .= substr($s, 0, 5);  # valid 5-byte UTF8
          $n_bytes = 5;
       } elsif ($s =~ /^[\xA0-\xBF]/) {
@@ -554,6 +625,15 @@ sub windows1252_to_utf8 {
       $s = substr($s, $n_bytes);
    }
    return $result;
+}
+
+sub delete_weird_stuff {
+   local($caller, $s) = @_;
+
+   # delete control chacters (except tab and linefeed), zero-width characters, byte order mark,
+   # directional marks, join marks, variation selectors, Arabic tatweel
+   $s =~ s/([\x00-\x08\x0B-\x1F\x7F]|\xC2[\x80-\x9F]|\xD9\x80|\xE2\x80[\x8B-\x8F]|\xEF\xB8[\x80-\x8F]|\xEF\xBB\xBF|\xF3\xA0[\x84-\x87][\x80-\xBF])//g;
+   return $s;
 }
 
 sub number_of_utf8_character {
@@ -894,7 +974,8 @@ sub extended_first_upper_case {
 sub repair_doubly_converted_utf8_strings {
    local($caller, $s) = @_;
 
-   if ($s =~ /\xC3[\x83-\x85]\xC2[\x80-\xBF]/) {
+   if ($s =~ /\xC3[\x82-\x85]\xC2[\x80-\xBF]/) {
+      $s =~ s/\xC3\x82\xC2([\x80-\xBF])/\xC2$1/g;
       $s =~ s/\xC3\x83\xC2([\x80-\xBF])/\xC3$1/g;
       $s =~ s/\xC3\x84\xC2([\x80-\xBF])/\xC4$1/g;
       $s =~ s/\xC3\x85\xC2([\x80-\xBF])/\xC5$1/g;
@@ -920,12 +1001,48 @@ sub repair_misconverted_windows_to_utf8_strings {
       my $result = "";
       while (($pre,$c_windows,$post) = ($s =~ /^(.*?)\xC2([\x80-\x9F])(.*)$/s)) {
 	 $c_utf8 = $caller->windows1252_to_utf8($c_windows, 0);
-         $result .= ($c_utf8 eq "?") ? "$pre$c_windows" : "$pre$c_utf8";
+         $result .= ($c_utf8 eq "?") ? ($pre . "\xC2" . $c_windows) : "$pre$c_utf8";
          $s = $post;
       }
       $result .= $s;
       $s = $result;
    }
+   if ($s =~ /\xC3/) {
+      $s =~ s/\xC3\xA2\xE2\x80\x9A\xC2\xAC/\xE2\x82\xAC/g;     # x80 -> Euro sign
+                                                               # x81 codepoint undefined in Windows 1252
+      $s =~ s/\xC3\xA2\xE2\x82\xAC\xC5\xA1/\xE2\x80\x9A/g;     # x82 -> single low-9 quotation mark
+      $s =~ s/\xC3\x86\xE2\x80\x99/\xC6\x92/g;                 # x83 -> Latin small letter f with hook
+      $s =~ s/\xC3\xA2\xE2\x82\xAC\xC5\xBE/\xE2\x80\x9E/g;     # x84 -> double low-9 quotation mark
+      $s =~ s/\xC3\xA2\xE2\x82\xAC\xC2\xA6/\xE2\x80\xA6/g;     # x85 -> horizontal ellipsis
+      $s =~ s/\xC3\xA2\xE2\x82\xAC\xC2\xA0/\xE2\x80\xA0/g;     # x86 -> dagger
+      $s =~ s/\xC3\xA2\xE2\x82\xAC\xC2\xA1/\xE2\x80\xA1/g;     # x87 -> double dagger
+      $s =~ s/\xC3\x8B\xE2\x80\xA0/\xCB\x86/g;                 # x88 -> modifier letter circumflex accent
+      $s =~ s/\xC3\xA2\xE2\x82\xAC\xC2\xB0/\xE2\x80\xB0/g;     # x89 -> per mille sign
+      $s =~ s/\xC3\x85\xC2\xA0/\xC5\xA0/g;                     # x8A -> Latin capital letter S with caron
+      $s =~ s/\xC3\xA2\xE2\x82\xAC\xC2\xB9/\xE2\x80\xB9/g;     # x8B -> single left-pointing angle quotation mark
+      $s =~ s/\xC3\x85\xE2\x80\x99/\xC5\x92/g;                 # x8C -> Latin capital ligature OE
+                                                               # x8D codepoint undefined in Windows 1252
+      $s =~ s/\xC3\x85\xC2\xBD/\xC5\xBD/g;                     # x8E -> Latin capital letter Z with caron
+                                                               # x8F codepoint undefined in Windows 1252
+                                                               # x90 codepoint undefined in Windows 1252
+      $s =~ s/\xC3\xA2\xE2\x82\xAC\xCB\x9C/\xE2\x80\x98/g;     # x91 a-circumflex+euro+small tilde -> left single quotation mark
+      $s =~ s/\xC3\xA2\xE2\x82\xAC\xE2\x84\xA2/\xE2\x80\x99/g; # x92 a-circumflex+euro+trademark -> right single quotation mark
+      $s =~ s/\xC3\xA2\xE2\x82\xAC\xC5\x93/\xE2\x80\x9C/g;     # x93 a-circumflex+euro+Latin small ligature oe -> left double quotation mark
+							       # x94 maps through undefined intermediate code point
+      $s =~ s/\xC3\xA2\xE2\x82\xAC\xC2\xA2/\xE2\x80\xA2/g;     # x95 a-circumflex+euro+cent sign -> bullet
+      $s =~ s/\xC3\xA2\xE2\x82\xAC\xE2\x80\x9C/\xE2\x80\x93/g; # x96 a-circumflex+euro+left double quotation mark -> en dash
+      $s =~ s/\xC3\xA2\xE2\x82\xAC\xE2\x80\x9D/\xE2\x80\x94/g; # x97 a-circumflex+euro+right double quotation mark -> em dash
+      $s =~ s/\xC3\x8B\xC5\x93/\xCB\x9C/g;                     # x98 Latin capital e diaeresis+Latin small ligature oe -> small tilde
+      $s =~ s/\xC3\xA2\xE2\x80\x9E\xC2\xA2/\xE2\x84\xA2/g;     # x99 -> trade mark sign
+      $s =~ s/\xC3\x85\xC2\xA1/\xC5\xA1/g;                     # x9A -> Latin small letter s with caron
+      $s =~ s/\xC3\xA2\xE2\x82\xAC\xC2\xBA/\xE2\x80\xBA/g;     # x9B -> single right-pointing angle quotation mark
+      $s =~ s/\xC3\x85\xE2\x80\x9C/\xC5\x93/g;                 # x9C -> Latin small ligature oe
+							       # x9D codepoint undefined in Windows 1252
+      $s =~ s/\xC3\x85\xC2\xBE/\xC5\xBE/g;                     # x9E -> Latin small letter z with caron
+      $s =~ s/\xC3\x85\xC2\xB8/\xC5\xB8/g;                     # x9F -> Latin capital letter Y with diaeresis 
+      $s =~ s/\xC3\xAF\xC2\xBF\xC2\xBD/\xEF\xBF\xBD/g;         # replacement character
+   }
+
    return $s;
 }
 
@@ -945,6 +1062,341 @@ sub latin1_to_utf {
    }
    $result .= $s;
    return $result;
+}
+
+sub character_type_is_letter_type {
+   local($caller, $char_type) = @_;
+
+   return ($char_type =~ /\b((CJK|hiragana|kana|katakana)\s+character|diacritic|letter|syllable)\b/);
+}
+
+sub character_type {
+   local($caller, $c) = @_;
+
+   if ($c =~ /^[\x00-\x7F]/) {
+      return "XML tag" if $c =~ /^<.*>$/;
+      return "ASCII Latin letter" if $c =~ /^[a-z]$/i;
+      return "ASCII digit" if $c =~ /^[0-9]$/i;
+      return "ASCII whitespace" if $c =~ /^[\x09-\x0D\x20]$/;
+      return "ASCII control-character" if $c =~ /^[\x00-\x1F\x7F]$/;
+      return "ASCII currency" if $c eq "\$";
+      return "ASCII punctuation";
+   } elsif ($c =~ /^[\xC0-\xDF]/) {
+      return "non-UTF8 (invalid)" unless $c =~ /^[\xC0-\xDF][\x80-\xBF]$/;
+      return "non-shortest-UTF8 (invalid)" if $c =~ /[\xC0-\xC1]/;
+      return "non-ASCII control-character" if $c =~ /\xC2[\x80-\x9F]/;
+      return "non-ASCII whitespace" if $c =~ /\xC2\xA0/;
+      return "non-ASCII currency" if $c =~ /\xC2[\xA2-\xA5]/;
+      return "fraction" if $c =~ /\xC2[\xBC-\xBE]/; # NEW
+      return "superscript digit"  if $c =~ /\xC2[\xB2\xB3\xB9]/;
+      return "non-ASCII Latin letter" if $c =~ /\xC2\xB5/; # micro sign
+      return "non-ASCII punctuation" if $c =~ /\xC2[\xA0-\xBF]/;
+      return "non-ASCII punctuation" if $c =~ /\xC3[\x97\xB7]/;
+      return "non-ASCII Latin letter" if $c =~ /\xC3[\x80-\xBF]/;
+      return "Latin ligature letter" if $c =~ /\xC4[\xB2\xB3]/;
+      return "Latin ligature letter" if $c =~ /\xC5[\x92\x93]/;
+      return "non-ASCII Latin letter" if $c =~ /[\xC4-\xC8]/;
+      return "non-ASCII Latin letter" if $c =~ /\xC9[\x80-\x8F]/;
+      return "IPA" if $c =~ /\xC9[\x90-\xBF]/;
+      return "IPA" if $c =~ /\xCA[\x80-\xBF]/;
+      return "IPA" if $c =~ /\xCB[\x80-\xBF]/;
+      return "combining-diacritic" if $c =~ /\xCC[\x80-\xBF]/;
+      return "combining-diacritic" if $c =~ /\xCD[\x80-\xAF]/;
+      return "Greek punctuation" if $c =~ /\xCD[\xBE]/; # Greek question mark
+      return "Greek punctuation" if $c =~ /\xCE[\x87]/; # Greek semicolon
+      return "Greek letter" if $c =~ /\xCD[\xB0-\xBF]/;
+      return "Greek letter" if $c =~ /\xCE/;
+      return "Greek letter" if $c =~ /\xCF[\x80-\xA1\xB3\xB7\xB8\xBA\xBB]/;
+      return "Coptic letter" if $c =~ /\xCF[\xA2-\xAF]/;
+      return "Cyrillic letter" if $c =~ /[\xD0-\xD3]/;
+      return "Cyrillic letter" if $c =~ /\xD4[\x80-\xAF]/;
+      return "Armenian punctuation" if $c =~ /\xD5[\x9A-\x9F]/;
+      return "Armenian punctuation" if $c =~ /\xD6[\x89-\x8F]/;
+      return "Armenian letter" if $c =~ /\xD4[\xB0-\xBF]/;
+      return "Armenian letter" if $c =~ /\xD5/;
+      return "Armenian letter" if $c =~ /\xD6[\x80-\x8F]/;
+      return "Hebrew accent" if $c =~ /\xD6[\x91-\xAE]/;
+      return "Hebrew punctuation" if $c =~ /\xD6\xBE/;
+      return "Hebrew punctuation" if $c =~ /\xD7[\x80\x83\x86\xB3\xB4]/;
+      return "Hebrew point" if $c =~ /\xD6[\xB0-\xBF]/;
+      return "Hebrew point" if $c =~ /\xD7[\x81\x82\x87]/;
+      return "Hebrew letter" if $c =~ /\xD7[\x90-\xB2]/;
+      return "other Hebrew" if $c =~ /\xD6[\x90-\xBF]/;
+      return "other Hebrew" if $c =~ /\xD7/;
+      return "Arabic currency" if $c =~ /\xD8\x8B/; # Afghani sign
+      return "Arabic punctuation" if $c =~ /\xD8[\x89-\x8D\x9B\x9E\x9F]/;
+      return "Arabic punctuation" if $c =~ /\xD9[\xAA-\xAD]/;
+      return "Arabic punctuation" if $c =~ /\xDB[\x94]/;
+      return "Arabic tatweel" if $c =~ /\xD9\x80/;
+      return "Arabic letter"  if $c =~ /\xD8[\xA0-\xBF]/;
+      return "Arabic letter"  if $c =~ /\xD9[\x81-\x9F]/;
+      return "Arabic letter"  if $c =~ /\xD9[\xAE-\xBF]/;
+      return "Arabic letter"  if $c =~ /\xDA[\x80-\xBF]/;
+      return "Arabic letter"  if $c =~ /\xDB[\x80-\x95]/;
+      return "Arabic Indic digit" if $c =~ /\xD9[\xA0-\xA9]/;
+      return "Arabic Indic digit" if $c =~ /\xDB[\xB0-\xB9]/;
+      return "other Arabic" if $c =~ /[\xD8-\xDB]/;
+      return "Syriac punctuation" if $c =~ /\xDC[\x80-\x8F]/;
+      return "Syriac letter" if $c =~ /\xDC[\x90-\xAF]/;
+      return "Syriac diacritic" if $c =~ /\xDC[\xB0-\xBF]/;
+      return "Syriac diacritic" if $c =~ /\xDD[\x80-\x8A]/;
+      return "Thaana letter" if $c =~ /\xDE/;
+   } elsif ($c =~ /^[\xE0-\xEF]/) {
+      return "non-UTF8 (invalid)" unless $c =~ /^[\xE0-\xEF][\x80-\xBF]{2,2}$/;
+      return "non-shortest-UTF8 (invalid)" if $c =~ /\xE0[\x80-\x9F]/;
+      return "Arabic letter"     if $c =~ /\xE0\xA2[\xA0-\xBF]/; # extended letters
+      return "other Arabic"      if $c =~ /\xE0\xA3/; # extended characters
+      return "Devanagari punctuation" if $c =~ /\xE0\xA5[\xA4\xA5]/; # danda, double danda
+      return "Devanagari digit" if $c =~ /\xE0\xA5[\xA6-\xAF]/;
+      return "Devanagari letter" if $c =~ /\xE0[\xA4-\xA5]/;
+      return "Bengali digit" if $c =~ /\xE0\xA7[\xA6-\xAF]/;
+      return "Bengali currency" if $c =~ /\xE0\xA7[\xB2-\xB9]/;
+      return "Bengali letter" if $c =~ /\xE0[\xA6-\xA7]/;
+      return "Gurmukhi digit" if $c =~ /\xE0\xA9[\xA6-\xAF]/;
+      return "Gurmukhi letter" if $c =~ /\xE0[\xA8-\xA9]/;
+      return "Gujarati digit" if $c =~ /\xE0\xAB[\xA6-\xAF]/;
+      return "Gujarati letter" if $c =~ /\xE0[\xAA-\xAB]/;
+      return "Oriya digit" if $c =~ /\xE0\xAD[\xA6-\xAF]/;
+      return "Oriya fraction" if $c =~ /\xE0\xAD[\xB2-\xB7]/;
+      return "Oriya letter" if $c =~ /\xE0[\xAC-\xAD]/;
+      return "Tamil digit" if $c =~ /\xE0\xAF[\xA6-\xAF]/;
+      return "Tamil number" if $c =~ /\xE0\xAF[\xB0-\xB2]/; # number (10, 100, 1000)
+      return "Tamil letter" if $c =~ /\xE0[\xAE-\xAF]/;
+      return "Telegu digit" if $c =~ /\xE0\xB1[\xA6-\xAF]/;
+      return "Telegu fraction" if $c =~ /\xE0\xB1[\xB8-\xBE]/;
+      return "Telegu letter" if $c =~ /\xE0[\xB0-\xB1]/;
+      return "Kannada digit" if $c =~ /\xE0\xB3[\xA6-\xAF]/;
+      return "Kannada letter" if $c =~ /\xE0[\xB2-\xB3]/;
+      return "Malayalam digit" if $c =~ /\xE0\xB5[\x98-\x9E\xA6-\xB8]/;
+      return "Malayalam punctuation" if $c =~ /\xE0\xB5\xB9/; # date mark
+      return "Malayalam letter" if $c =~ /\xE0[\xB4-\xB5]/;
+      return "Sinhala digit" if $c =~ /\xE0\xB7[\xA6-\xAF]/;
+      return "Sinhala punctuation" if $c =~ /\xE0\xB7\xB4/;
+      return "Sinhala letter" if $c =~ /\xE0[\xB6-\xB7]/;
+      return "Thai currency" if $c =~ /\xE0\xB8\xBF/;
+      return "Thai digit" if $c =~ /\xE0\xB9[\x90-\x99]/;
+      return "Thai character" if $c =~ /\xE0[\xB8-\xB9]/;
+      return "Lao punctuation" if $c =~ /\xE0\xBA\xAF/; # Lao ellipsis
+      return "Lao digit" if $c =~ /\xE0\xBB[\x90-\x99]/;
+      return "Lao character" if $c =~ /\xE0[\xBA-\xBB]/;
+      return "Tibetan punctuation" if $c =~ /\xE0\xBC[\x81-\x94]/;
+      return "Tibetan sign"        if $c =~ /\xE0\xBC[\x95-\x9F]/;
+      return "Tibetan digit"       if $c =~ /\xE0\xBC[\xA0-\xB3]/;
+      return "Tibetan punctuation" if $c =~ /\xE0\xBC[\xB4-\xBD]/;
+      return "Tibetan letter" if $c =~ /\xE0[\xBC-\xBF]/;
+      return "Myanmar digit" if $c =~ /\xE1\x81[\x80-\x89]/;
+      return "Myanmar digit" if $c =~ /\xE1\x82[\x90-\x99]/; # Myanmar Shan digits
+      return "Myanmar punctuation" if $c =~ /\xE1\x81[\x8A-\x8B]/;
+      return "Myanmar letter" if $c =~ /\xE1[\x80-\x81]/;
+      return "Myanmar letter" if $c =~ /\xE1\x82[\x80-\x9F]/;
+      return "Georgian punctuation" if $c =~ /\xE1\x83\xBB/;
+      return "Georgian letter" if $c =~ /\xE1\x82[\xA0-\xBF]/;
+      return "Georgian letter" if $c =~ /\xE1\x83/;
+      return "Georgian letter" if $c =~ /\xE1\xB2[\x90-\xBF]/; # Georgian Mtavruli capital letters
+      return "Georgian letter" if $c =~ /\xE2\xB4[\x80-\xAF]/; # Georgian small letters (Khutsuri)
+      return "Korean Hangul letter" if $c =~ /\xE1[\x84-\x87]/;
+      return "Ethiopic punctuation" if $c =~ /\xE1\x8D[\xA0-\xA8]/;
+      return "Ethiopic digit" if $c =~ /\xE1\x8D[\xA9-\xB1]/;
+      return "Ethiopic number" if $c =~ /\xE1\x8D[\xB2-\xBC]/;
+      return "Ethiopic syllable" if $c =~ /\xE1[\x88-\x8D]/;
+      return "Cherokee letter" if $c =~ /\xE1\x8E[\xA0-\xBF]/;
+      return "Cherokee letter" if $c =~ /\xE1\x8F/;
+      return "Canadian punctuation" if $c =~ /\xE1\x90\x80/; # Canadian Syllabics hyphen
+      return "Canadian punctuation" if $c =~ /\xE1\x99\xAE/; # Canadian Syllabics full stop
+      return "Canadian syllable" if $c =~ /\xE1[\x90-\x99]/;
+      return "Canadian syllable" if $c =~ /\xE1\xA2[\xB0-\xBF]/;
+      return "Canadian syllable" if $c =~ /\xE1\xA3/;
+      return "Ogham whitespace" if $c =~ /\xE1\x9A\x80/;
+      return "Ogham letter" if $c =~ /\xE1\x9A[\x81-\x9A]/;
+      return "Ogham punctuation" if $c =~ /\xE1\x9A[\x9B-\x9C]/;
+      return "Runic punctuation" if $c =~ /\xE1\x9B[\xAB-\xAD]/;
+      return "Runic letter" if $c =~ /\xE1\x9A[\xA0-\xBF]/;
+      return "Runic letter" if $c =~ /\xE1\x9B/;
+      return "Khmer currency" if $c =~ /\xE1\x9F\x9B/;
+      return "Khmer digit" if $c =~ /\xE1\x9F[\xA0-\xA9]/;
+      return "Khmer letter" if $c =~ /\xE1[\x9E-\x9F]/;
+      return "Mongolian punctuation" if $c =~ /\xE1\xA0[\x80-\x8A]/;
+      return "Mongolian digit"       if $c =~ /\xE1\xA0[\x90-\x99]/;
+      return "Mongolian letter" if $c =~ /\xE1[\xA0-\xA1]/;
+      return "Mongolian letter" if $c =~ /\xE1\xA2[\x80-\xAF]/;
+      return "Buginese letter" if $c =~ /\xE1\xA8[\x80-\x9B]/;
+      return "Buginese punctuation" if $c =~ /\xE1\xA8[\x9E-\x9F]/;
+      return "Balinese letter" if $c =~ /\xE1\xAC/;
+      return "Balinese letter" if $c =~ /\xE1\xAD[\x80-\x8F]/;
+      return "Balinese digit" if $c =~ /\xE1\xAD[\x90-\x99]/;
+      return "Balinese puncutation" if $c =~ /\xE1\xAD[\x9A-\xA0]/;
+      return "Balinese symbol" if $c =~ /\xE1\xAD[\xA1-\xBF]/;
+      return "Sundanese digit" if $c =~ /\xE1\xAE[\xB0-\xB9]/;
+      return "Sundanese letter" if $c =~ /\xE1\xAE/;
+      return "Cyrillic letter" if $c =~ /\xE1\xB2[\x80-\x8F]/;
+      return "Sundanese punctuation" if $c =~ /\xE1\xB3[\x80-\x8F]/;
+      return "IPA" if $c =~ /\xE1[\xB4-\xB6]/;
+      return "non-ASCII Latin letter" if $c =~ /\xE1[\xB8-\xBB]/;
+      return "Greek letter" if $c =~ /\xE1[\xBC-\xBF]/;
+      return "non-ASCII whitespace"  if $c =~ /\xE2\x80[\x80-\x8A\xAF]/;
+      return "zero-width space"      if $c =~ /\xE2\x80\x8B/;
+      return "zero-width non-space"  if $c =~ /\xE2\x80\x8C/;
+      return "zero-width joiner"     if $c =~ /\xE2\x80\x8D/;
+      return "directional mark"      if $c =~ /\xE2\x80[\x8E-\x8F\xAA-\xAE]/;
+      return "non-ASCII punctuation" if $c =~ /\xE2\x80[\x90-\xBF]/;
+      return "non-ASCII punctuation" if $c =~ /\xE2\x81[\x80-\x9E]/;
+      return "superscript letter"    if $c =~ /\xE2\x81[\xB1\xBF]/;
+      return "superscript digit"     if $c =~ /\xE2\x81[\xB0-\xB9]/;
+      return "superscript punctuation" if $c =~ /\xE2\x81[\xBA-\xBE]/;
+      return "subscript digit"       if $c =~ /\xE2\x82[\x80-\x89]/;
+      return "subscript punctuation" if $c =~ /\xE2\x82[\x8A-\x8E]/;
+      return "non-ASCII currency"    if $c =~ /\xE2\x82[\xA0-\xBF]/;
+      return "letterlike symbol"     if $c =~ /\xE2\x84/;
+      return "letterlike symbol"     if $c =~ /\xE2\x85[\x80-\x8F]/;
+      return "fraction"              if $c =~ /\xE2\x85[\x90-\x9E]/; # NEW
+      return "Roman number"          if $c =~ /\xE2\x85[\xA0-\xBF]/; # NEW
+      return "arrow symbol"          if $c =~ /\xE2\x86[\x90-\xBF]/;
+      return "arrow symbol"          if $c =~ /\xE2\x87/;
+      return "mathematical operator" if $c =~ /\xE2[\x88-\x8B]/;
+      return "technical symbol"      if $c =~ /\xE2[\x8C-\x8F]/;
+      return "enclosed alphanumeric" if $c =~ /\xE2\x91[\xA0-\xBF]/;
+      return "enclosed alphanumeric" if $c =~ /\xE2[\x92-\x93]/;
+      return "box drawing" if $c =~ /\xE2[\x94-\x95]/;
+      return "geometric shape" if $c =~ /\xE2\x96[\xA0-\xBF]/;
+      return "geometric shape" if $c =~ /\xE2\x97/;
+      return "pictograph" if $c =~ /\xE2[\x98-\x9E]/;
+      return "arrow symbol"          if $c =~ /\xE2\xAC[\x80-\x91\xB0-\xBF]/;
+      return "geometric shape"       if $c =~ /\xE2\xAC[\x92-\xAF]/;         
+      return "arrow symbol"          if $c =~ /\xE2\xAD[\x80-\x8F\x9A-\xBF]/;
+      return "geometric shape"       if $c =~ /\xE2\xAD[\x90-\x99]/;        
+      return "arrow symbol"          if $c =~ /\xE2\xAE[\x80-\xB9]/;       
+      return "geometric shape"       if $c =~ /\xE2\xAE[\xBA-\xBF]/;      
+      return "geometric shape"       if $c =~ /\xE2\xAF[\x80-\x88\x8A-\x8F]/;
+      return "symbol"                if $c =~ /\xE2[\xAC-\xAF]/;
+      return "Coptic fraction" if $c =~ /\xE2\xB3\xBD/;
+      return "Coptic punctuation" if $c =~ /\xE2\xB3[\xB9-\xBF]/;
+      return "Coptic letter" if $c =~ /\xE2[\xB2-\xB3]/;
+      return "Georgian letter" if $c =~ /\xE2\xB4[\x80-\xAF]/;
+      return "Tifinagh punctuation" if $c =~ /\xE2\xB5\xB0/;
+      return "Tifinagh letter" if $c =~ /\xE2\xB4[\xB0-\xBF]/;
+      return "Tifinagh letter" if $c =~ /\xE2\xB5/;
+      return "Ethiopic syllable" if $c =~ /\xE2\xB6/;
+      return "Ethiopic syllable" if $c =~ /\xE2\xB7[\x80-\x9F]/;
+      return "non-ASCII punctuation" if $c =~ /\xE3\x80[\x80-\x91\x94-\x9F\xB0\xBB-\xBD]/;
+      return "symbol" if $c =~ /\xE3\x80[\x91\x92\xA0\xB6\xB7]/;
+      return "Japanese hiragana character" if $c =~ /\xE3\x81/;
+      return "Japanese hiragana character" if $c =~ /\xE3\x82[\x80-\x9F]/;
+      return "Japanese katakana character" if $c =~ /\xE3\x82[\xA0-\xBF]/;
+      return "Japanese katakana character" if $c =~ /\xE3\x83/;
+      return "Bopomofo letter" if $c =~ /\xE3\x84[\x80-\xAF]/;
+      return "Korean Hangul letter" if $c =~ /\xE3\x84[\xB0-\xBF]/;
+      return "Korean Hangul letter" if $c =~ /\xE3\x85/;
+      return "Korean Hangul letter" if $c =~ /\xE3\x86[\x80-\x8F]/;
+      return "Bopomofo letter" if $c =~ /\xE3\x86[\xA0-\xBF]/;
+      return "CJK stroke" if $c =~ /\xE3\x87[\x80-\xAF]/;
+      return "Japanese kana character" if $c =~ /\xE3\x87[\xB0-\xBF]/;
+      return "CJK symbol" if $c =~ /\xE3[\x88-\x8B]/;
+      return "CJK square Latin abbreviation" if $c =~ /\xE3\x8D[\xB1-\xBA]/;
+      return "CJK square Latin abbreviation" if $c =~ /\xE3\x8E/;
+      return "CJK square Latin abbreviation" if $c =~ /\xE3\x8F[\x80-\x9F\xBF]/;
+      return "CJK character" if $c =~ /\xE4[\xB8-\xBF]/;
+      return "CJK character" if $c =~ /[\xE5-\xE9]/;
+      return "Yi syllable" if $c =~ /\xEA[\x80-\x92]/;
+      return "Lisu letter"      if $c =~ /\xEA\x93[\x90-\xBD]/;
+      return "Lisu punctuation" if $c =~ /\xEA\x93[\xBE-\xBF]/;
+      return "Cyrillic letter" if $c =~ /\xEA\x99/;
+      return "Cyrillic letter" if $c =~ /\xEA\x9A[\x80-\x9F]/;
+      return "modifier tone" if $c =~ /\xEA\x9C[\x80-\xA1]/;
+      return "Javanese punctuation" if $c =~ /\xEA\xA7[\x81-\x8D\x9E-\x9F]/;
+      return "Javanese digit" if $c =~ /\xEA\xA7[\x90-\x99]/;
+      return "Javanese letter" if $c =~ /\xEA\xA6/;
+      return "Javanese letter" if $c =~ /\xEA\xA7[\x80-\x9F]/;
+      return "Ethiopic syllable" if $c =~ /\xEA\xAC[\x80-\xAF]/;
+      return "Cherokee letter" if $c =~ /\xEA\xAD[\xB0-\xBF]/;
+      return "Cherokee letter" if $c =~ /\xEA\xAE/;
+      return "Meetai Mayek digit" if $c =~ /\xEA\xAF[\xB0-\xB9]/;
+      return "Meetai Mayek letter" if $c =~ /\xEA\xAF/;
+      return "Korean Hangul syllable" if $c =~ /\xEA[\xB0-\xBF]/;
+      return "Korean Hangul syllable" if $c =~ /[\xEB-\xEC]/;
+      return "Korean Hangul syllable" if $c =~ /\xED[\x80-\x9E]/;
+      return "Klingon letter" if $c =~ /\xEF\xA3[\x90-\xA9]/;
+      return "Klingon digit" if $c =~ /\xEF\xA3[\xB0-\xB9]/;
+      return "Klingon punctuation" if $c =~ /\xEF\xA3[\xBD-\xBE]/;
+      return "Klingon symbol" if $c =~ /\xEF\xA3\xBF/;
+      return "private use character" if $c =~ /\xEE/;
+      return "Latin typographic ligature" if $c =~ /\xEF\xAC[\x80-\x86]/;
+      return "Hebrew presentation letter" if $c =~ /\xEF\xAC[\x9D-\xBF]/;
+      return "Hebrew presentation letter" if $c =~ /\xEF\xAD[\x80-\x8F]/;
+      return "Arabic presentation letter" if $c =~ /\xEF\xAD[\x90-\xBF]/;
+      return "Arabic presentation letter" if $c =~ /\xEF[\xAE-\xB7]/;
+      return "non-ASCII punctuation" if $c =~ /\xEF\xB8[\x90-\x99]/;
+      return "non-ASCII punctuation" if $c =~ /\xEF\xB8[\xB0-\xBF]/;
+      return "non-ASCII punctuation" if $c =~ /\xEF\xB9[\x80-\xAB]/;
+      return "Arabic presentation letter" if $c =~ /\xEF\xB9[\xB0-\xBF]/;
+      return "Arabic presentation letter" if $c =~ /\xEF\xBA/;
+      return "Arabic presentation letter" if $c =~ /\xEF\xBB[\x80-\xBC]/;
+      return "byte-order mark/zero-width no-break space" if $c eq "\xEF\xBB\xBF";
+      return "fullwidth currency" if $c =~ /\xEF\xBC\x84/;
+      return "fullwidth digit" if $c =~ /\xEF\xBC[\x90-\x99]/;
+      return "fullwidth Latin letter" if $c =~ /\xEF\xBC[\xA1-\xBA]/;
+      return "fullwidth Latin letter" if $c =~ /\xEF\xBD[\x81-\x9A]/;
+      return "fullwidth punctuation" if $c =~ /\xEF\xBC/;
+      return "fullwidth punctuation" if $c =~ /\xEF\xBD[\x9B-\xA4]/;
+      return "halfwidth Japanese punctuation" if $c =~ /\xEF\xBD[\xA1-\xA4]/;
+      return "halfwidth Japanese katakana character" if $c =~ /\xEF\xBD[\xA5-\xBF]/;
+      return "halfwidth Japanese katakana character" if $c =~ /\xEF\xBE[\x80-\x9F]/;
+      return "fullwidth currency" if $c =~ /\xEF\xBF[\xA0-\xA6]/;
+      return "replacement character" if $c eq "\xEF\xBF\xBD";
+   } elsif ($c =~ /[\xF0-\xF7]/) {
+      return "non-UTF8 (invalid)" unless $c =~ /[\xF0-\xF7][\x80-\xBF]{3,3}$/;
+      return "non-shortest-UTF8 (invalid)" if $c =~ /\xF0[\x80-\x8F]/;
+      return "Linear B syllable" if $c =~ /\xF0\x90\x80/;
+      return "Linear B syllable" if $c =~ /\xF0\x90\x81[\x80-\x8F]/;
+      return "Linear B symbol"   if $c =~ /\xF0\x90\x81[\x90-\x9F]/;
+      return "Linear B ideogram" if $c =~ /\xF0\x90[\x82-\x83]/;
+      return "Gothic letter" if $c =~ /\xF0\x90\x8C[\xB0-\xBF]/;
+      return "Gothic letter" if $c =~ /\xF0\x90\x8D[\x80-\x8F]/;
+      return "Phoenician letter" if $c =~ /\xF0\x90\xA4[\x80-\x95]/;
+      return "Phoenician number" if $c =~ /\xF0\x90\xA4[\x96-\x9B]/;
+      return "Phoenician punctuation" if $c =~ /\xF0\x90\xA4\x9F/; # word separator
+      return "Old Hungarian number" if $c =~ /\xF0\x90\xB3[\xBA-\xBF]/;
+      return "Old Hungarian letter" if $c =~ /\xF0\x90[\xB2-\xB3]/;
+      return "Cuneiform digit" if $c =~ /\xF0\x92\x90/; # numberic sign
+      return "Cuneiform digit" if $c =~ /\xF0\x92\x91[\x80-\xAF]/; # numberic sign
+      return "Cuneiform punctuation" if $c =~ /\xF0\x92\x91[\xB0-\xBF]/;
+      return "Cuneiform sign" if $c =~ /\xF0\x92[\x80-\x95]/;
+      return "Egyptian hieroglyph number" if $c =~ /\xF0\x93\x81\xA8/;
+      return "Egyptian hieroglyph number" if $c =~ /\xF0\x93\x82[\xAD-\xB6]/;
+      return "Egyptian hieroglyph number" if $c =~ /\xF0\x93\x86[\x90\xBC-\xBF]/;
+      return "Egyptian hieroglyph number" if $c =~ /\xF0\x93\x87[\x80-\x84]/;
+      return "Egyptian hieroglyph number" if $c =~ /\xF0\x93\x8D[\xA2-\xAB]/;
+      return "Egyptian hieroglyph number" if $c =~ /\xF0\x93\x8E[\x86-\x92]/;
+      return "Egyptian hieroglyph number" if $c =~ /\xF0\x93\x8F[\xBA-\xBF]/;
+      return "Egyptian hieroglyph number" if $c =~ /\xF0\x93\x90[\x80-\x83]/;
+      return "Egyptian hieroglyph" if $c =~ /\xF0\x93[\x80-\x90]/;
+      return "enclosed alphanumeric" if $c =~ /\xF0\x9F[\x84-\x87]/;
+      return "Mahjong symbol" if $c =~ /\xF0\x9F\x80[\x80-\xAF]/;
+      return "Domino symbol" if $c =~ /\xF0\x9F\x80[\xB0-\xBF]/;
+      return "Domino symbol" if $c =~ /\xF0\x9F\x81/;
+      return "Domino symbol" if $c =~ /\xF0\x9F\x82[\x80-\x9F]/;
+      return "Playing card symbol" if $c =~ /\xF0\x9F\x82[\xA0-\xBF]/;
+      return "Playing card symbol" if $c =~ /\xF0\x9F\x83/;
+      return "CJK symbol" if $c =~ /\xF0\x9F[\x88-\x8B]/;
+      return "pictograph" if $c =~ /\xF0\x9F[\x8C-\x9B]/;
+      return "geometric shape" if $c =~ /\xF0\x9F[\x9E-\x9F]/;
+      return "non-ASCII punctuation" if $c =~ /\xF0\x9F[\xA0-\xA3]/;
+      return "pictograph" if $c =~ /\xF0\x9F[\xA4-\xAB]/;
+      return "CJK character" if $c =~ /\xF0[\xA0-\xAF]/;
+      return "tag" if $c =~ /\xF3\xA0[\x80-\x81]/;
+      return "variation selector" if $c =~ /\xF3\xA0[\x84-\x87]/;
+      return "private use character" if $c =~ /\xF3[\xB0-\xBF]/;
+      return "private use character" if $c =~ /\xF4[\x80-\x8F]/;
+      # ...
+   } elsif ($c =~ /[\xF8-\xFB]/) {
+      return "non-UTF8 (invalid)" unless $c =~ /[\xF8-\xFB][\x80-\xBF]{4,4}$/;
+   } elsif ($c =~ /[\xFC-\xFD]/) {
+      return "non-UTF8 (invalid)" unless $c =~ /[\xFC-\xFD][\x80-\xBF]{5,5}$/;
+   } elsif ($c =~ /\xFE/) {
+      return "non-UTF8 (invalid)" unless $c =~ /\xFE][\x80-\xBF]{6,6}$/;
+   } else {
+      return "non-UTF8 (invalid)";
+   }
+   return "other character";
 }
 
 1;

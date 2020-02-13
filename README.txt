@@ -1,34 +1,24 @@
-# URoman
+uroman version 1.2.7
+Release date: January 6, 2020
+Author: Ulf Hermjakob, USC Information Sciences Institute
 
-*uroman* is a *universal romanizer*. It converts text in any script to the Latin alphabet.
+uroman is a universal romanizer. It converts text in any script to the Latin alphabet.
 
-Version: 1.2.7
-Release date: January 6, 2020  
-Author: Ulf Hermjakob, USC Information Sciences Institute  
-
-
-### Usage: 
-```bash
-$ uroman.pl [-l <lang-code>] [--chart] [--no-cache] < STDIN
+Usage: uroman.pl [-l <lang-code>] [--chart] [--no-cache] < STDIN
        where the optional <lang-code> is a 3-letter languages code, e.g. ara, bel, bul, deu, ell, eng, fas,
             grc, ell, eng, heb, kaz, kir, lav, lit, mkd, mkd2, oss, pnt, pus, rus, srp, srp2, tur, uig, ukr, yid.
        --chart specifies chart output (in JSON format) to represent alternative romanizations.
        --no-cache disables caching.
-```
-### Examples: 
-```bash
-$ bin/uroman.pl < text/zho.txt
-$ bin/uroman.pl -l tur < text/tur.txt
-$ bin/uroman.pl -l heb --chart < text/heb.txt
-$ bin/uroman.pl < test/multi-script.txt > test/multi-script.uroman.txt
-```
+Examples: bin/uroman.pl < text/zho.txt
+          bin/uroman.pl -l tur < text/tur.txt
+	  bin/uroman.pl -l heb --chart < text/heb.txt
+	  bin/uroman.pl < test/multi-script.txt > test/multi-script.uroman.txt
 
-Identifying the input as Arabic, Belarusian, Bulgarian, English, Farsi, German,
-Ancient Greek, Modern Greek, Pontic Greek, Hebrew, Kazakh, Kyrgyz, Latvian,
-Lithuanian, North Macedonian, Russian, Serbian, Turkish, Ukrainian, Uyghur or 
-Yiddish will improve romanization for those languages as some letters in those 
-languages have different sound values from other languages using the same script 
-(French, Russian, Hebrew respectively).
+Identifying the input as Arabic, Belarusian, Bulgarian, English, Farsi, German, 
+Ancient Greek, Modern Greek, Pontic Greek, Hebrew, Kazakh, Kyrgyz, Latvian, 
+Lithuanian, North Macedonian, Russian, Serbian, Turkish, Ukrainian, Uyghur or Yiddish 
+will improve romanization for those languages as some letters in those languages 
+have different sound values from other languages using the same script.
 No effect for other languages in this version.
 
 Changes in version 1.2.7
@@ -47,17 +37,20 @@ Changes in version 1.2.5
  * Improved support for Armenian and eight languages using Cyrillic scripts.
    -- For Serbian and Macedonian, which are often written in both Cyrillic
       and Latin scripts, uroman will map both official versions to the same
-      romanized text, e.g. both "▒~]и▒~H" and "Niš" will be mapped to "Nish" (which
+      romanized text, e.g. both "Ниш" and "Niš" will be mapped to "Nish" (which
       properly reflects the pronunciation of the city's name).
       For both Serbian and Macedonian, casual writers often use a simplified
-      Latin form without diacritics, e.g. "s" to represent not only Cyrillic "▒~A"
-      and Latin "s", but also "▒~H" or "š", even if this conflates "s" and "sh" and
+      Latin form without diacritics, e.g. "s" to represent not only Cyrillic "с"
+      and Latin "s", but also "ш" or "š", even if this conflates "s" and "sh" and
       other such pairs. The casual romanization can be simulated by using
       alternative uroman language codes "srp2" and "mkd2", which romanize
-      both "▒~]и▒~H" and "Niš" to "Nis" to reflect the casual Latin spelling.
+      both "Ниш" and "Niš" to "Nis" to reflect the casual Latin spelling.
  * Various small improvements.
 Changes in version 1.2.4
-  * Bug-fix that generated two emtpy lines for each empty line in cache mode.
+ * Added support for Tifinagh (a script used for Berber languages).
+ * Bug-fix that generated two emtpy lines for each empty line in cache mode.
+Changes in version 1.2.3
+ * Exclude emojis, dingbats, many other pictographs from being romanized (e.g. to "face")
 Changes in version 1.2
  * Run-time improvement based on (1) token-based caching and (2) shortcut 
    romanization (identity) of ASCII strings for default 1-best (non-chart) 

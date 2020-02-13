@@ -7,6 +7,7 @@
 package NLP::Chinese;
 
 $utf8 = NLP::UTF8;
+%empty_ht = ();
 
 sub read_chinese_tonal_pinyin_files {
    local($caller, *ht, @filenames) = @_;
@@ -117,7 +118,7 @@ sub tonal_pinyin {
    $cedict_pinyin = $ht{"cedict"}->{$s} || "";
    $cedicts_pinyin = $ht{"cedicts"}->{$s} || "";
    $unihan_pinyin = "";
-   @characters = $utf8->split_into_utf8_characters($s, "return only chars");
+   @characters = $utf8->split_into_utf8_characters($s, "return only chars", *empty_ht);
    foreach $c (@characters) {
       if ($pinyin = $ht{"simple_pinyin"}->{$c}) {
 	 $unihan_pinyin .= $pinyin;

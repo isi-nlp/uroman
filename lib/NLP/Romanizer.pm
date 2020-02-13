@@ -15,6 +15,16 @@ $util = NLP::utilities;
 $chinesePM = NLP::Chinese;
 
 my $verbosePM = 0;
+%empty_ht = ();
+
+my $braille_capital_letter_indicator = "\xE2\xA0\xA0";
+my $braille_number_indicator = "\xE2\xA0\xBC";
+my $braille_decimal_point = "\xE2\xA0\xA8";
+my $braille_comma = "\xE2\xA0\x82";
+my $braille_solidus = "\xE2\xA0\x8C";
+my $braille_numeric_space = "\xE2\xA0\x90";
+my $braille_letter_indicator = "\xE2\xA0\xB0";
+my $braille_period = "\xE2\xA0\xB2";
 
 sub new {
    local($caller) = @_;
@@ -130,7 +140,7 @@ sub unicode_hangul_romanization {
    @vowels = split(/\s+/, "a ae ya yae eo e yeo ye o wa wai oe yo u weo we wi yu eu yi i");
    @tails = split(/\s+/, "- g gg gs n nj nh d l lg lm lb ls lt lp lh m b bs s ss ng j c k t p h");
    $result = "";
-   @chars = $utf8->split_into_utf8_characters($s, "return only chars");
+   @chars = $utf8->split_into_utf8_characters($s, "return only chars", *empty_ht);
    foreach $char (@chars) {
       $unicode = $utf8->utf8_to_unicode($char);
       if (($unicode >= 0xAC00) && ($unicode <= 0xD7A3)) {
@@ -165,6 +175,54 @@ sub listify_comma_sep_string {
    return @result_list;
 }
 
+sub braille_string_p {
+   local($this, $s) = @_;
+
+   return ($s =~ /^(\xE2[\xA0-\xA3][\x80-\xBF])+$/);
+}
+
+sub register_word_boundary_info {
+   local($this, *ht, $lang_code, $utf8_source_string, $utf8_target_string, $use_only_for_whole_word_p, 
+	 $use_only_at_start_of_word_p, $use_only_at_end_of_word_p, 
+	 $dont_use_at_start_of_word_p, $dont_use_at_end_of_word_p) = @_;
+
+   if ($use_only_for_whole_word_p) {
+      if ($lang_code) {
+         $ht{USE_ONLY_FOR_WHOLE_WORD_LANG_SPEC}->{$lang_code}->{$utf8_source_string}->{$utf8_target_string} = 1;
+      } else {
+         $ht{USE_ONLY_FOR_WHOLE_WORD}->{$utf8_source_string}->{$utf8_target_string} = 1;
+      }
+   }
+   if ($use_only_at_start_of_word_p) {
+      if ($lang_code) {
+         $ht{USE_ONLY_AT_START_OF_WORD_LANG_SPEC}->{$lang_code}->{$utf8_source_string}->{$utf8_target_string} = 1;
+      } else {
+         $ht{USE_ONLY_AT_START_OF_WORD}->{$utf8_source_string}->{$utf8_target_string} = 1;
+      }
+   }
+   if ($use_only_at_end_of_word_p) {
+      if ($lang_code) {
+         $ht{USE_ONLY_AT_END_OF_WORD_LANG_SPEC}->{$lang_code}->{$utf8_source_string}->{$utf8_target_string} = 1;
+      } else {
+         $ht{USE_ONLY_AT_END_OF_WORD}->{$utf8_source_string}->{$utf8_target_string} = 1;
+      }
+   }
+   if ($dont_use_at_start_of_word_p) {
+      if ($lang_code) {
+         $ht{DONT_USE_AT_START_OF_WORD_LANG_SPEC}->{$lang_code}->{$utf8_source_string}->{$utf8_target_string} = 1;
+      } else {
+         $ht{DONT_USE_AT_START_OF_WORD}->{$utf8_source_string}->{$utf8_target_string} = 1;
+      }
+   }
+   if ($dont_use_at_end_of_word_p) {
+      if ($lang_code) {
+         $ht{DONT_USE_AT_END_OF_WORD_LANG_SPEC}->{$lang_code}->{$utf8_source_string}->{$utf8_target_string} = 1;
+      } else {
+         $ht{DONT_USE_AT_END_OF_WORD}->{$utf8_source_string}->{$utf8_target_string} = 1;
+      }
+   }
+}
+
 sub load_romanization_table {
    local($this, *ht, $filename) = @_;
    # ../../data/romanization-table.txt
@@ -179,8 +237,13 @@ sub load_romanization_table {
          $utf8_target_string = $util->slot_value_in_double_colon_del_list($_, "t");
          $utf8_alt_target_string_s = $util->slot_value_in_double_colon_del_list($_, "t-alt");
          $use_alt_in_pointed_p = ($_ =~ /::use-alt-in-pointed\b/);
+         $use_only_for_whole_word_p = ($_ =~ /::use-only-for-whole-word\b/);
          $use_only_at_start_of_word_p = ($_ =~ /::use-only-at-start-of-word\b/);
          $use_only_at_end_of_word_p = ($_ =~ /::use-only-at-end-of-word\b/);
+         $dont_use_at_start_of_word_p = ($_ =~ /::dont-use-at-start-of-word\b/);
+         $dont_use_at_end_of_word_p = ($_ =~ /::dont-use-at-end-of-word\b/);
+	 $use_only_in_lower_case_enviroment_p = ($_ =~ /::use-only-in-lower-case-enviroment\b/);
+	 $word_external_punctuation_p = ($_ =~ /::word-external-punctuation\b/);
 	 $utf8_source_string =~ s/\s*$//;
 	 $utf8_target_string =~ s/\s*$//;
 	 $utf8_alt_target_string_s =~ s/\s*$//;
@@ -199,21 +262,45 @@ sub load_romanization_table {
 	    } else {
                $ht{UTF_CHAR_MAPPING}->{$utf8_source_string}->{$utf8_target_string} = $prob;
 	    }
-	 }
-	 if ($use_only_at_start_of_word_p) {
-	    if ($lang_code) {
-	       $ht{USE_ONLY_AT_START_OF_WORD_LANG_SPEC}->{$lang_code}->{$utf8_source_string}->{$utf8_target_string} = 1;
-	    } else {
-	       $ht{USE_ONLY_AT_START_OF_WORD}->{$utf8_source_string}->{$utf8_target_string} = 1;
+	    if ($word_external_punctuation_p) {
+	       if ($lang_code) {
+                  $ht{WORD_EXTERNAL_PUNCTUATION_LANG_SPEC}->{$lang_code}->{$utf8_source_string}->{$utf8_target_string} = $prob;
+	       } else {
+                  $ht{WORD_EXTERNAL_PUNCTUATION}->{$utf8_source_string}->{$utf8_target_string} = $prob;
+	       }
+	    }
+            if ($this->braille_string_p($utf8_source_string)) {
+	       if (($utf8_target_string =~ /^[a-z]+$/)
+	        && (! ($utf8_source_string =~ /^$braille_capital_letter_indicator/))) {
+	          my $uc_utf8_source_string = "$braille_capital_letter_indicator$utf8_source_string";
+	          my $uc_utf8_target_string = ucfirst $utf8_target_string;
+	          if ($lang_code) {
+                     $ht{UTF_CHAR_MAPPING_LANG_SPEC}->{$lang_code}->{$uc_utf8_source_string}->{$uc_utf8_target_string} = $prob;
+	          } else {
+                     $ht{UTF_CHAR_MAPPING}->{$uc_utf8_source_string}->{$uc_utf8_target_string} = $prob;
+	          }
+                  $this->register_word_boundary_info(*ht, $lang_code, $uc_utf8_source_string, $uc_utf8_target_string,
+                            $use_only_for_whole_word_p, $use_only_at_start_of_word_p, $use_only_at_end_of_word_p, 
+	                    $dont_use_at_start_of_word_p, $dont_use_at_end_of_word_p);
+	       }
+	       if (($utf8_target_string =~ /^[0-9]$/)
+	        && ($utf8_source_string =~ /^$braille_number_indicator./)) {
+	          my $core_number_char = $utf8_source_string;
+		  $core_number_char =~ s/$braille_number_indicator//;
+	          $ht{BRAILLE_TO_DIGIT}->{$core_number_char} = $utf8_target_string;
+	       }
 	    }
 	 }
-	 if ($use_only_at_end_of_word_p) {
+	 if ($use_only_in_lower_case_enviroment_p) {
 	    if ($lang_code) {
-	       $ht{USE_ONLY_AT_END_OF_WORD_LANG_SPEC}->{$lang_code}->{$utf8_source_string}->{$utf8_target_string} = 1;
+	       $ht{USE_ONLY_IN_LOWER_CASE_ENVIROMENT_LANG_SPEC}->{$lang_code}->{$utf8_source_string}->{$utf8_target_string} = 1;
 	    } else {
-	       $ht{USE_ONLY_AT_END_OF_WORD}->{$utf8_source_string}->{$utf8_target_string} = 1;
+	       $ht{USE_ONLY_IN_LOWER_CASE_ENVIROMENT}->{$utf8_source_string}->{$utf8_target_string} = 1;
 	    }
 	 }
+         $this->register_word_boundary_info(*ht, $lang_code, $utf8_source_string, $utf8_target_string, 
+                   $use_only_for_whole_word_p, $use_only_at_start_of_word_p, $use_only_at_end_of_word_p, 
+	           $dont_use_at_start_of_word_p, $dont_use_at_end_of_word_p);
 	 foreach $utf8_alt_target (@utf8_alt_targets) {
 	    if ($lang_code) {
                $ht{UTF_CHAR_ALT_MAPPING_LANG_SPEC}->{$lang_code}->{$utf8_source_string}->{$utf8_alt_target} = $prob;
@@ -221,6 +308,13 @@ sub load_romanization_table {
 	    } else {
                $ht{UTF_CHAR_ALT_MAPPING}->{$utf8_source_string}->{$utf8_alt_target} = $prob;
 	       $ht{USE_ALT_IN_POINTED}->{$utf8_source_string}->{$utf8_alt_target} = 1 if $use_alt_in_pointed_p;
+	    }
+	    if ($use_only_for_whole_word_p) {
+	       if ($lang_code) {
+	          $ht{USE_ALT_ONLY_FOR_WHOLE_WORD_LANG_SPEC}->{$lang_code}->{$utf8_source_string}->{$utf8_alt_target} = 1;
+	       } else {
+	          $ht{USE_ALT_ONLY_FOR_WHOLE_WORD}->{$utf8_source_string}->{$utf8_alt_target} = 1;
+	       }
 	    }
 	    if ($use_only_at_start_of_word_p) {
 	       if ($lang_code) {
@@ -256,6 +350,7 @@ sub char_name_to_script {
    local($this, $char_name, *ht) = @_;
 
    return $cached_result if $cached_result = $ht{CHAR_NAME_TO_SCRIPT}->{$char_name};
+   $orig_char_name = $char_name;
    $char_name =~ s/\s+(CONSONANT|LETTER|LIGATURE|SIGN|SYLLABLE|SYLLABICS|VOWEL)\b.*$//;
    my $script_name;
    while ($char_name) {
@@ -414,8 +509,9 @@ sub romanize_by_token_with_caching {
 
    $control = "" unless defined($control);
    my $return_chart_p = ($control =~ /return chart/i);
+   my $return_offset_mappings_p = ($control =~ /return offset mappings/i);
    return $this->romanize($s, $lang_code, $output_style, *ht, *pinyin_ht, $initial_char_offset, $control, $line_number)
-     if $return_chart_p;
+     if $return_chart_p || $return_offset_mappings_p;
    my $result = "";
    my @separators = ();
    my @tokens = ();
@@ -448,13 +544,20 @@ sub romanize_by_token_with_caching {
 }
 
 sub romanize {
-   local($this, $s, $lang_code, $output_style, *ht, *pinyin_ht, $initial_char_offset, $control, $line_number) = @_;
+   local($this, $s, $lang_code, $output_style, *ht, *pinyin_ht, $initial_char_offset, $control, $line_number, $initial_rom_char_offset) = @_;
 
+   my $orig_lang_code = $lang_code;
+   # Check whether the text (to be romanized) starts with a language code directive.
+   if (($line_lang_code) = ($s =~ /^::lcode\s+([a-z][a-z][a-z])\s/)) {
+      $lang_code = $line_lang_code;
+   }
    $initial_char_offset = 0 unless defined($initial_char_offset);
+   $initial_rom_char_offset = 0 unless defined($initial_rom_char_offset);
    $control = "" unless defined($control);
    my $return_chart_p = ($control =~ /return chart/i);
+   my $return_offset_mappings_p = ($control =~ /return offset mappings/i);
    $line_number = "" unless defined($line_number);
-   my @chars = $utf8->split_into_utf8_characters($s, "return only chars");
+   my @chars = $utf8->split_into_utf8_characters($s, "return only chars", *empty_ht);
    my $n_characters = $#chars + 1;
    %chart_ht = ();
    $chart_ht{N_CHARS} = $n_characters;
@@ -476,6 +579,7 @@ sub romanize {
    my $hebrew_word_contains_point = 0;
    my $current_word_start = "";
    my $current_word_script = "";
+   my $braille_all_caps_p = 0;
 
    # prep
    foreach $i ((0 .. ($#chars + 1))) {
@@ -535,16 +639,71 @@ sub romanize {
                         && ($this->letter_plus_char_p($char_name)
                          || $this->subjoined_char_p($char_name)
 			 || ($char_name =~ /\b(LETTER|SYLLABLE|SYLLABICS|LIGATURE)\b/));
+
+      # Braille punctuation
+      my $end_offset = 0;
+      if ($char_name =~ /^Braille\b/i) {
+         if (($char =~ /^\s*$/) || ($char_name =~ /BLANK/)) {
+	    $part_of_word_p = 0;
+            $braille_all_caps_p = 0;
+	 } elsif ($chart_ht{NOT_PART_OF_WORD_P}->{$i}) {
+	    $part_of_word_p = 0;
+            $braille_all_caps_p = 0;
+	 } elsif ((keys %{$ht{WORD_EXTERNAL_PUNCTUATION_LANG_SPEC}->{$lang_code}->{$char}})
+	       || (keys %{$ht{WORD_EXTERNAL_PUNCTUATION}->{$char}})) {
+	    $part_of_word_p = 0;
+            $braille_all_caps_p = 0;
+	 } elsif (($i+1 <= $#chars) 
+	       && ($s1 = $char . $chars[$i+1])
+	       && ((keys %{$ht{WORD_EXTERNAL_PUNCTUATION_LANG_SPEC}->{$lang_code}->{$s1}})
+	        || (keys %{$ht{WORD_EXTERNAL_PUNCTUATION}->{$s1}}))) {
+	    $part_of_word_p = 0;
+            $braille_all_caps_p = 0;
+            $chart_ht{NOT_PART_OF_WORD_P}->{($i+1)} = 1;
+	 } elsif (($i+2 <= $#chars)
+	       && ($s2 = $char . $chars[$i+1] . $chars[$i+2])
+	       && ((keys %{$ht{WORD_EXTERNAL_PUNCTUATION_LANG_SPEC}->{$lang_code}->{$s2}})
+	        || (keys %{$ht{WORD_EXTERNAL_PUNCTUATION}->{$s2}}))) {
+	    $part_of_word_p = 0;
+            $braille_all_caps_p = 0;
+            $chart_ht{NOT_PART_OF_WORD_P}->{($i+1)} = 1;
+            $chart_ht{NOT_PART_OF_WORD_P}->{($i+2)} = 1;
+	 } elsif (($i+1 <= $#chars)
+	       && ($char eq $braille_capital_letter_indicator)
+	       && ($chars[$i+1] eq $braille_capital_letter_indicator)) {
+	    $braille_all_caps_p = 1;
+	 } else {
+	    $part_of_word_p = 1;
+	 }
+	 # last period in Braille text is also not part_of_word_p
+	 if (($char eq $braille_period)
+	  && (($i == $#chars)
+	   || (($i < $#chars)
+	    && (! $this->braille_string_p($chars[$i+1]))))) {
+	    $part_of_word_p = 0;
+	 }
+	 # period before other word-external punctuation is also not part_of_word_p
+	 if (($i > 0)
+	  && ($chars[$i-1] eq $braille_period)
+	  && (! $part_of_word_p)
+	  && ($current_word_start ne "")) {
+	    $end_offset = -1;
+	 }
+      } else {
+         $braille_all_caps_p = 0;
+      }
+      $chart_ht{BRAILLE_ALL_CAPS_P}->{$i} = $braille_all_caps_p;
+
       if (($current_word_start ne "")
        && ((! $part_of_word_p)
         || ($current_script ne $current_word_script))) {
          # END OF WORD
 	 $chart_ht{CHAR_START_OF_WORD}->{$current_word_start} = 1;
-	 $chart_ht{CHAR_END_OF_WORD}->{($i-1)} = 1;
-	 my $word = join("", @chars[$current_word_start .. ($i-1)]);
+	 $chart_ht{CHAR_END_OF_WORD}->{($i-1+$end_offset)} = 1;
+	 my $word = join("", @chars[$current_word_start .. ($i-1+$end_offset)]);
 	 $chart_ht{WORD_START_END}->{$current_word_start}->{$i} = $word;
-	 $chart_ht{WORD_END_START}->{$i}->{$current_word_start} = $word;
-	 # print STDERR "Word ($current_word_start-$i): $word ($current_word_script)\n";
+	 $chart_ht{WORD_END_START}->{$i+$end_offset}->{$current_word_start} = $word;
+	 # print STDERR "Word ($current_word_start-$i+$end_offset): $word ($current_word_script)\n";
 	 $current_word_start = "";
 	 $current_word_script = "";
       }
@@ -605,26 +764,90 @@ sub romanize {
       my $prev2_script = ($i >= 2) ? $chart_ht{CHAR_SCRIPT}->{($i-2)} : "";
       my $prev_script = ($i >= 1) ? $chart_ht{CHAR_SCRIPT}->{($i-1)} : "";
       my $next_script = ($i < $#chars) ? $chart_ht{CHAR_SCRIPT}->{($i+1)} : "";
+      my $next_char = ($i < $#chars) ? $chart_ht{ORIG_CHAR}->{($i+1)} : "";
+      my $next_char_name = $ht{UTF_TO_CHAR_NAME}->{$next_char} || "";
       my $prev2_letter_plus_char_p = ($i >= 2) ? $chart_ht{CHAR_LETTER_PLUS}->{($i-2)} : 0;
       my $prev_letter_plus_char_p = ($i >= 1) ? $chart_ht{CHAR_LETTER_PLUS}->{($i-1)} : 0;
       my $next_letter_plus_char_p = ($i < $#chars) ? $chart_ht{CHAR_LETTER_PLUS}->{($i+1)} : 0;
       my $next_index = $i + 1;
-      foreach $string_length (reverse(1 .. 6)) {
-	 next if ($i + $string_length-1) > $#chars;
-	 my $multi_char_substring = join("", @chars[$i..($i+$string_length-1)]);
-	 my @mappings = keys %{$ht{UTF_CHAR_MAPPING_LANG_SPEC}->{$lang_code}->{$multi_char_substring}};
-	 @mappings = keys %{$ht{UTF_CHAR_MAPPING}->{$multi_char_substring}} unless @mappings;
-	 foreach $mapping (@mappings) {
+
+      # Braille numeric mode
+      if ($char eq $braille_number_indicator) {
+	 my $offset = 0;
+	 my $numeric_value = "";
+	 my $digit;
+         while ($i+$offset < $#chars) {
+	    $offset++;
+	    my $offset_char = $chart_ht{ORIG_CHAR}->{$i+$offset};
+            if (defined($digit = $ht{BRAILLE_TO_DIGIT}->{$offset_char})) {
+	       $numeric_value .= $digit;
+	    } elsif (($offset_char eq $braille_decimal_point)
+                  || ($ht{UTF_CHAR_MAPPING}->{$offset_char}->{"."})) {
+	       $numeric_value .= ".";
+	    } elsif ($offset_char eq $braille_comma) {
+	       $numeric_value .= ",";
+	    } elsif ($offset_char eq $braille_numeric_space) {
+	       $numeric_value .= " ";
+	    } elsif ($offset_char eq $braille_solidus) {
+	       $numeric_value .= "/";
+	    } elsif ($offset_char eq $braille_number_indicator) {
+	        # stay in Braille numeric mode
+	    } elsif ($offset_char eq $braille_letter_indicator) {
+	       # consider as part of number, but without contributing to numeric_value
+	       last;
+	    } else {
+	       $offset--; 
+	       last;
+	    }
+	 }
+	 if ($offset) {
+            $next_index = $i + $offset + 1;
+	    $node_id = $this->add_node($numeric_value, $i, $next_index, *chart_ht, "", "braille number");
+	    $found_char_mapping_p = 1;
+	 }
+      }
+
+      unless ($found_char_mapping_p) {
+        foreach $string_length (reverse(1 .. 6)) {
+	  next if ($i + $string_length-1) > $#chars;
+	  my $start_of_word_p = $chart_ht{CHAR_START_OF_WORD}->{$i} || 0;
+	  my $end_of_word_p = $chart_ht{CHAR_END_OF_WORD}->{($i+$string_length-1)} || 0;
+	  my $multi_char_substring = join("", @chars[$i..($i+$string_length-1)]);
+	  my @mappings = keys %{$ht{UTF_CHAR_MAPPING_LANG_SPEC}->{$lang_code}->{$multi_char_substring}};
+	  @mappings = keys %{$ht{UTF_CHAR_MAPPING}->{$multi_char_substring}} unless @mappings;
+	  my @mappings_whole = ();
+	  my @mappings_start_or_end = ();
+	  my @mappings_other = ();
+	  foreach $mapping (@mappings) {
 	    next if $mapping =~ /\(__.*__\)/;
-	    if ($ht{USE_ONLY_AT_START_OF_WORD_LANG_SPEC}->{$lang_code}->{$multi_char_substring}->{$mapping}
-	     || $ht{USE_ONLY_AT_START_OF_WORD}->{$multi_char_substring}->{$mapping}) {
-	       next unless $chart_ht{CHAR_START_OF_WORD}->{$i};
+	    if ($ht{USE_ONLY_FOR_WHOLE_WORD_LANG_SPEC}->{$lang_code}->{$multi_char_substring}->{$mapping}
+	     || $ht{USE_ONLY_FOR_WHOLE_WORD}->{$multi_char_substring}->{$mapping}) {
+	       push(@mappings_whole, $mapping) if $start_of_word_p && $end_of_word_p;
+	    } elsif ($ht{USE_ONLY_AT_START_OF_WORD_LANG_SPEC}->{$lang_code}->{$multi_char_substring}->{$mapping}
+	          || $ht{USE_ONLY_AT_START_OF_WORD}->{$multi_char_substring}->{$mapping}) {
+	       push(@mappings_start_or_end, $mapping) if $start_of_word_p;
+	    } elsif ($ht{USE_ONLY_AT_END_OF_WORD_LANG_SPEC}->{$lang_code}->{$multi_char_substring}->{$mapping}
+	          || $ht{USE_ONLY_AT_END_OF_WORD}->{$multi_char_substring}->{$mapping}) {
+	       push(@mappings_start_or_end, $mapping) if $end_of_word_p;
+	    } else {
+	       push(@mappings_other, $mapping);
 	    }
-	    if ($ht{USE_ONLY_AT_END_OF_WORD_LANG_SPEC}->{$lang_code}->{$multi_char_substring}->{$mapping}
-	     || $ht{USE_ONLY_AT_END_OF_WORD}->{$multi_char_substring}->{$mapping}) {
-	       next unless $chart_ht{CHAR_END_OF_WORD}->{($i+$string_length-1)};
+	  }
+	  @mappings = @mappings_whole;
+	  @mappings = @mappings_start_or_end unless @mappings;
+	  @mappings = @mappings_other unless @mappings;
+	  foreach $mapping (@mappings) {
+	    next if $mapping =~ /\(__.*__\)/;
+	    if ($ht{DONT_USE_AT_START_OF_WORD_LANG_SPEC}->{$lang_code}->{$multi_char_substring}->{$mapping}
+	     || $ht{DONT_USE_AT_START_OF_WORD}->{$multi_char_substring}->{$mapping}) {
+	       next if $start_of_word_p;
 	    }
-	    $node_id = $this->add_node($mapping, $i, $i+$string_length, *chart_ht, "", "multi-char-mapping");
+	    if ($ht{DONT_USE_AT_END_OF_WORD_LANG_SPEC}->{$lang_code}->{$multi_char_substring}->{$mapping}
+	     || $ht{DONT_USE_AT_END_OF_WORD}->{$multi_char_substring}->{$mapping}) {
+	       next if $end_of_word_p;
+	    }
+	    my $mapping2 = ($chart_ht{BRAILLE_ALL_CAPS_P}->{$i}) ? (uc $mapping) : $mapping;
+	    $node_id = $this->add_node($mapping2, $i, $i+$string_length, *chart_ht, "", "multi-char-mapping");
 	    $next_index = $i + $string_length;
 	    $found_char_mapping_p = 1;
 	    if ($annotation) {
@@ -637,24 +860,30 @@ sub romanize {
 		  }
 	       }
 	    }
-	 }
-	 my @alt_mappings = keys %{$ht{UTF_CHAR_ALT_MAPPING_LANG_SPEC}->{$lang_code}->{$multi_char_substring}};
-	 @alt_mappings = keys %{$ht{UTF_CHAR_ALT_MAPPING}->{$multi_char_substring}} unless @alt_mappings;
-	 foreach $alt_mapping (@alt_mappings) {
+	  }
+	  my @alt_mappings = keys %{$ht{UTF_CHAR_ALT_MAPPING_LANG_SPEC}->{$lang_code}->{$multi_char_substring}};
+	  @alt_mappings = keys %{$ht{UTF_CHAR_ALT_MAPPING}->{$multi_char_substring}} unless @alt_mappings;
+	  @alt_mappings = () if ($#alt_mappings == 0) && ($alt_mappings[0] eq "_NONE_");
+	  foreach $alt_mapping (@alt_mappings) {
 	    if ($chart_ht{CHAR_PART_OF_POINTED_HEBREW_WORD}->{$i}) {
 	       next unless
 	          $ht{USE_ALT_IN_POINTED_LANG_SPEC}->{$lang_code}->{$multi_char_substring}->{$alt_mapping}
 	       || $ht{USE_ALT_IN_POINTED}->{$multi_char_substring}->{$alt_mapping};
 	    }
+	    if ($ht{USE_ALT_ONLY_FOR_WHOLE_WORD_LANG_SPEC}->{$lang_code}->{$multi_char_substring}->{$alt_mapping}
+	     || $ht{USE_ALT_ONLY_FOR_WHOLE_WORD}->{$multi_char_substring}->{$alt_mapping}) {
+	       next unless $start_of_word_p && $end_of_word_p;
+	    }
 	    if ($ht{USE_ALT_ONLY_AT_START_OF_WORD_LANG_SPEC}->{$lang_code}->{$multi_char_substring}->{$alt_mapping}
 	     || $ht{USE_ALT_ONLY_AT_START_OF_WORD}->{$multi_char_substring}->{$alt_mapping}) {
-	       next unless $chart_ht{CHAR_START_OF_WORD}->{$i};
+	       next unless $start_of_word_p;
 	    }
 	    if ($ht{USE_ALT_ONLY_AT_END_OF_WORD_LANG_SPEC}->{$lang_code}->{$multi_char_substring}->{$alt_mapping}
 	     || $ht{USE_ALT_ONLY_AT_END_OF_WORD}->{$multi_char_substring}->{$alt_mapping}) {
-	       next unless $chart_ht{CHAR_END_OF_WORD}->{($i+$string_length-1)};
+	       next unless $end_of_word_p;
 	    }
-	    $node_id = $this->add_node($alt_mapping, $i, $i+$string_length, *chart_ht, "alt", "multi-char-mapping");
+	    my $alt_mapping2 = ($chart_ht{BRAILLE_ALL_CAPS_P}->{$i}) ? (uc $alt_mapping) : $alt_mapping;
+	    $node_id = $this->add_node($alt_mapping2, $i, $i+$string_length, *chart_ht, "alt", "multi-char-mapping");
 	    if ($annotation) {
 	       @annotation_elems = split(/,\s*/, $annotation);
 	       foreach $annotation_elem (@annotation_elems) {
@@ -665,7 +894,8 @@ sub romanize {
 	          }
 	       }
 	    }
-	 }
+	  }
+        }
       }
       unless ($found_char_mapping_p) {
 	 my $prev_node_id = $this->get_node_for_span($i-4, $i, *chart_ht)
@@ -733,9 +963,9 @@ sub romanize {
 	 } elsif ($char =~ /^[\x00-\x7F]$/) {
 	    $this->add_node($char, $i, $i+1, *chart_ht, "", "ASCII"); # ASCII character, incl. control characters
 
-         # Emoji, dingbats, pictographs
-         } elsif ($char =~ /^(\xE2[\x98-\x9E]|\xF0\x9F[\x8C-\xA7])/) {
-            $this->add_node($char, $i, $i+1, *chart_ht, "", "pictograph");
+	 # Emoji, dingbats, pictographs
+	 } elsif ($char =~ /^(\xE2[\x98-\x9E]|\xF0\x9F[\x8C-\xA7])/) {
+	    $this->add_node($char, $i, $i+1, *chart_ht, "", "pictograph");
 
          # Hangul (Korean)
          } elsif (($char =~ /^[\xEA-\xED]/)
@@ -997,13 +1227,19 @@ sub romanize {
    $this->default_vowelize_tibetan(0, $n_characters, *chart_ht, $lang_code, $line_number) if $chart_ht{CHART_CONTAINS_SCRIPT}->{"Tibetan"};
    $this->assemble_numbers_in_chart(*chart_ht, $line_number);
 
-   $result = $this->best_romanized_string(0, $n_characters, *chart_ht) unless $return_chart_p;
+   if ($return_chart_p) {
+   } elsif ($return_offset_mappings_p) {
+      ($result, $offset_mappings, $new_char_offset, $new_rom_char_offset) = $this->best_romanized_string(0, $n_characters, *chart_ht, $control, $initial_char_offset, $initial_rom_char_offset);
+   } else {
+      $result = $this->best_romanized_string(0, $n_characters, *chart_ht) unless $return_chart_p;
+   }
 
    if ($verbosePM) {
       my $logfile = "/nfs/isd/ulf/cgi-mt/amr-tmp/uroman-log.txt";
       $util->append_to_file($logfile, $log) if $log && (-r $logfile);
    }
 
+   return ($result, $offset_mappings) if $return_offset_mappings_p;
    return *chart_ht if $return_chart_p;
    return $result;
 }
@@ -1187,28 +1423,58 @@ sub schwa_deletion {
 }
 
 sub best_romanized_string {
-   local($this, $chart_start, $chart_end, *chart_ht) = @_;
+   local($this, $chart_start, $chart_end, *chart_ht, $control, $orig_char_offset, $rom_char_offset) = @_;
 
+   $control = "" unless defined($control);
+   my $current_orig_char_offset = $orig_char_offset || 0;
+   my $current_rom_char_offset = $rom_char_offset || 0;
+   my $return_offset_mappings_p = ($control =~ /\breturn offset mappings\b/);
    my $result = "";
    my $start = $chart_start;
    my $end;
+   my @char_offsets = ("$current_orig_char_offset:$current_rom_char_offset");
    while ($start < $chart_end) {
       $end = $this->find_end_of_rom_segment($start, $chart_end, *chart_ht);
+      my $n_orig_chars_in_segment = 0;
+      my $n_rom_chars_in_segment = 0;
       if ($end && ($start < $end)) {
          my @best_romanizations = $this->best_romanizations($start, $end, *chart_ht);
 	 my $best_romanization = (@best_romanizations) ? $best_romanizations[0] : undef;
 	 if (defined($best_romanization)) {
             $result .= $best_romanization;
+	    if ($return_offset_mappings_p) {
+	       $n_orig_chars_in_segment = $end-$start;
+	       $n_rom_chars_in_segment = $utf8->length_in_utf8_chars($best_romanization);
+	    }
 	    $start = $end;
 	 } else {
-            $result .= $chart_ht{ORIG_CHAR}->{$start};
+	    my $best_romanization = $chart_ht{ORIG_CHAR}->{$start};
+            $result .= $best_romanization;
 	    $start++;
+	    if ($return_offset_mappings_p) {
+	       $n_orig_chars_in_segment = 1;
+	       $n_rom_chars_in_segment = $utf8->length_in_utf8_chars($best_romanization);
+	    }
 	 }
       } else {
-         $result .= $chart_ht{ORIG_CHAR}->{$start};
+	 my $best_romanization = $chart_ht{ORIG_CHAR}->{$start};
+         $result .= $best_romanization;
 	 $start++;
+	 if ($return_offset_mappings_p) {
+	    $n_orig_chars_in_segment = 1;
+	    $n_rom_chars_in_segment = $utf8->length_in_utf8_chars($best_romanization);
+	 }
+      }
+      if ($return_offset_mappings_p) {
+         my $new_orig_char_offset = $current_orig_char_offset + $n_orig_chars_in_segment;
+         my $new_rom_char_offset = $current_rom_char_offset + $n_rom_chars_in_segment;
+         my $offset_mapping = "$new_orig_char_offset:$new_rom_char_offset";
+         push(@char_offsets, $offset_mapping);
+         $current_orig_char_offset = $new_orig_char_offset;
+         $current_rom_char_offset = $new_rom_char_offset;
       }
    }
+   return ($result, join(",", @char_offsets), $current_orig_char_offset, $current_rom_char_offset) if $return_offset_mappings_p;
    return $result;
 }
 
@@ -1391,7 +1657,7 @@ sub markup_orig_rom_strings {
       $marked_up_orig .= "<span id=\"span-$last_group_id_index-2\" onmouseover=\"highlight_elems('span-$last_group_id_index','1');\" onmouseout=\"highlight_elems('span-$last_group_id_index','0');\"$orig_title_clause>" . $util->guard_html($orig_segment) . "<\/span>";
       if (($last_char = $chart_ht{ORIG_CHAR}->{($segment_end-1)})
        && ($last_char_name = $ht{UTF_TO_CHAR_NAME}->{$last_char})
-       && ($last_char_name =~ /^(FULLWIDTH COLON|FULLWIDTH COMMA|FULLWIDTH RIGHT PARENTHESIS|IDEOGRAPHIC COMMA|IDEOGRAPHIC FULL STOP|RIGHT CORNER BRACKET|TIBETAN MARK .*)$/)) {
+       && ($last_char_name =~ /^(FULLWIDTH COLON|FULLWIDTH COMMA|FULLWIDTH RIGHT PARENTHESIS|IDEOGRAPHIC COMMA|IDEOGRAPHIC FULL STOP|RIGHT CORNER BRACKET|BRAILLE PATTERN BLANK|TIBETAN MARK .*)$/)) {
          $marked_up_orig .= "<wbr>";
          $marked_up_rom .= "<wbr>";
       }
@@ -1446,7 +1712,7 @@ sub quick_romanize {
    local($this, $s, $lang_code, *ht) = @_;
 
    my $result = "";
-   my @chars = $utf8->split_into_utf8_characters($s, "return only chars");
+   my @chars = $utf8->split_into_utf8_characters($s, "return only chars", *empty_ht);
    while (@chars) {
       my $found_match_in_table_p = 0;
       foreach $string_length (reverse(1..4)) {
@@ -1487,7 +1753,7 @@ sub mark_up_string_for_mouse_over {
    $control = "" unless defined($control);
    $no_ascii_p = ($control =~ /NO-ASCII/);
    my $result = "";
-   @chars = $utf8->split_into_utf8_characters($s, "return only chars");
+   @chars = $utf8->split_into_utf8_characters($s, "return only chars", *empty_ht);
    while (@chars) {
       $char = shift @chars;
       $numeric = $ht{UTF_TO_NUMERIC}->{$char};
@@ -1574,6 +1840,7 @@ sub romanize_charname {
    return $cached_result if defined($cashed_result);
    $orig_char_name = $char_name;
    $char_name =~ s/^.* LETTER\s+//;
+   $char_name =~ s/^.* SYLLABLE\s+B\d\d\d\s+/$1/; # Linear B syllables
    $char_name =~ s/^.* SYLLABLE\s+//;
    $char_name =~ s/^.* SYLLABICS\s+//;
    $char_name =~ s/^.* LIGATURE\s+//;
@@ -1584,6 +1851,7 @@ sub romanize_charname {
    $char_name =~ s/ WITH .*$//;
    $char_name =~ s/ WITHOUT .*$//;
    $char_name =~ s/\s+(ABOVE|AGUNG|BAR|BARREE|BELOW|CEDILLA|CEREK|DIGRAPH|DOACHASHMEE|FINAL FORM|GHUNNA|GOAL|INITIAL FORM|ISOLATED FORM|KAWI|LELET|LELET RASWADI|LONSUM|MAHAPRANA|MEDIAL FORM|MURDA|MURDA MAHAPRANA|REVERSED|ROTUNDA|SASAK|SUNG|TAM|TEDUNG|TYPE ONE|TYPE TWO|WOLOSO)\s*$//;
+   $char_name =~ s/^([A-Z]+)\d+$/$1/; # Linear B syllables etc.
    foreach $_ ((1 .. 3)) {
       $char_name =~ s/^.*\b(?:ABKHASIAN|ACADEMY|AFRICAN|AIVILIK|AITON|AKHMIMIC|ALEUT|ALI GALI|ALPAPRAANA|ALTERNATE|ALTERNATIVE|AMBA|ARABIC|ARCHAIC|ASPIRATED|ATHAPASCAN|BASELINE|BLACKLETTER|BARRED|BASHKIR|BERBER|BHATTIPROLU|BIBLE-CREE|BIG|BINOCULAR|BLACKFOOT|BLENDED|BOTTOM|BROAD|BROKEN|CANDRA|CAPITAL|CARRIER|CHILLU|CLOSE|CLOSED|COPTIC|CROSSED|CRYPTOGRAMMIC|CURLY|CYRILLIC|DANTAJA|DENTAL|DIALECT-P|DIAERESIZED|DOTLESS|DOUBLE|DOUBLE-STRUCK|EASTERN PWO KAREN|EGYPTOLOGICAL|FARSI|FINAL|FLATTENED|GLOTTAL|GREAT|GREEK|HALF|HIGH|INITIAL|INSULAR|INVERTED|IOTIFIED|JONA|KANTAJA|KASHMIRI|KHAKASSIAN|KHAMTI|KHANDA|KIRGHIZ|KOMI|L-SHAPED|LATINATE|LITTLE|LONG|LOOPED|LOW|MAHAAPRAANA|MANCHU|MANDAILING|MATHEMATICAL|MEDIAL|MIDDLE-WELSH|MON|MONOCULAR|MOOSE-CREE|MULTIOCULAR|MUURDHAJA|N-CREE|NASKAPI|NDOLE|NEUTRAL|NIKOLSBURG|NORTHERN|NUBIAN|NUNAVIK|NUNAVUT|OJIBWAY|OLD|OPEN|ORKHON|OVERLONG|PERSIAN|PHARYNGEAL|PRISHTHAMATRA|R-CREE|REDUPLICATION|REVERSED|ROMANIAN|ROUND|ROUNDED|RUDIMENTA|RUMAI PALAUNG|SANYAKA|SARA|SAYISI|SCRIPT|SEBATBEIT|SEMISOFT|SGAW KAREN|SHAN|SHARP|SHWE PALAUNG|SHORT|SIBE|SIDEWAYS|SIMALUNGUN|SMALL|SOGDIAN|SOFT|SOUTH-SLAVEY|SOUTHERN|SPIDERY|STIRRUP|STRAIGHT|STRETCHED|SUBSCRIPT|SWASH|TAI LAING|TAILED|TAILLESS|TAALUJA|TH-CREE|TALL|TURNED|TODO|TOP|TROKUTASTI|TUAREG|UKRAINIAN|VISIGOTHIC|VOCALIC|VOICED|VOICELESS|VOLAPUK|WAVY|WESTERN PWO KAREN|WEST-CREE|WESTERN|WIDE|WOODS-CREE|Y-CREE|YENISEI|YIDDISH)\s+//;
    }
@@ -1606,6 +1874,8 @@ sub romanize_charname {
       $char_name = "+m";
    } elsif ($char_name =~ /\bSCHWA\b/) {
       $char_name = "e";
+   } elsif ($char_name =~ /\bIOTA\b/) {
+      $char_name = "i";
    } elsif ($char_name =~ /\s/) {
    } elsif ($orig_char_name =~ /KHMER LETTER/) {
       $char_name .= "-";
@@ -1621,7 +1891,7 @@ sub romanize_charname {
       $char_name =~ s/^([AEIOU]+)[^AEIOU]+[AEIOU].*/$1/i;
    }
 
-   my $result = ($orig_char_name =~ /\bCAPITAL\b/) ? $char_name : (lc $char_name);
+   my $result = ($orig_char_name =~ /\bCAPITAL\b/) ? (uc $char_name) : (lc $char_name);
    # print STDERR "(R) romanize_charname($orig_char_name): $result\n" if $orig_char_name =~ /middle/i;
    $ht{ROMANIZE_CHARNAME}->{$char_name}->{$lang_code}->{$output_style} = $result;
    return $result;

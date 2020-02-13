@@ -12,6 +12,7 @@
 ::script-name Bhaiksuki
 ::script-name Bopomofo ::language Chinese
 ::script-name Brahmi ::abugida-default-vowel a
+::script-name Braille
 ::script-name Buginese
 ::script-name Buhid
 ::script-name Canadian Syllabics

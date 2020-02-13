@@ -28,6 +28,14 @@
 ::s Ț ::t Ts
 ::s ț ::t ts
 
+# Digraphs
+# ::s ʣ ::t dz
+::s ʤ ::t dzh ::comment Latin small letter dezh digraph
+# ::s ʥ ::t dz
+# ::s ʦ ::t ts
+::s ʧ ::t tsh ::comment Latin small letter tesh digraph
+# ::s ʨ ::t tc
+
 # Miscellaneous
 ::s ə ::t e
 
@@ -40,8 +48,8 @@
 ::s gh ::t gh ::t-alt f, ph, "" ::example laugh, daughter
 ::s high ::t high ::t-alt hai ::example highlight
 ::s High ::t High ::t-alt Hai ::example High School
-::s Isle ::t Isle ::t-alt Ail ::use-only-at-start-of-word ::use-only-at-end-of-word ::example Isle
-::s Island ::t Island ::t-alt Ailand ::use-only-at-start-of-word ::use-only-at-end-of-word ::example Island
+::s Isle ::t Isle ::t-alt Ail ::use-only-for-whole-word ::example Isle
+::s Island ::t Island ::t-alt Ailand ::use-only-for-whole-word ::example Island
 ::s kn ::t kn ::t-alt n ::use-only-at-start-of-word ::example knowledge
 ::s Kn ::t Kn ::t-alt N ::use-only-at-start-of-word ::example Knight
 ::s Mc ::t Mc ::t-alt Mac ::use-only-at-start-of-word ::example McNulty
@@ -51,10 +59,10 @@
 ::s Ph ::t Ph ::t-alt F ::example Philip
 ::s Thom ::t Thom ::t-alt Tom ::use-only-at-start-of-word ::example Thomas, Thompson
 ::s tion ::t tion ::t-alt shen ::example
-::s Sean ::t Sean ::t-alt Shawn ::use-only-at-start-of-word ::use-only-at-end-of-word
+::s Sean ::t Sean ::t-alt Shawn ::use-only-for-whole-word
 ::s ssion ::t ssion ::t-alt shen ::example Sessions
-::s St  ::t St ::t-alt Saint ::use-only-at-start-of-word ::use-only-at-end-of-word
-::s St.  ::t St. ::t-alt Saint ::use-only-at-start-of-word ::use-only-at-end-of-word
+::s St ::t St ::t-alt Saint ::use-only-for-whole-word
+::s St. ::t St. ::t-alt Saint ::use-only-for-whole-word
 ::s Wr ::t Wr ::t-alt R ::example Wren
 ::s wr ::t wr ::t-alt r ::example Cartwright
 ::s x ::t x ::t-alt ks ::example Mexico
@@ -83,7 +91,65 @@
 ::s ij ::t ij ::t-alt ai
 ::s Ij ::t Ij ::t-alt Ai
 
-# Greek
+# Latvian
+::s Ā ::t A ::t-alt Aa ::lcode lav
+::s ā ::t a ::t-alt aa ::lcode lav
+::s Ē ::t E ::t-alt Ee ::lcode lav
+::s ē ::t e ::t-alt ee ::lcode lav
+::s Ī ::t I ::t-alt Ii ::lcode lav
+::s ī ::t i ::t-alt ii ::lcode lav
+::s Ū ::t U ::t-alt Uu ::lcode lav
+::s ū ::t u ::t-alt uu ::lcode lav
+::s Ģ ::t G ::t-alt Gj ::lcode lav
+::s ģ ::t g ::t-alt gj ::lcode lav
+::s Ķ ::t K ::t-alt Kj ::lcode lav
+::s ķ ::t k ::t-alt kj ::lcode lav
+::s Ļ ::t L ::t-alt Lj ::lcode lav
+::s ļ ::t l ::t-alt lj ::lcode lav
+::s Ņ ::t N ::t-alt Nj ::lcode lav
+::s ņ ::t n ::t-alt nj ::lcode lav
+::s C ::t C ::t-alt Ts ::lcode lav
+::s c ::t c ::t-alt ts ::lcode lav
+::s Č ::t C ::t-alt Tsh ::lcode lav
+::s č ::t c ::t-alt tsh ::lcode lav
+::s Š ::t Sh ::t-alt s ::lcode lav
+::s š ::t sh ::t-alt s ::lcode lav
+::s Ž ::t Z ::t-alt Zh ::lcode lav
+::s ž ::t z ::t-alt zh ::lcode lav
+
+# Lithuanian
+::s C ::t C ::t-alt Ts ::lcode lit
+::s c ::t c ::t-alt ts ::lcode lit
+::s Č ::t C ::t-alt Tsh ::lcode lit
+::s č ::t c ::t-alt tsh ::lcode lit
+::s Š ::t Sh ::t-alt s ::lcode lit
+::s š ::t sh ::t-alt s ::lcode lit
+::s Ž ::t Z ::t-alt Zh ::lcode lit
+::s ž ::t z ::t-alt zh ::lcode lit
+
+# International Greek (e.g. as used in chemical compounds)
+::s β ::t b
+::s Β ::t B
+::s ϐ ::t b
+
+# Ancient Greek
+::s β ::t b ::lcode grc
+::s Β ::t B ::lcode grc
+::s γγ ::t ng ::lcode grc
+::s γκ ::t nk ::lcode grc
+::s γξ ::t nx ::lcode grc
+::s γχ ::t nch ::lcode grc
+::s ϱ ::t r ::lcode grc
+
+# Pontic Greek
+::s β ::t v ::t-alt b ::lcode pnt
+::s Β ::t V ::t-alt B ::lcode pnt
+::s ϐ ::t v ::t-alt b ::lcode pnt
+
+# Modern Greek (generally the default)
+::s β ::t v ::t-alt b ::lcode ell
+::s Β ::t V ::t-alt B ::lcode ell
+::s ϐ ::t v ::t-alt b ::lcode ell
 ::s Ι ::t I
 ::s ι ::t i
 ::s ί ::t i
@@ -92,22 +158,46 @@
 ::s υ ::t y
 ::s Ρ ::t R
 ::s ρ ::t r
+::s ϱ ::t r
+::s Χ ::t Ch ::t-alt Kh
+::s χ ::t ch ::t-alt kh
+::s φ ::t f ::t-alt ph
+::s Φ ::t F ::t-alt Ph
 ::s Ντ ::t D
-::s ντ ::t nd ::t-alt d
+::s ντ ::t nd ::t-alt d, nt
 # ::s ντζ ::t ntz
 ::s Μπ ::t B
-::s μπ ::t mb ::t-alt b
+::s μπ ::t b ::use-only-at-start-of-word
+::s μπ ::t mb ::t-alt b, mp ::dont-use-at-start-of-word
+::s λμπ ::t lb
+::s νμπ ::t nb
+::s ρμπ ::t rb
 ::s γγ ::t ng
-::s γκ ::t ng ::t-alt g
+::s Γκ ::t G
+::s γκ ::t ng ::t-alt g ::dont-use-at-start-of-word
+::s γκ ::t g ::use-only-at-start-of-word
+::s γξ ::t nx ::lcode grc
+::s γχ ::t nch ::lcode grc
 ::s ει ::t ei ::t-alt i
+::s Ει ::t Ei ::t-alt I
+::s ευ ::t eu ::t-alt ev ::comment donated by Constantine
+::s Ευ ::t Eu ::t-alt Ev ::comment donated by Constantine
+::s αυ ::t au ::t-alt av
+::s Αυ ::t Au ::t-alt Av
 ::s ου ::t ou ::t-alt u
-::s χ ::t ch ::t-alt kh
+::s Ου ::t Ou ::t-alt U
+::s ηυ ::t eu
+::s Ηυ ::t Eu
+::s υι ::t ui
+::s Υι ::t Ui
+::s ωυ ::t ou
+::s Ωυ ::t Ou
 
 # Cyrillic
-::s Г ::t G ::t-alt H
-::s г ::t g ::t-alt h
-::s Е ::t E ::t-alt Ye
-::s е ::t e ::t-alt ye
+::s Г ::t G ::t-alt H ::comment Cyrillic capital ghe
+::s г ::t g ::t-alt h ::comment Cyrillic small ghe
+::s Е ::t E ::t-alt Ye ::comment Cyrillic capital ie
+::s е ::t e ::t-alt ye ::comment Cyrillic small ie
 ::s Ё ::t E ::t-alt Yo
 ::s ё ::t e ::t-alt yo
 ::s Х ::t Kh ::t-alt Ch, H ::comment Cyrillic capital ha
@@ -120,6 +210,13 @@
 ::s ы ::t y ::comment Cyrillic small yeru
 ::s Ь ::t ::comment Cyrillic capital soft sign
 ::s ь ::t ::comment Cyrillic small soft sign
+::s Ж ::t Zh ::comment Cyrillic capital letter zhe
+::s Ш ::t Sh ::comment Cyrillic capital letter sha
+::s Ч ::t Ch ::comment Cyrillic capital letter che
+::s Џ ::t Dzh ::comment Cyrillic capital letter dzhe
+::s Є ::t Ie ::comment Cyrillic capital letter ie
+::s Ю ::t Yu ::comment Cyrillic capital letter yu
+::s Я ::t Ya ::comment  Cyrillic capital letter ya
 
 ::s Ҥ ::t Ng ::comment Cyrillic capital ligature EN GHE
 ::s ҥ ::t ng ::comment Cyrillic small ligature EN GHE
@@ -130,15 +227,399 @@
 ::s ҵ ::t ts ::comment Cyrillic small ligature te tse, used in Abkhasian
 ::s Ӕ ::t AE ::comment Cyrillic capital ligature a ie
 ::s ӕ ::t ae ::comment Cyrillic small ligature a ie
+::s ʹ ::t "'" ::comment modifier letter prime
+::s ʺ ::t '"' ::comment modifier letter double prime
+::s ий ::t iy ::dont-use-at-end-of-word
+::s ий ::t y ::use-only-at-end-of-word
+
+# Russian
+::s Г ::t G ::t-alt _NONE_ ::lcode rus ::comment Cyrillic capital letter ghe 
+::s г ::t g ::t-alt _NONE_ ::lcode rus ::comment Cyrillic small letter ghe
+::s Й ::t Y ::t-alt I, J ::lcode rus ::comment Cyrillic capital letter short i 
+::s й ::t y ::t-alt i, j ::lcode rus ::comment Cyrillic small letter short i 
+::s Ц ::t Ts ::t-alt C ::lcode rus ::comment Cyrillic capital letter tse
+::s ц ::t ts ::t-alt c ::lcode rus ::comment Cyrillic small letter tse
+::s Щ ::t Shch ::t-alt _NONE_ ::lcode rus ::comment Cyrillic capital letter shcha 
+::s щ ::t shch ::t-alt _NONE_ ::lcode rus ::comment Cyrillic small letter shcha 
+::s Ѣ ::t E ::t-alt Ie ::lcode rus ::comment archaic Cyrillic capital letter yat
+::s ѣ ::t e ::t-alt ie ::lcode rus ::comment archaic Cyrillic small letter yat
+::s Е ::t E ::t-alt Ye ::dont-use-at-start-of-word ::lcode rus ::comment Cyrillic capital ie
+::s Е ::t Ye ::t-alt E ::use-only-at-start-of-word ::lcode rus
+::s е ::t e ::t-alt ye ::dont-use-at-start-of-word ::lcode rus ::comment Cyrillic small ie
+::s е ::t ye ::t-alt e ::use-only-at-start-of-word ::lcode rus
+::s ае ::t aye ::lcode rus
+::s а́е ::t aye ::lcode rus
+::s ее ::t eye ::lcode rus
+::s е́е ::t eye ::lcode rus
+::s ие ::t iye ::lcode rus
+::s и́е ::t iye ::lcode rus
+::s ое ::t oye ::lcode rus
+::s о́е ::t oye ::lcode rus
+::s уе ::t uye ::lcode rus
+::s у́е ::t uye ::lcode rus
+::s ье ::t ye ::lcode rus
+::s ъе ::t ye ::lcode rus
+::s Ё ::t Yo ::t-alt E ::lcode rus ::comment Cyrillic capital io
+::s ё ::t yo ::t-alt e ::lcode rus
+::s аё ::t ayo ::lcode rus
+::s а́ё ::t ayo ::lcode rus
+::s её ::t eyo ::lcode rus
+::s е́ё ::t eyo ::lcode rus
+::s иё ::t iyo ::lcode rus
+::s и́ё ::t iyo ::lcode rus
+::s оё ::t oyo ::lcode rus
+::s о́ё ::t oyo ::lcode rus
+::s уё ::t uyo ::lcode rus
+::s у́ё ::t uyo ::lcode rus
+::s ьё ::t yo ::lcode rus
+::s ъё ::t yo ::lcode rus
+::s ий ::t y ::lcode rus
+
+# Ukranian
 ::s Г ::t H ::lcode ukr ::comment Ukrainian capital letter he 
 ::s г ::t h ::lcode ukr ::comment Ukrainian small letter he
 ::s Ґ ::t G ::lcode ukr ::comment Ukrainian capital letter ghe
 ::s ґ ::t g ::lcode ukr ::comment Ukrainian small letter ghe
+::s Е ::t E ::t-alt _NONE_ ::lcode ukr ::comment Cyrillic capital ie
+::s е ::t e ::t-alt _NONE_ ::lcode ukr ::comment Cyrillic small ie
+::s И ::t Y ::lcode ukr ::comment Ukrainian capital letter i
+::s и ::t y ::lcode ukr ::comment Ukrainian small letter i
+::s Ї ::t Yi ::lcode ukr ::comment Ukrainian capital letter yi
+::s ї ::t yi ::lcode ukr ::comment Ukrainian small letter yi
+::s Й ::t I ::t-alt Y ::lcode ukr ::comment Cyrillic capital letter short i 
+::s й ::t i ::t-alt y ::lcode ukr ::comment Cyrillic small letter short i 
+::s Ц ::t Ts ::t-alt C ::lcode ukr ::comment Cyrillic capital letter tse
+::s ц ::t ts ::t-alt c ::lcode ukr ::comment Cyrillic small letter tse
+::s Щ ::t Shch ::t-alt _NONE_ ::lcode ukr ::comment Cyrillic capital letter shcha 
+::s щ ::t shch ::t-alt _NONE_ ::lcode ukr ::comment Cyrillic small letter shcha 
+::s Ѣ ::t E ::t-alt Ie ::lcode ukr ::comment archaic Cyrillic capital letter yat
+::s ѣ ::t e ::t-alt ie ::lcode ukr ::comment archaic Cyrillic small letter yat
+::s Иї ::t Yi ::lcode ukr ::comment avoid Yyi
+::s иї ::t yi ::lcode ukr ::comment avoid yyi
+::s ій ::t iy ::lcode ukr
+::s і́й ::t iy ::lcode ukr
+::s ий ::t y ::lcode ukr ::comment Зеленський/Zelensky
+
+# Belarusian
+::s Г ::t H ::t-alt G ::lcode bel ::comment capital letter he 
+::s г ::t h ::t-alt g ::lcode bel ::comment small letter he
+::s Ґ ::t G ::lcode bel ::comment capital letter ghe
+::s ґ ::t g ::lcode bel ::comment small letter ghe
+::s Й ::t J ::t-alt Y ::lcode bel ::comment Cyrillic capital letter short i 
+::s й ::t j ::t-alt y ::lcode bel ::comment Cyrillic small letter short i
+::s Ц ::t Ts ::t-alt C ::lcode bel ::comment Cyrillic capital letter tse
+::s ц ::t ts ::t-alt c ::lcode bel ::comment Cyrillic small letter tse
+::s Щ ::t Shch ::t-alt _NONE_ ::lcode bel ::comment Cyrillic capital letter shcha 
+::s щ ::t shch ::t-alt _NONE_ ::lcode bel ::comment Cyrillic small letter shcha 
+::s Ѣ ::t E ::t-alt Ie ::lcode bel ::comment archaic Cyrillic capital letter yat
+::s ѣ ::t e ::t-alt ie ::lcode bel ::comment archaic Cyrillic small letter yat
+::s 'я ::t ya ::lcode bel
+::s ’я ::t ya ::lcode bel
+::s 'і ::t i ::lcode bel
+::s ’і ::t i ::lcode bel
+::s Ё ::t Yo ::t-alt E ::lcode bel ::comment Cyrillic capital io
+::s ё ::t yo ::t-alt e ::lcode bel
+::s ёў ::t you ::lcode bel
+::s ий ::t y ::lcode bel
+
+# Serbian
+::s Г ::t G ::t-alt _NONE_ ::lcode srp ::comment Cyrillic capital ghe
+::s г ::t g ::t-alt _NONE_ ::lcode srp ::comment Cyrillic small ghe
+::s Х ::t H ::t-alt _NONE_ ::lcode srp ::comment Cyrillic capital ha
+::s х ::t h ::t-alt _NONE_ ::lcode srp ::comment Cyrillic small ha
+::s Е ::t E ::t-alt _NONE_ ::lcode srp ::comment Cyrillic capital ie
+::s е ::t e ::t-alt _NONE_ ::lcode srp ::comment Cyrillic small ie
+::s Ђ ::t Dj ::lcode srp ::comment Cyrillic capital dje
+::s Љ ::t Lj ::lcode srp ::comment Cyrillic capital lje
+::s Ћ ::t Tsh ::lcode srp ::comment Cyrillic capital tshe
+::s Ж ::t Zh ::lcode srp ::comment Cyrillic capital zhe
+::s Ц ::t C ::t-alt Ts ::lcode srp ::comment Cyrillic capital tse
+::s ц ::t c ::t-alt ts ::lcode srp ::comment Cyrillic capital tse 
+::s Đ ::t Dj ::lcode srp ::comment Latin capital d with stroke
+::s đ ::t dj ::lcode srp ::comment Latin small d with stroke
+::s Ž ::t Zh ::lcode srp ::comment Latin capital z with caron
+::s ž ::t zh ::lcode srp ::comment Latin small z with caron
+::s Ć ::t Tsh ::lcode srp ::comment Latin capital c with acute
+::s ć ::t tsh ::lcode srp ::comment Latin small c with acute
+::s Č ::t Ch ::lcode srp ::comment Latin capital c with caron
+::s č ::t ch ::lcode srp ::comment Latin small c with caron
+::s Š ::t Sh ::lcode srp ::comment Latin capital s with caron
+::s š ::t sh ::lcode srp ::comment Latin small s with caron
+
+::s Г ::t G ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic capital ghe
+::s г ::t g ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic small ghe
+::s Х ::t H ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic capital ha
+::s х ::t h ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic small ha
+::s Ц ::t C ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic capital letter tse
+::s ц ::t c ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic small letter tse
+::s Ч ::t C ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic capital letter che
+::s ч ::t c ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic small letter che
+::s Џ ::t Dz ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic capital letter dzhe
+::s џ ::t dz ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic small letter dzhe
+::s Е ::t E ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic capital ie
+::s е ::t e ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic small ie
+::s Ш ::t S ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic capital sha
+::s ш ::t s ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic small sha
+::s Ж ::t Z ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic capital zhe
+::s ж ::t z ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic small zhe
+::s Љ ::t Lj ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic capital lje
+::s љ ::t lj ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic small lje
+::s Њ ::t Nj ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic capital nje
+::s њ ::t nj ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic small nje
+::s Ђ ::t Dj ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic capital dje
+::s ђ ::t dj ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic small dje
+::s Ћ ::t C ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic capital tshe
+::s ћ ::t c ::t-alt _NONE_ ::lcode srp2 ::comment Cyrillic small tshe
+::s Đ ::t Dj ::lcode srp2 ::comment Latin capital d with stroke
+::s đ ::t dj ::lcode srp2 ::comment Latin small d with stroke
+
+# Montenegrin extension (controversial)
+::s З́ ::t Zj ::lcode srp ::comment Cyrillic capital zje
+::s з́ ::t zj ::lcode srp ::comment Cyrillic small zje
+::s С́ ::t Sj ::lcode srp ::comment Cyrillic capital sje
+::s с́ ::t sj ::lcode srp ::comment Cyrillic small sje
+::s Ź ::t Zj ::lcode srp ::comment Latin capital z with acute
+::s ź ::t zj ::lcode srp ::comment Latin small z with acute
+::s Ś ::t Sj ::lcode srp ::comment Latin capital s with acute
+::s ś ::t sj ::lcode srp ::comment Latin small s with acute
+
+::s З́ ::t Z ::lcode srp2 ::comment Cyrillic capital zje
+::s з́ ::t z ::lcode srp2 ::comment Cyrillic small zje
+::s С́ ::t S ::lcode srp2 ::comment Cyrillic capital sje
+::s с́ ::t s ::lcode srp2 ::comment Cyrillic small sje
+::s Ź ::t Z ::lcode srp2 ::comment Latin capital z with acute
+::s ź ::t z ::lcode srp2 ::comment Latin small z with acute
+::s Ś ::t S ::lcode srp2 ::comment Latin capital s with acute
+::s ś ::t s ::lcode srp2 ::comment Latin small s with acute
+
+# Bulgarian
+::s Г ::t G ::t-alt _NONE_ ::lcode bul ::comment Cyrillic capital ghe
+::s г ::t g ::t-alt _NONE_ ::lcode bul ::comment Cyrillic small ghe
+::s Х ::t H ::t-alt Kh ::lcode bul ::comment Cyrillic capital letter ha
+::s х ::t h ::t-alt kh ::lcode bul ::comment Cyrillic small letter ha
+::s Ц ::t C ::t-alt Ts ::lcode bul ::comment Cyrillic capital letter tse
+::s ц ::t c ::t-alt ts ::lcode bul ::comment Cyrillic small letter tse
+::s Щ ::t Sht ::t-alt _NONE_ ::lcode bul ::comment Cyrillic capital letter shcha
+::s щ ::t sht ::t-alt _NONE_ ::lcode bul ::comment Cyrillic small letter shcha
+::s Е ::t E ::t-alt _NONE_ ::lcode bul ::comment Cyrillic capital ie
+::s е ::t e ::t-alt _NONE_ ::lcode bul ::comment Cyrillic small ie
+::s Ж ::t Zh ::t-alt Z, J ::lcode bul ::comment Cyrillic capital zhe
+::s ж ::t zh ::t-alt z, j ::lcode bul ::comment Cyrillic small zhe
+::s Й ::t I ::t-alt Y, J ::lcode bul ::comment Cyrillic capital letter short i
+::s й ::t i ::t-alt y, j ::lcode bul ::comment Cyrillic short letter short i
+::s Ю ::t Yu ::t-alt U, Ju, Iu ::lcode bul ::comment Cyrillic capital letter yu
+::s ю ::t yu ::t-alt u, ju, iu ::lcode bul ::comment Cyrillic small letter yu
+::s Ъ ::t U ::t-alt A ::lcode bul ::comment Cyrillic capital letter hard sign
+::s ъ ::t u ::t-alt a ::lcode bul ::comment Cyrillic capital letter hard sign
+::s Ѣ ::t E ::t-alt Ie ::lcode bul ::comment archaic Cyrillic capital letter yat
+::s ѣ ::t e ::t-alt ie ::lcode bul ::comment archaic Cyrillic small letter yat
+::s Ѫ ::t U ::lcode bul ::comment archaic Cyrillic capital letter yus
+::s ѫ ::t u ::lcode bul ::comment archaic Cyrillic small letter yus
+::s ИЯ ::t IA ::lcode bul ::use-only-at-end-of-word
+::s ия ::t ia ::lcode bul ::use-only-at-end-of-word
+
+::s Ž ::t Zh ::lcode bul ::comment Latin capital z with caron
+::s ž ::t zh ::lcode bul ::comment Latin small z with caron
+::s Č ::t Ch ::lcode bul ::comment Latin capital c with caron
+::s č ::t ch ::lcode bul ::comment Latin small c with caron
+::s Š ::t Sh ::lcode bul ::comment Latin capital s with caron
+::s š ::t sh ::lcode bul ::comment Latin small s with caron
+::s Ŝ ::t Sht ::lcode bul ::comment Latin capital s with circumflex
+::s ŝ ::t sht ::lcode bul ::comment Latin small s with circumflex
+::s Û ::t Yu ::t-alt U, Ju, Iu ::lcode bul ::comment Latin capital u with circumflex
+::s û ::t yu ::t-alt u, ju, iu ::lcode bul ::comment Latin small u with circumflex
+::s Â ::t Ya ::t-alt _NONE_ ::lcode bul ::comment Latin capital a with circumflex
+::s â ::t ya ::t-alt _NONE_ ::lcode bul ::comment Latin small a with circumflex
+::s Ŭ ::t U ::t-alt A ::lcode bul ::comment Latin capital u with breve (for hard sign)
+::s ŭ ::t u ::t-alt a ::lcode bul ::comment Latin small u with breve (for hard sign)
+::s Ǎ ::t U ::t-alt A ::lcode bul ::comment Latin capital a with caron (for hard sign)
+::s ǎ ::t u ::t-alt a ::lcode bul ::comment Latin small a with caron (for hard sign)
+
+# Macedonian
+::s Г ::t G ::t-alt _NONE_ ::lcode mkd ::comment Cyrillic capital ghe
+::s г ::t g ::t-alt _NONE_ ::lcode mkd ::comment Cyrillic small ghe
+::s Х ::t H ::lcode mkd ::comment Cyrillic capital ha
+::s х ::t h ::lcode mkd ::comment Cyrillic small ha
+::s Ц ::t C ::t-alt Ts ::lcode mkd ::comment Cyrillic capital letter tse
+::s ц ::t c ::t-alt ts ::lcode mkd ::comment Cyrillic small letter tse
+::s Џ ::t Dzh ::t-alt Dj, Dz ::lcode mkd ::comment Cyrillic capital letter dzhe
+::s џ ::t dzh ::t-alt dj, dz ::lcode mkd ::comment Cyrillic small letter dzhe
+::s Е ::t E ::t-alt _NONE_ ::lcode mkd ::comment Cyrillic capital ie
+::s е ::t e ::t-alt _NONE_ ::lcode mkd ::comment Cyrillic small ie
+::s Ž ::t Zh ::lcode mkd ::comment Latin capital z with caron
+::s ž ::t zh ::lcode mkd ::comment Latin small z with caron
+::s Č ::t Ch ::lcode mkd ::comment Latin capital c with caron
+::s č ::t ch ::lcode mkd ::comment Latin small c with caron
+::s Š ::t Sh ::lcode mkd ::comment Latin capital s with caron
+::s š ::t sh ::lcode mkd ::comment Latin small s with caron
+::s Ǵ ::t Gj ::lcode mkd
+::s ǵ ::t gj ::lcode mkd
+::s Đ ::t Gj ::lcode mkd
+::s đ ::t gj ::lcode mkd
+::s Ẑ ::t Dz ::lcode mkd
+::s ẑ ::t dz ::lcode mkd
+::s J̌ ::t J ::lcode mkd
+::s ǰ ::t j ::lcode mkd
+::s L̂ ::t Lj ::lcode mkd
+::s l̂ ::t lj ::lcode mkd
+::s N̂ ::t Nj ::lcode mkd
+::s n̂ ::t nj ::lcode mkd
+::s Ḱ ::t Kj ::lcode mkd
+::s ḱ ::t kj ::lcode mkd
+::s Ć ::t Kj ::lcode mkd
+::s ć ::t kj ::lcode mkd
+::s D̂ ::t Dzh ::lcode mkd
+::s d̂ ::t dzh ::lcode mkd
+
+::s Г ::t G ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic capital ghe
+::s г ::t g ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic small ghe
+::s Х ::t H ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic capital ha
+::s х ::t h ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic small ha
+::s Ц ::t C ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic capital letter tse
+::s ц ::t c ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic small letter tse
+::s Ч ::t C ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic capital letter che
+::s ч ::t c ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic small letter che
+::s Џ ::t D ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic capital letter dzhe
+::s џ ::t d ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic small letter dzhe
+::s Е ::t E ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic capital ie
+::s е ::t e ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic small ie
+::s Ш ::t S ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic capital sha
+::s ш ::t s ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic small sha
+::s Ѓ ::t G ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic capital gje
+::s ѓ ::t g ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic small gje
+::s Ж ::t Z ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic capital zhe
+::s ж ::t z ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic small zhe
+::s Ѕ ::t Z ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic capital dze
+::s ѕ ::t z ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic small dze
+::s Ќ ::t K ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic capital kje
+::s ќ ::t k ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic small kje
+::s Љ ::t L ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic capital lje
+::s љ ::t l ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic small lje
+::s Њ ::t N ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic capital nje
+::s њ ::t n ::t-alt _NONE_ ::lcode mkd2 ::comment Cyrillic small nje
+::s Ž ::t Z ::lcode mkd2 ::comment Latin capital z with caron
+::s ž ::t z ::lcode mkd2 ::comment Latin small z with caron
+::s Č ::t C ::lcode mkd2 ::comment Latin capital c with caron
+::s č ::t c ::lcode mkd2 ::comment Latin small c with caron
+::s Š ::t S ::lcode mkd2 ::comment Latin capital s with caron
+::s š ::t s ::lcode mkd2 ::comment Latin small s with caron
+::s Ǵ ::t G ::lcode mkd2
+::s ǵ ::t g ::lcode mkd2
+::s Đ ::t G ::lcode mkd2
+::s đ ::t g ::lcode mkd2
+::s Ẑ ::t D ::lcode mkd2
+::s ẑ ::t d ::lcode mkd2
+::s J̌ ::t J ::lcode mkd2
+::s ǰ ::t j ::lcode mkd2
+::s L̂ ::t L ::lcode mkd2
+::s l̂ ::t l ::lcode mkd2
+::s N̂ ::t N ::lcode mkd2
+::s n̂ ::t n ::lcode mkd2
+::s Ḱ ::t K ::lcode mkd2
+::s ḱ ::t k ::lcode mkd2
+::s Ć ::t K ::lcode mkd2
+::s ć ::t k ::lcode mkd2
+::s D̂ ::t D ::lcode mkd2
+::s d̂ ::t d ::lcode mkd2
+
+# Kazakh
+::s Ә ::t A ::lcode kaz
+::s ә ::t a ::lcode kaz
+::s Г ::t G ::t-alt _NONE_ ::lcode kaz ::comment Cyrillic capital ghe
+::s г ::t g ::t-alt _NONE_ ::lcode kaz ::comment Cyrillic small ghe
+::s Ғ ::t G ::t-alt _NONE_ ::lcode kaz ::comment Cyrillic capital ghe with stroke
+::s ғ ::t g ::t-alt _NONE_ ::lcode kaz ::comment Cyrillic small ghe with stroke
+::s Е ::t E ::t-alt _NONE_ ::lcode kaz ::comment Cyrillic capital ie
+::s е ::t e ::t-alt _NONE_ ::lcode kaz ::comment Cyrillic small ie
+::s Ё ::t Yo ::t-alt _NONE_ ::lcode kaz
+::s ё ::t yo ::t-alt _NONE_ ::lcode kaz
+::s Х ::t H ::t-alt X ::lcode kaz ::comment Cyrillic capital ha
+::s х ::t h ::t-alt x ::lcode kaz ::comment Cyrillic small ha
+::s Һ ::t H ::lcode kaz ::comment Cyrillic capital shha
+::s һ ::t h ::lcode kaz ::comment Cyrillic small shha
+::s Қ ::t Q ::t-alt K ::lcode kaz 
+::s қ ::t q ::t-alt k ::lcode kaz
+::s Ц ::t Ts ::t-alt C ::lcode kaz ::comment Cyrillic capital letter tse
+::s ц ::t ts ::t-alt c ::lcode kaz ::comment Cyrillic small letter tse
+::s Щ ::t Sh ::t-alt _NONE_ ::lcode kaz ::comment Cyrillic capital letter shcha
+::s щ ::t sh ::t-alt _NONE_ ::lcode kaz ::comment Cyrillic small letter shcha
+::s У ::t U ::t-alt Y ::lcode kaz
+::s у ::t u ::t-alt y ::lcode kaz
+::s уы ::t wy ::lcode kaz
+::s Ж ::t J ::t-alt _NONE_ ::lcode kaz ::comment Cyrillic capital zhe
+::s ж ::t j ::t-alt _NONE_ ::lcode kaz ::comment Cyrillic small zhe
+::s Ю ::t Yw ::t-alt Yuw, Yiw ::lcode kaz ::comment Cyrillic capital letter yu
+::s ю ::t yw ::t-alt yuw, yiw ::lcode kaz ::comment Cyrillic small letter yu
+
+# Kyrgyz
+::s Г ::t G ::t-alt _NONE_ ::lcode kir ::comment Cyrillic capital ghe
+::s г ::t g ::t-alt _NONE_ ::lcode kir ::comment Cyrillic small ghe
+::s Е ::t E ::t-alt Ye ::lcode kir ::comment Cyrillic capital ie
+::s е ::t e ::t-alt ye ::lcode kir ::comment Cyrillic small ie
+::s Ё ::t Yo ::t-alt _NONE_ ::lcode kir
+::s ё ::t yo ::t-alt _NONE_ ::lcode kir
+::s Х ::t Kh ::t-alt X, H ::lcode kir ::comment Cyrillic capital ha
+::s х ::t kh ::t-alt x, h ::lcode kir ::comment Cyrillic small ha
+::s Ж ::t Zh ::t-alt J ::lcode kir ::comment Cyrillic capital zhe
+::s ж ::t zh ::t-alt j ::lcode kir ::comment Cyrillic small zhe
+::s Й ::t Y ::t-alt I ::lcode kir ::comment Cyrillic capital letter short i 
+::s й ::t y ::t-alt i ::lcode kir ::comment Cyrillic small letter short i
+::s Ц ::t Ts ::t-alt C ::lcode kir ::comment Cyrillic capital letter tse
+::s ц ::t ts ::t-alt c ::lcode kir ::comment Cyrillic small letter tse
+::s Ң ::t Ng ::lcode kir
+::s ң  ::t ng ::lcode kir
+::s Ө ::t O ::t-alt Oe ::lcode kir
+::s ө ::t o ::t-alt oe ::lcode kir
+::s Ү ::t U ::t-alt Y, Ue ::lcode kir
+::s ү ::t u ::t-alt y, ue ::lcode kir
+::s Ы ::t I ::t-alt Y ::lcode kir
+::s ы ::t i ::t-alt y ::lcode kir
+::s йы ::t yi ::lcode kir
+::s ый ::t iy ::lcode kir
+
+# Ossetian
+::s ийы ::t iy ::lcode oss
 
 # Gothic
 ::s 𐌴 ::t e ::comment Gothic letter aihvus
 ::s 𐌹 ::t i ::comment Gothic letter eis
 ::s 𐍇 ::t x ::comment Gothic letter iggws
+
+# Runic
+::s ᛫ ::t " " ::comment Runic single punctuation, used as word separator
+::s ᛬ ::t . ::comment Runic multiple punctuation, used as sentence separator
+
+# Ogham
+::s ᚁ ::t b ::comment Ogham letter Beith	
+::s ᚂ ::t l ::comment Ogham letter Luis	
+::s ᚃ ::t f ::comment Ogham letter Fearn	
+::s ᚄ ::t s ::comment Ogham letter Sail	
+::s ᚅ ::t n ::comment Ogham letter Nion	
+::s ᚋ ::t m ::comment Ogham letter Muin
+::s ᚌ ::t g ::comment Ogham letter Gort
+::s ᚍ ::t v ::t-alt ng ::comment Ogham letter nGéadal
+::s ᚎ ::t z ::comment Ogham letter Straif
+::s ᚏ ::t r ::comment Ogham letter Ruis
+::s ᚆ ::t h ::t-alt j ::comment Ogham letter Uath	
+::s ᚇ ::t d	::comment Ogham letter Dair	
+::s ᚈ ::t t ::comment Ogham letter Tinne	
+::s ᚉ ::t k ::comment Ogham letter Coll	
+::s ᚊ ::t q ::t-alt kw ::comment Ogham letter Ceirt
+::s ᚐ ::t a ::comment Ogham letter Ailm
+::s ᚑ ::t o	::comment Ogham letter Onn
+::s ᚒ ::t u ::comment Ogham letter Úr
+::s ᚓ ::t e ::comment Ogham letter Eadhadh
+::s ᚔ ::t i ::comment Ogham letter Iodhadh
+::s ᚚ ::t p ::comment Ogham letter Peith
+# Additional Ogham letters (outside standard alphabet)
+::s ᚕ ::t eo ::t-alt ea ::comment Ogham additional letter Éabhadh
+::s ᚖ ::t oi ::t-alt oe ::comment Ogham additional letter Ór
+::s ᚗ ::t ui ::t-alt ua ::comment Ogham additional letter Uilleann
+::s ᚘ ::t p ::t-alt io ::comment Ogham additional letter Ifín 
+::s ᚙ ::t ch ::t-alt x, ai ::comment Ogham additional letter Eamhancholl
+::s   ::t " " ::comment Ogham space mark
+::s ᚛ ::t "" ::comment Ogham feather mark
+::s ᚜ ::t "" ::comment Ogham feather mark
 
 # Georgian
 ::s ა ::t a ::comment Georgian letter an
@@ -148,17 +629,60 @@
 ::s უ ::t u ::comment Georgian letter un
 
 # Armenian
-::s Ա ::t a ::comment Armenian capital letter ayb
+::s Ա ::t A ::comment Armenian capital letter ayb
 ::s ա ::t a ::comment Armenian small letter ayb
-::s Ե ::t e ::comment Armenian capital letter ech
-::s ե ::t e ::comment Armenian small letter ech
-::s և ::t ev ::comment Armenian small ligature ech yiwn
-::s Է ::t e ::comment Armenian capital letter eh
+::s Ե ::t E ::comment Armenian capital letter ech ::dont-use-at-start-of-word
+::s ե ::t e ::comment Armenian small letter ech ::dont-use-at-start-of-word
+::s Ե ::t Ye ::comment Armenian capital letter ech ::use-only-at-start-of-word
+::s ե ::t ye ::comment Armenian small letter ech ::use-only-at-start-of-word
+::s Է ::t E ::comment Armenian capital letter eh
 ::s է ::t e ::comment Armenian small letter eh
-::s Ի ::t i ::comment Armenian capital letter ini
+::s Ը ::t E ::comment Armenian capital letter et
+::s ը ::t e ::comment Armenian small letter et
+::s Ի ::t I ::comment Armenian capital letter ini
 ::s ի ::t i ::comment Armenian small letter ini
-::s Օ ::t o ::comment Armenian capital letter oh
+::s Յ ::t Y ::comment Armenian capital letter yi
+::s յ ::t y ::comment Armenian small letter yi
+::s Ո ::t Vo ::comment Armenian capital letter vo ::use-only-at-start-of-word
+::s ո ::t vo ::comment Armenian small letter vo ::use-only-at-start-of-word
+::s Ո ::t O ::comment Armenian capital letter vo ::dont-use-at-start-of-word
+::s ո ::t o ::comment Armenian small letter vo ::dont-use-at-start-of-word
+::s Ւ ::t W ::comment Armenian capital letter yiwn
+::s ւ ::t w ::comment Armenian small letter yiwn
+::s Օ ::t O ::comment Armenian capital letter oh
 ::s օ ::t o ::comment Armenian small letter oh
+::s Խ ::t Kh ::comment Armenian capital letter xeh
+::s խ ::t kh ::comment Armenian small letter xeh
+
+::s Ժ ::t Zh ::comment Armenian capital letter zhe
+::s Ղ ::t Gh ::comment Armenian capital letter ghad
+::s Ճ ::t Tch ::comment Armenian capital letter cheh
+::s ճ ::t tch ::comment Armenian small letter cheh
+::s Շ ::t Sh ::comment Armenian capital letter sha
+::s Չ ::t Ch ::comment Armenian capital letter cha
+::s Ջ ::t J ::comment Armenian capital letter jheh
+::s ջ ::t j ::comment Armenian small letter jheh
+::s Վ ::t V ::comment Armenian capital letter vew
+::s վ ::t v ::comment Armenian small letter vew
+::s Ձ ::t Dz ::comment Armenian capital letter ja
+::s ձ ::t dz ::comment Armenian small letter ja
+::s Ծ ::t Ts ::comment Armenian capital letter ca
+::s ծ ::t ts ::comment Armenian small letter ca
+::s Ք ::t K ::t-alt Q ::comment Armenian capital letter keh - sometimes romanized as K' or Q
+::s ք ::t k ::t-alt q ::comment Armenian small letter keh - sometimes romanized as k' or q
+
+::s են ::t en ::use-only-for-whole-word ::comment exception (auxiliary verb)
+::s եմ ::t em ::use-only-for-whole-word ::comment exception (auxiliary verb)
+::s ենք ::t enk ::use-only-for-whole-word ::comment exception (auxiliary verb)
+::s ես ::t es ::use-only-for-whole-word ::comment exception (auxiliary verb)
+::s եք ::t ek ::use-only-for-whole-word ::comment exception (auxiliary verb)
+
+::s և ::t ev ::comment Armenian small ligature ech yiwn
+::s ՈՒ ::t U ::comment Armenian capital vo+yiwn
+::s Ու ::t U ::comment Armenian capital/small vo+yiwn
+::s ու ::t u ::comment Armenian small vo+wywn
+
+::s իւ ::t yu 
 
 ## Japanese
 # Katakana
@@ -468,7 +992,25 @@
 ::s ۬ ::t   ::comment Arabic rounded high stop with filled center U+06EC 
 
 # Pashto
-::s ٙ ::t e
+::s ٙ ::t e ::comment Arabic zwarakay
+::s ځ ::t z ::t-alt dz ::comment Pashto letter zim; Arabic letter "hah with hamza above"
+::s څ ::t ts ::t-alt c ::comment Pashto letter tsim; Arabic letter "h with three dots above"
+::s ګ ::t g ::comment Pashto letter gaf; Arabic letter "kaf with ring"
+::s ڼ ::t n ::comment Arabic letter "noon with ring"
+::s ږ ::t g ::t-alt z, zh, j ::comment pronunciation varies regionally
+::s ښ ::t kh ::t-alt sh ::comment pronunciation varies regionally
+::s ه ::t h ::t-alt a ::lcode pus
+::s ۀ ::t e ::lcode pus ::comment Arabic letter "heh with yeh above"
+::s و ::t w ::t-alt o, u ::lcode pus
+::s ی ::t ay ::t-alt y ::lcode pus
+::s وی ::t wy ::t-alt oy, uy ::lcode pus
+::s ای ::t ay ::lcode pus
+::s ۍ ::t ay ::lcode pus
+::s ئ ::t ay ::t-alt y ::lcode pus
+::s ژ ::t zh ::t-alt z ::lcode pus ::comment [ʒ]
+::s ض ::t z ::t-alt d ::lcode pus
+::s ث ::t s ::lcode pus ::t-alt th ::comment Arabic letter theh (unvoiced th/θ)
+::s ذ ::t z ::lcode pus ::t-alt th ::comment Arabic letter thal (voiced th/ð)
 
 # Hebrew
 ::s ב ::t v ::comment Hebrew letter bet  ::t-alt b
@@ -681,8 +1223,15 @@
 # delete
 ::s ¿ ::t "" ::comment inverted question mark
 ::s ¡ ::t "" ::comment inverted exclamation mark
+# decompose double-punctuation
+::s ‼ ::t !!
+::s ⁇ ::t ??
+::s ⁉ ::t !?
+::s ⁈ ::t ?!
 # preserve
 ::s ′ ::t ′
+::s ∩ ::t ∩
+::s ‡ ::t ‡
 # Cyrillic
 ::s ⁙ ::t . ::comment five dot punctuation
 # Amharic/Ethiopian
@@ -693,6 +1242,10 @@
 ::s ፧ ::t ? ::comment Ethiopic question mark
 ::s ፡ ::t " " ::comment Ethiopic wordspace
 ::s ፦ ::t :  ::comment Ethiopic preface colon
+# Ethiopic wordspace often appropriated for other purposes:
+::s ፡፡ ::t .
+::s ፡- ::t :
+::s "፡ " ::t ", "
 ::s ቸ ::t cha ::comment Ethiopic syllable ca
 ::s ቹ ::t chu ::comment Ethiopic syllable cu
 ::s ቺ ::t chi ::comment Ethiopic syllable ci
@@ -813,3 +1366,387 @@ Khmer
 ::s ♄ ::t ♄  ::comment Saturn
 ::s ♆ ::t ♆  ::comment Neptune
 ::s ♋ ::t ♋  ::comment Cancer
+
+# Braille
+::s ⠁ ::t a
+::s ⠃ ::t b
+::s ⠉ ::t c
+::s ⠙ ::t d
+::s ⠑ ::t e
+::s ⠋ ::t f
+::s ⠛ ::t g
+::s ⠓ ::t h
+::s ⠊ ::t i
+::s ⠚ ::t j
+::s ⠅ ::t k
+::s ⠇ ::t l
+::s ⠍ ::t m
+::s ⠝ ::t n
+::s ⠕ ::t o
+::s ⠏ ::t p
+::s ⠟ ::t q
+::s ⠗ ::t r
+::s ⠎ ::t s
+::s ⠞ ::t t
+::s ⠥ ::t u
+::s ⠧ ::t v
+::s ⠺ ::t w
+::s ⠭ ::t x
+::s ⠽ ::t y
+::s ⠵ ::t z
+
+::s ⠜ ::t ae
+::s ⠪ ::t oe
+::s ⠳ ::t ue
+::s ⠷ ::t a ::comment à
+::s ⠡ ::t a ::comment â
+::s ⠿ ::t e ::comment é
+::s ⠮ ::t e ::comment è
+::s ⠣ ::t e ::comment ê
+::s ⠫ ::t e ::comment ë
+::s ⠩ ::t i ::comment î
+::s ⠻ ::t i ::comment ï
+::s ⠹ ::t o ::comment ô
+::s ⠾ ::t u ::comment ù
+::s ⠱ ::t u ::comment û
+
+::s ⠡ ::t au ::lcode deu
+::s ⠌ ::t aeu ::lcode deu
+::s ⠹ ::t ch ::lcode deu
+::s ⠩ ::t ei ::lcode deu
+::s ⠣ ::t eu ::lcode deu
+::s ⠬ ::t ie ::lcode deu
+::s ⠱ ::t sch ::lcode deu
+::s ⠮ ::t ss ::lcode deu
+::s ⠾ ::t st ::lcode deu
+
+::s ⠠⠠ ::t "" ::comment start of word all-caps mode
+# ::s ⠠⠁ ::t A
+# ::s ⠠⠃ ::t B
+# ::s ⠠⠉ ::t C
+# ::s ⠠⠙ ::t D
+# ::s ⠠⠑ ::t E
+# ::s ⠠⠋ ::t F
+# ::s ⠠⠛ ::t G
+# ::s ⠠⠓ ::t H
+# ::s ⠠⠊ ::t I
+# ::s ⠠⠚ ::t J
+# ::s ⠠⠅ ::t K
+# ::s ⠠⠇ ::t L
+# ::s ⠠⠍ ::t M
+# ::s ⠠⠝ ::t N
+# ::s ⠠⠕ ::t O
+# ::s ⠠⠏ ::t P
+# ::s ⠠⠟ ::t Q
+# ::s ⠠⠗ ::t R
+# ::s ⠠⠎ ::t S
+# ::s ⠠⠞ ::t T
+# ::s ⠠⠥ ::t U
+# ::s ⠠⠧ ::t V
+# ::s ⠠⠺ ::t W
+# ::s ⠠⠭ ::t X
+# ::s ⠠⠽ ::t Y
+# ::s ⠠⠵ ::t Z
+
+::s ⠼⠁ ::t 1
+::s ⠼⠃ ::t 2
+::s ⠼⠉ ::t 3
+::s ⠼⠙ ::t 4
+::s ⠼⠑ ::t 5
+::s ⠼⠋ ::t 6
+::s ⠼⠛ ::t 7
+::s ⠼⠓ ::t 8
+::s ⠼⠊ ::t 9
+::s ⠼⠚ ::t 0
+
+::s ⠂ ::t ,
+::s ⠆ ::t ;
+::s ⠒ ::t : 
+::s ⠲ ::t .
+::s ⠦ ::t ?
+::s ⠖ ::t !
+::s ⠄ ::t '
+::s ⠤ ::t -
+::s ⠨⠤ ::t _
+
+::s ⠀ ::t " " ::comment blank
+# ::s ⠐ t " " ::comment blank in numeric mode
+::s ⠈ ::t "" ::comment accent
+# ::s ⠌ ::t / ::comment in numeric mode only
+# ::s ⠐ ::comment abbreviation sign
+# ::s ⠘ ::comment abbreviation sign
+# ::s ⠠ ::comment capital indicator
+::s ⠨ ::t . ::comment decimal point; emphasis
+::s ⠰ ::t "" ::comment letter indicator
+# ::s ⠴ ::t ”
+# ::s ⠶ ::t ()
+# ::s ⠸ ::comment abbreviation sign
+::s ⠼ ::t "" ::comment number indicator
+::s ⠘⠚ ::t ° ::word-external-punctuation
+::s ⠘⠚⠠⠉ ::t °C
+::s ⠘⠚⠉ ::t °C
+::s ⠘⠚⠠⠋ ::t °F
+::s ⠘⠚⠋ ::t °F
+
+::s ⠠⠶ ::t " ::word-external-punctuation
+::s ⠘⠦ ::t “ ::word-external-punctuation
+::s ⠘⠴ ::t ” ::word-external-punctuation
+::s ⠄⠦ ::t ‘
+::s ⠄⠴ ::t ’
+::s ⠠⠴ ::t ’
+::s ⠐⠣ ::t ( ::word-external-punctuation
+::s ⠐⠜ ::t ) ::word-external-punctuation
+::s ⠨⠣ ::t [ ::word-external-punctuation
+::s ⠨⠜ ::t ] ::word-external-punctuation
+::s ⠸⠣ ::t { ::word-external-punctuation
+::s ⠸⠜ ::t } ::word-external-punctuation
+::s ⠈⠣ ::t < ::word-external-punctuation
+::s ⠈⠜ ::t > ::word-external-punctuation
+::s ⠸⠌ ::t / ::word-external-punctuation
+::s ⠸⠡ ::t \ ::word-external-punctuation
+::s ⠠⠤ ::t – ::word-external-punctuation
+::s ⠐⠠⠤ ::t — ::word-external-punctuation
+::s ⠈⠯ ::t & ::word-external-punctuation
+::s ⠐⠔ ::t * ::word-external-punctuation
+::s ⠨⠦ ::t ∩ ::word-external-punctuation
+::s ⠨⠴ ::t % ::word-external-punctuation
+::s ⠐⠖ ::t + ::word-external-punctuation
+::s ⠐⠤ ::t − ::word-external-punctuation
+::s ⠐⠶ ::t = ::word-external-punctuation
+::s ⠈⠎ ::t $ ::word-external-punctuation
+::s ⠈⠉ ::t ¢ ::word-external-punctuation
+::s ⠈⠇ ::t £ ::word-external-punctuation
+::s ⠈⠽ ::t ¥ ::word-external-punctuation
+::s ⠈⠁ ::t @ ::word-external-punctuation
+::s ⠸⠹ ::t # ::word-external-punctuation
+::s ⠸⠲ ::t • ::word-external-punctuation
+::s ⠈⠢ ::t ^ ::word-external-punctuation
+::s ⠈⠔ ::t ~ ::word-external-punctuation
+::s ⠘⠉ ::t © ::word-external-punctuation
+::s ⠐⠌ ::t ÷ ::word-external-punctuation
+::s ⠐⠦ ::t × ::word-external-punctuation
+::s ⠈⠠⠹ ::t † ::word-external-punctuation
+::s ⠈⠠⠻ ::t ‡ ::word-external-punctuation
+::s ⠘⠏ ::t ¶ ::word-external-punctuation
+::s ⠘⠎ ::t § ::word-external-punctuation
+::s ⠘⠗ ::t ® ::word-external-punctuation
+::s ⠘⠞ ::t ™ ::word-external-punctuation
+
+# English Braille
+::s ⠁⠃ ::t about ::lcode eng ::use-only-for-whole-word
+::s ⠁⠃⠧ ::t above ::lcode eng ::use-only-for-whole-word
+::s ⠁⠉ ::t according ::lcode eng ::use-only-for-whole-word
+::s ⠁⠉⠗ ::t across ::lcode eng ::use-only-for-whole-word
+::s ⠁⠋ ::t after ::lcode eng ::use-only-for-whole-word
+::s ⠁⠋⠝ ::t afternoon ::lcode eng ::use-only-for-whole-word
+::s ⠁⠋⠺ ::t afterward ::lcode eng ::use-only-for-whole-word
+::s ⠁⠛ ::t again ::lcode eng ::use-only-for-whole-word
+::s ⠁⠛⠌ ::t against ::lcode eng ::use-only-for-whole-word
+::s ⠠⠽ ::t ally ::lcode eng ::use-only-at-end-of-word ::use-only-in-lower-case-environment
+::s ⠁⠇⠍ ::t almost ::lcode eng ::use-only-for-whole-word
+::s ⠁⠇⠗ ::t already ::lcode eng ::use-only-for-whole-word
+::s ⠁⠇ ::t also ::lcode eng ::use-only-for-whole-word
+::s ⠁⠇⠹ ::t although ::lcode eng ::use-only-for-whole-word
+::s ⠁⠇⠞ ::t altogether ::lcode eng ::use-only-for-whole-word
+::s ⠁⠇⠺ ::t always ::lcode eng ::use-only-for-whole-word
+::s ⠨⠑ ::t ance ::lcode eng
+::s ⠯ ::t and ::lcode eng
+::s ⠜ ::t ar ::lcode eng
+::s ⠵ ::t as ::lcode eng ::use-only-for-whole-word
+::s ⠠⠝ ::t ation ::lcode eng ::use-only-at-end-of-word ::use-only-in-lower-case-environment
+::s ⠃ ::t b ::lcode eng
+::s ⠆ ::t bb ::lcode eng ::dont-use-at-start-of-word ::dont-use-at-end-of-word
+::s ⠆ ::t be ::lcode eng ::use-only-at-start-of-word
+::s ⠆⠉ ::t because ::lcode eng ::use-only-for-whole-word
+::s ⠆⠋ ::t before ::lcode eng ::use-only-for-whole-word
+::s ⠆⠓ ::t behind ::lcode eng ::use-only-for-whole-word
+::s ⠆⠇ ::t below ::lcode eng ::use-only-for-whole-word
+::s ⠆⠝ ::t beneath ::lcode eng ::use-only-for-whole-word
+::s ⠆⠎ ::t beside ::lcode eng ::use-only-for-whole-word
+::s ⠆⠞ ::t between ::lcode eng ::use-only-for-whole-word
+::s ⠆⠽ ::t beyond ::lcode eng ::use-only-for-whole-word
+::s ⠃⠇ ::t blind ::lcode eng ::use-only-for-whole-word
+::s ⠃⠗⠇ ::t Braille ::lcode eng ::use-only-for-whole-word
+::s ⠃ ::t but ::lcode eng ::use-only-for-whole-word
+::s ⠉ ::t c ::lcode eng
+::s ⠉ ::t can ::lcode eng ::use-only-for-whole-word
+::s ⠸⠉ ::t cannot ::lcode eng
+::s ⠒ ::t cc ::lcode eng ::dont-use-at-start-of-word ::dont-use-at-end-of-word
+::s ⠉⠧ ::t ceive ::lcode eng ::use-only-at-end-of-word
+::s ⠉⠧⠙ ::t ceived ::lcode eng ::use-only-at-end-of-word
+::s ⠉⠧⠎ ::t ceives ::lcode eng ::use-only-at-end-of-word
+::s ⠉⠧⠛ ::t ceiving ::lcode eng
+::s ⠡ ::t ch ::lcode eng
+::s ⠐⠡ ::t character ::lcode eng
+::s ⠡ ::t child ::lcode eng ::use-only-for-whole-word
+::s ⠡⠝ ::t children ::lcode eng ::use-only-for-whole-word
+::s ⠒ ::t con ::lcode eng ::use-only-at-start-of-word
+::s ⠒ ::t : ::lcode eng ::use-only-at-end-of-word
+::s ⠉⠙ ::t could ::lcode eng ::use-only-for-whole-word
+::s ⠙ ::t d ::lcode eng
+::s ⠙ ::t do ::lcode eng ::use-only-for-whole-word
+::s ⠐⠙ ::t day ::lcode eng
+# ::s ⠲ ::t dd ::t-alt . ::lcode eng ::dont-use-at-start-of-word ::dont-use-at-end-of-word ::comment abolished; interferes with period in abbrevisations such as U.S.
+::s ⠙⠉⠇ ::t declare ::lcode eng
+::s ⠙⠉⠇⠛ ::t declaring ::lcode eng
+::s ⠲ ::t dis ::lcode eng ::use-only-at-start-of-word
+::s ⠲ ::t .  ::lcode eng ::dont-use-at-start-of-word
+::s ⠑ ::t e ::lcode eng
+::s ⠂ ::t ea ::lcode eng ::dont-use-at-end-of-word
+::s ⠂ ::t , ::lcode eng ::use-only-at-end-of-word
+::s ⠫ ::t ed ::lcode eng
+::s ⠑⠊ ::t either ::lcode eng ::use-only-for-whole-word
+::s ⠢ ::t en ::lcode eng
+::s ⠰⠑ ::t ence ::lcode eng ::dont-use-at-start-of-word
+::s ⠢ ::t enough ::lcode eng ::use-only-for-whole-word
+::s ⠻ ::t er ::lcode eng
+::s ⠐⠑ ::t ever ::lcode eng
+::s ⠑ ::t every ::lcode eng ::use-only-for-whole-word
+::s ⠋ ::t f ::lcode eng
+::s ⠐⠋ ::t father ::lcode eng
+::s ⠖ ::t ff ::lcode eng ::dont-use-at-start-of-word ::dont-use-at-end-of-word
+::s ⠋⠌ ::t first ::lcode eng
+::s ⠿ ::t for ::lcode eng
+::s ⠋⠗ ::t friend ::lcode eng ::use-only-for-whole-word
+::s ⠋⠗⠎ ::t friends ::lcode eng ::use-only-for-whole-word
+::s ⠋ ::t from ::lcode eng ::use-only-for-whole-word
+::s ⠰⠇ ::t ful ::lcode eng ::dont-use-at-start-of-word
+::s ⠛ ::t g ::lcode eng
+::s ⠶ ::t gg ::lcode eng ::dont-use-at-start-of-word ::dont-use-at-end-of-word
+::s ⠣ ::t gh ::lcode eng
+::s ⠛ ::t go ::lcode eng ::use-only-for-whole-word
+::s ⠛⠙ ::t good ::lcode eng ::use-only-at-start-of-word
+::s ⠛⠗⠞ ::t great ::lcode eng
+::s ⠓ ::t h ::lcode eng
+::s ⠸⠓ ::t had ::lcode eng
+::s ⠓ ::t have ::lcode eng ::use-only-for-whole-word
+::s ⠐⠓ ::t here ::lcode eng
+::s ⠓⠻⠋ ::t herself ::lcode eng ::use-only-for-whole-word
+::s ⠓⠍ ::t him ::lcode eng ::use-only-for-whole-word
+::s ⠓⠍⠋ ::t himself ::lcode eng ::use-only-for-whole-word
+::s ⠦ ::t ? ::lcode eng
+::s ⠦ ::t his ::lcode eng ::use-only-for-whole-word
+::s ⠊⠍⠍ ::t immediate ::lcode eng ::use-only-for-whole-word
+::s ⠊⠍⠍⠇⠽ ::t immediately ::lcode eng ::use-only-for-whole-word
+::s ⠔ ::t in ::lcode eng
+::s ⠔⠒ ::t incon ::lcode eng ::use-only-at-start-of-word
+::s ⠬ ::t ing ::lcode eng
+::s ⠭ ::t it ::lcode eng ::use-only-for-whole-word
+::s ⠭⠎ ::t its ::lcode eng ::use-only-for-whole-word
+::s ⠭⠋ ::t itself ::lcode eng ::use-only-for-whole-word
+::s ⠰⠽ ::t ity ::lcode eng ::dont-use-at-start-of-word
+::s ⠚ ::t j ::lcode eng
+::s ⠚ ::t just ::lcode eng ::use-only-for-whole-word
+::s ⠅ ::t k ::lcode eng
+::s ⠐⠅ ::t know ::lcode eng
+::s ⠅ ::t knowledge ::lcode eng ::use-only-for-whole-word
+::s ⠇ ::t l ::lcode eng
+::s ⠨⠎ ::t less ::lcode eng ::dont-use-at-start-of-word
+::s ⠇⠗ ::t letter ::lcode eng ::use-only-for-whole-word
+::s ⠇⠗⠎ ::t letters ::lcode eng ::use-only-for-whole-word
+::s ⠇ ::t like ::lcode eng ::use-only-for-whole-word
+::s ⠇⠇ ::t little ::lcode eng ::use-only-for-whole-word
+::s ⠐⠇ ::t lord ::lcode eng
+::s ⠍ ::t m ::lcode eng
+::s ⠸⠍ ::t many ::lcode eng
+::s ⠰⠞ ::t ment ::lcode eng ::dont-use-at-start-of-word
+::s ⠍ ::t more ::lcode eng ::use-only-for-whole-word
+::s ⠐⠍ ::t mother ::lcode eng
+::s ⠍⠡ ::t much ::lcode eng ::use-only-for-whole-word
+::s ⠍⠌ ::t must ::lcode eng ::use-only-for-whole-word
+::s ⠍⠽⠋ ::t myself ::lcode eng ::use-only-for-whole-word
+::s ⠝  ::t n ::lcode eng
+::s ⠐⠝ ::t name ::lcode eng
+::s ⠝⠑⠉ ::t necessary ::lcode eng ::use-only-for-whole-word
+::s ⠝⠑⠊ ::t neither ::lcode eng ::use-only-for-whole-word
+::s ⠰⠎ ::t ness ::lcode eng ::dont-use-at-start-of-word
+::s ⠝  ::t not ::lcode eng ::use-only-for-whole-word
+::s ⠕⠄⠉ ::t o'clock ::lcode eng ::use-only-for-whole-word
+::s ⠷ ::t of ::lcode eng
+::s ⠐⠕ ::t one ::lcode eng
+::s ⠰⠛ ::t ong ::lcode eng ::dont-use-at-start-of-word
+::s ⠳ ::t ou ::lcode eng
+::s ⠨⠙ ::t ound ::lcode eng
+::s ⠨⠞ ::t ount ::lcode eng
+::s ⠐⠳ ::t ought ::lcode eng
+::s ⠳⠗⠧⠎ ::t ourselves ::lcode eng ::use-only-for-whole-word
+::s ⠳ ::t out ::lcode eng ::use-only-for-whole-word
+::s ⠪ ::t ow ::lcode eng
+::s ⠏ ::t p ::lcode eng
+::s ⠏⠙ ::t paid ::lcode eng ::use-only-for-whole-word
+::s ⠐⠏ ::t part ::lcode eng
+::s ⠏ ::t people ::lcode eng ::use-only-for-whole-word
+::s ⠏⠻⠓ ::t perhaps ::lcode eng ::use-only-for-whole-word
+::s ⠟ ::t q ::lcode eng
+::s ⠐⠟ ::t question ::lcode eng
+::s ⠟⠅ ::t quick ::lcode eng ::use-only-for-whole-word
+::s ⠟⠅⠻ ::t quicker ::lcode eng ::use-only-for-whole-word
+::s ⠟⠅⠑⠌ ::t quickest ::lcode eng ::use-only-for-whole-word
+::s ⠟ ::t quite ::lcode eng ::use-only-for-whole-word
+::s ⠗ ::t r ::lcode eng
+::s ⠗ ::t rather ::lcode eng ::use-only-for-whole-word
+::s ⠐⠗ ::t right ::lcode eng
+::s ⠗⠚⠉ ::t rejoice ::lcode eng
+::s ⠗⠚⠉⠛ ::t rejoicing ::lcode eng
+::s ⠎ ::t s ::lcode eng
+::s ⠎⠙ ::t said ::lcode eng ::use-only-for-whole-word
+::s ⠩ ::t sh ::lcode eng
+::s ⠩ ::t shall ::lcode eng ::use-only-for-whole-word
+::s ⠩⠙ ::t should ::lcode eng ::use-only-for-whole-word
+::s ⠨⠝ ::t sion ::lcode eng
+::s ⠎ ::t so ::lcode eng ::use-only-for-whole-word
+::s ⠐⠎ ::t some ::lcode eng
+::s ⠸⠎ ::t spirit ::lcode eng
+::s ⠌ ::t st ::lcode eng
+::s ⠌ ::t still ::lcode eng ::use-only-for-whole-word
+::s ⠎⠡ ::t such ::lcode eng ::use-only-for-whole-word
+::s ⠞ ::t t ::lcode eng
+::s ⠹ ::t th ::lcode eng
+::s ⠞ ::t that ::lcode eng ::use-only-for-whole-word
+::s ⠹ ::t this ::lcode eng ::use-only-for-whole-word
+::s ⠮ ::t the ::lcode eng
+::s ⠸⠮ ::t their ::lcode eng
+::s ⠮⠍⠧⠎ ::t themselves ::lcode eng ::use-only-for-whole-word
+::s ⠐⠮ ::t there ::lcode eng
+::s ⠘⠮ ::t these ::lcode eng
+::s ⠘⠹ ::t those ::lcode eng
+::s ⠐⠹ ::t through ::lcode eng
+::s ⠐⠞ ::t time ::lcode eng
+::s ⠰⠝ ::t tion ::lcode eng ::dont-use-at-start-of-word
+::s ⠖ ::t to ::lcode eng ::use-only-for-whole-word
+::s ⠞⠙ ::t today ::lcode eng ::use-only-for-whole-word
+::s ⠞⠛⠗ ::t together ::lcode eng ::use-only-for-whole-word
+::s ⠞⠍ ::t tomorrow ::lcode eng ::use-only-for-whole-word
+::s ⠞⠝ ::t tonight ::lcode eng ::use-only-for-whole-word
+::s ⠥ ::t u ::lcode eng
+::s ⠥⠝⠒ ::t uncon ::lcode eng ::use-only-at-start-of-word
+::s ⠥ ::t us ::lcode eng ::use-only-for-whole-word
+::s ⠠⠥⠲⠎⠲ ::t U.S. ::lcode eng
+::s ⠐⠥ ::t under ::lcode eng
+::s ⠘⠥ ::t upon ::lcode eng
+::s ⠧ ::t v ::lcode eng
+::s ⠧ ::t very ::lcode eng ::use-only-for-whole-word
+::s ⠺ ::t w ::lcode eng
+::s ⠴ ::t " ::lcode eng
+::s ⠴ ::t was ::lcode eng ::use-only-for-whole-word
+::s ⠶ ::t were ::lcode eng ::use-only-for-whole-word
+::s ⠱ ::t wh ::lcode eng
+::s ⠐⠱ ::t where ::lcode eng
+::s ⠱ ::t which ::lcode eng ::use-only-for-whole-word
+::s ⠘⠱ ::t whose ::lcode eng
+::s ⠺ ::t will ::lcode eng ::use-only-for-whole-word
+::s ⠾ ::t with ::lcode eng
+::s ⠘⠺ ::t word ::lcode eng
+::s ⠐⠺ ::t work ::lcode eng
+::s ⠸⠺ ::t world ::lcode eng
+::s ⠺⠙ ::t would ::lcode eng ::use-only-for-whole-word
+::s ⠭ ::t x ::lcode eng
+::s ⠽ ::t y ::lcode eng
+::s ⠽ ::t you ::lcode eng ::use-only-for-whole-word
+::s ⠽⠗ ::t your ::lcode eng ::use-only-for-whole-word
+::s ⠽⠗⠎ ::t yours ::lcode eng ::use-only-for-whole-word
+::s ⠽⠗⠋ ::t yourself ::lcode eng ::use-only-for-whole-word
+::s ⠽⠗⠧⠎ ::t yourselves ::lcode eng ::use-only-for-whole-word
+::s ⠐⠽ ::t young ::lcode eng
+::s ⠵ ::t z ::lcode eng
+::s ⠠⠴ ::t ’ ::lcode eng
