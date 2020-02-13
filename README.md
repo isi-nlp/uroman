@@ -32,7 +32,7 @@ languages have different sound values from other languages using the same script
 No effect for other languages in this version.
 
 ### Bibliography
-Ulf Hermjakob, Jonathan May, and Kevin Knight. 2018. Out-of-the-box universal romanization tool uroman. In Proceedings of the 56th Annual Meeting of Association for Computational Linguistics, Demo Track. (Best Demo Paper Award)
+Ulf Hermjakob, Jonathan May, and Kevin Knight. 2018. Out-of-the-box universal romanization tool uroman. In Proceedings of the 56th Annual Meeting of Association for Computational Linguistics, Demo Track. ACL-2018 Best Demo Paper Award. [Paper in ACL Anthology](https://www.aclweb.org/anthology/P18-4003) [Poster](https://www.isi.edu/~ulf/papers/poster-uroman-acl2018.pdf)
 
 ### Change History
 Changes in version 1.2.7
@@ -143,13 +143,14 @@ New features in version 0.3
 
 ### Other features
  * Web interface: http://www.isi.edu/~ulf/uroman.html
- * Vowelization is provided when locally computable, e.g. for many South Asian
-   languages and Tibetan.
+ * Vowelization is provided when locally computable, e.g. for many South Asian languages and Tibetan.
 
 ### Limitations
- * This version of uroman assumes all CJK ideographs to be Mandarin (Chinese).
-   This means that Japanese kanji are incorrectly romanized; however, Japanese
-   hiragana and katakana are properly romanized.
+ * The current version of uroman has a few limitations, some of which we plan to address in future versions.
+   For Japanese, *uroman* currently romanizes hiragana and katakana as expected, but kanji are interpreted as Chinese characters and romanized as such. 
+   For Egyptian hieroglyphs, only single-sound phonetic characters and numbers are currently romanized. 
+   For Linear B, only phonetic syllabic characters are romanized. 
+   For some other extinct scripts such as cuneiform, no romanization is provided.
  * A romanizer is not a full transliterator. For example, this version of
    uroman does not vowelize text that lacks explicit vowelization such as
    normal text in Arabic and Hebrew (without diacritics/points).
