@@ -32,7 +32,7 @@ languages have different sound values from other languages using the same script
 No effect for other languages in this version.
 
 ### Bibliography
-Ulf Hermjakob, Jonathan May, and Kevin Knight. 2018. Out-of-the-box universal romanization tool uroman. In Proceedings of the 56th Annual Meeting of Association for Computational Linguistics, Demo Track. ACL-2018 Best Demo Paper Award. [Paper in ACL Anthology](https://www.aclweb.org/anthology/P18-4003) [Poster](https://www.isi.edu/~ulf/papers/poster-uroman-acl2018.pdf)
+Ulf Hermjakob, Jonathan May, and Kevin Knight. 2018. Out-of-the-box universal romanization tool uroman. In Proceedings of the 56th Annual Meeting of Association for Computational Linguistics, Demo Track. ACL-2018 Best Demo Paper Award. [Paper in ACL Anthology](https://www.aclweb.org/anthology/P18-4003) | [Poster](https://www.isi.edu/~ulf/papers/poster-uroman-acl2018.pdf) | [BibTex](https://www.aclweb.org/anthology/P18-4003.bib)
 
 ### Change History
 Changes in version 1.2.7
