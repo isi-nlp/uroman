@@ -192,6 +192,22 @@
 ::s Υι ::t Ui
 ::s ωυ ::t ou
 ::s Ωυ ::t Ou
+::s ͺ ::t ::comment GREEK YPOGEGRAMMENI (U+037A)
+::s ϒ ::t Y ::comment GREEK UPSILON WITH HOOK SYMBOL (U+03D2)
+::s ϓ ::t Y ::comment GREEK UPSILON WITH ACUTE AND HOOK SYMBOL (U+03D3)
+::s ϔ ::t Y ::comment GREEK UPSILON WITH DIAERESIS AND HOOK SYMBOL (U+03D4)
+::s ι ::t ::comment GREEK PROSGEGRAMMENI (U+1FBE)
+::s ᾿ ::t ::comment GREEK PSILI (U+1FBF)
+::s ῀ ::t ::comment GREEK PERISPOMENI (U+1FC0)
+::s ` ::t ::comment GREEK VARIA (U+1FEF)
+::s ´ ::t ::comment GREEK OXIA (U+1FFD)
+
+# Glagolitic
+::s Ⰿ ::t M ::comment GLAGOLITIC CAPITAL LETTER MYSLITE (U+2C0F)
+::s Ⱞ ::t M ::comment GLAGOLITIC CAPITAL LETTER LATINATE MYSLITE (U+2C2E)
+::s ⰿ ::t m ::comment GLAGOLITIC SMALL LETTER MYSLITE (U+2C3F)
+::s ⱞ ::t m ::comment GLAGOLITIC SMALL LETTER LATINATE MYSLITE (U+2C5E)
+::s 𞀏 ::t m ::comment COMBINING GLAGOLITIC LETTER MYSLITE (U+1E00F)
 
 # Cyrillic
 ::s Г ::t G ::t-alt H ::comment Cyrillic capital ghe
@@ -206,6 +222,7 @@
 ::s щ ::t shch ::t-alt sh
 ::s Ъ ::t ::comment Cyrillic capital hard sign
 ::s ъ ::t ::comment Cyrillic small hard sign
+::s ᲆ ::t ::comment CYRILLIC SMALL LETTER TALL HARD SIGN
 ::s Ы ::t Y ::comment Cyrillic capital yeru
 ::s ы ::t y ::comment Cyrillic small yeru
 ::s Ь ::t ::comment Cyrillic capital soft sign
@@ -231,6 +248,8 @@
 ::s ʺ ::t '"' ::comment modifier letter double prime
 ::s ий ::t iy ::dont-use-at-end-of-word
 ::s ий ::t y ::use-only-at-end-of-word
+
+::s ᲈ ::t u ::comment CYRILLIC SMALL LETTER UNBLENDED UK ligature ou
 
 # Russian
 ::s Г ::t G ::t-alt _NONE_ ::lcode rus ::comment Cyrillic capital letter ghe 
@@ -627,10 +646,88 @@
 ::s ი ::t i ::comment Georgian letter in
 ::s ო ::t o ::comment Georgian letter on
 ::s უ ::t u ::comment Georgian letter un
+::s ჱ ::t ey ::comment archaic Georgian letter he
+::s ჲ ::t i ::comment archaic Georgian letter hie
+::s ჳ :::t w ::comment archaic Georgian letter we
+::s ჴ ::t q ::comment archaic Georgian letter har
+::s ჵ ::t o ::comment archaic Georgian letter hoe
+::s ჶ ::t f ::comment Georgian letter fi (Greek phi)
+::s ჷ ::t e ::comment Georgian letter yn (schwa)
+::s ჸ ::t a ::comment Georgian letter elifi
+::s ჹ ::t g ::comment Georgian letter gan
+::s ჺ ::t ' ::comment Georgian letter ain
+::s ჼ ::t n ::comment Georgian letter nar
+::s ჽ ::t e ::comment Georgian letter aen
+::s ჾ ::t ::comment Georgian letter hard sign
+::s ჿ ::t w ::comment Georgian letter labial sign
+
+::s Ⴚ ::t TS ::comment GEORGIAN CAPITAL LETTER CAN
+::s ც ::t ts ::comment GEORGIAN LETTER CAN
+::s Ც ::t TS ::comment GEORGIAN MTAVRULI CAPITAL LETTER CAN
+::s ⴚ ::t ts ::comment GEORGIAN SMALL LETTER CAN
+::s Ⴜ ::t TS ::comment GEORGIAN CAPITAL LETTER CIL
+::s წ ::t ts ::comment GEORGIAN LETTER CIL
+::s Წ ::t TS ::comment GEORGIAN MTAVRULI CAPITAL LETTER CIL
+::s ⴜ ::t ts ::comment GEORGIAN SMALL LETTER CIL
+::s Ⴛ ::t DZ ::comment GEORGIAN CAPITAL LETTER JIL
+::s ძ ::t dz ::comment GEORGIAN LETTER JIL
+::s Ძ ::t DZ ::comment GEORGIAN MTAVRULI CAPITAL LETTER JIL
+::s ⴛ ::t dz ::comment GEORGIAN SMALL LETTER JIL
+::s Ⴟ ::t J ::comment GEORGIAN CAPITAL LETTER JHAN
+::s ჯ ::t j ::comment GEORGIAN LETTER JHAN
+::s Ჯ ::t J ::comment GEORGIAN MTAVRULI CAPITAL LETTER JHAN
+::s ⴟ ::t j ::comment GEORGIAN SMALL LETTER JHAN
+
+
+::s Ⴀ ::t A ::comment Georgian capital letter an
+::s Ⴄ ::t E ::comment Georgian capital letter en
+::s Ⴈ ::t I ::comment Georgian capital letter in
+::s Ⴍ ::t O ::comment Georgian capital letter on
+::s Ⴓ ::t U ::comment Georgian capital letter un
+::s Ⴡ ::t EY ::comment archaic Georgian capital letter he
+::s Ⴢ ::t I ::comment archaic Georgian capital letter hie
+::s Ⴣ :::t W ::comment archaic Georgian capitel letter we
+::s Ⴤ ::t Q ::comment archaic Georgian capital letter har
+::s Ⴥ ::t O ::comment archaic Georgian capital letter hoe
+::s Ⴧ ::t E ::comment archaic Georgian capital letter yn (schwa)
+::s Ⴭ ::t E ::comment archaic Georgian capital letter aen
+
+::s Ა ::t A ::comment Georgian Mtavruli capital letter an
+::s Ე ::t E ::comment Georgian Mtavruli capital letter en
+::s Ი ::t I ::comment Georgian Mtavruli capital letter in
+::s Ო ::t O ::comment Georgian Mtavruli capital letter on
+::s Უ ::t U ::comment Georgian Mtavruli capital letter un
+::s Ჱ ::t EY ::comment archaic Georgian Mtavruli capital letter he
+::s Ჲ ::t I ::comment archaic Georgian Mtavruli capital letter hie
+::s Ჳ :::t W ::comment archaic Georgian Mtavruli capital letter we
+::s Ჴ ::t Q ::comment archaic Georgian Mtavruli capital letter har
+::s Ჵ ::t O ::comment archaic Georgian Mtavruli capital letter hoe
+::s Ჶ ::t F ::comment Georgian Mtavruli capital letter fi (Greek phi)
+::s Ჷ ::t E ::comment Georgian Mtavruli capital letter yn (schwa)
+::s Ჸ ::t A ::comment Georgian Mtavruli capital letter elifi
+::s Ჹ ::t G ::comment Georgian Mtavruli capital letter gan
+::s Ჺ ::t ' ::comment Georgian Mtavruli capital letter ain
+::s Ჽ ::t E ::comment Georgian Mtavruli capital letter aen
+::s Ჾ ::t ::comment Georgian Mtavruli capital letter hard sign
+::s Ჿ ::t W ::comment Georgian Mtavruli capital letter labial sign
+
+::s ⴀ ::t a ::comment Georgian small letter an
+::s ⴄ ::t e ::comment Georgian small letter en
+::s ⴈ ::t i ::comment Georgian small letter in
+::s ⴍ ::t o ::comment Georgian small letter on
+::s ⴓ ::t u ::comment Georgian small letter un
+::s ⴡ ::t ey ::comment archaic Georgian small letter he
+::s ⴢ ::t i ::comment archaic Georgian small letter hie
+::s ⴣ :::t w ::comment archaic Georgian small letter we
+::s ⴤ ::t q ::comment archaic Georgian small letter har
+::s ⴥ ::t o ::comment archaic Georgian small letter hoe
+::s ⴧ ::t e ::comment Georgian small letter yn (schwa)
+::s ⴭ ::t e ::comment Georgian small letter aen
 
 # Armenian
 ::s Ա ::t A ::comment Armenian capital letter ayb
 ::s ա ::t a ::comment Armenian small letter ayb
+::s ՠ ::t a ::comment ARMENIAN SMALL LETTER TURNED AYB (CHECK)
 ::s Ե ::t E ::comment Armenian capital letter ech ::dont-use-at-start-of-word
 ::s ե ::t e ::comment Armenian small letter ech ::dont-use-at-start-of-word
 ::s Ե ::t Ye ::comment Armenian capital letter ech ::use-only-at-start-of-word
@@ -643,6 +740,7 @@
 ::s ի ::t i ::comment Armenian small letter ini
 ::s Յ ::t Y ::comment Armenian capital letter yi
 ::s յ ::t y ::comment Armenian small letter yi
+::s ֈ ::t y ::comment ARMENIAN SMALL LETTER YI WITH STROKE (CHECK)
 ::s Ո ::t Vo ::comment Armenian capital letter vo ::use-only-at-start-of-word
 ::s ո ::t vo ::comment Armenian small letter vo ::use-only-at-start-of-word
 ::s Ո ::t O ::comment Armenian capital letter vo ::dont-use-at-start-of-word
@@ -715,6 +813,9 @@
 ::s ディ ::t di
 ::s ッ ::t (__SOKUON__) ::comment katakana double following consonant
 ::s ー ::t (__CHOONPU__) ::comment katakana prolonged sound mark
+::s 𛅤 ::t i ::comment KATAKANA LETTER SMALL WI
+::s 𛅥 ::t e ::comment KATAKANA LETTER SMALL WE
+::s 𛅦 ::t o ::comment KATAKANA LETTER SMALL WO
 # Hiragana
 ::s し ::t shi
 ::s ち ::t chi
@@ -736,6 +837,9 @@
 ::s ぢゃ ::t ja
 ::s ぢゅ ::t ju
 ::s ぢょ ::t jo
+::s 𛅐 ::t i ::comment HIRAGANA LETTER SMALL WI
+::s 𛅑 ::t e ::comment HIRAGANA LETTER SMALL WE
+::s 𛅒 ::t o ::comment HIRAGANA LETTER SMALL WO
 ::s っ ::t (__SOKUON__) ::comment hiragana double following consonant
 ::s 々 ::t ² ::comment ideographic iteration mark ::annotation repetition-sign
 
@@ -752,6 +856,8 @@
 ::s ス ::t su ::t-alt s
 ::s ト ::t to ::t-alt t
 ::s ツ ::t tsu ::t-alt tu, ts ::example シュルツ = Schultz
+
+::s ㋿ ::t Reiwa ::comment SQUARE ERA NAME REIWA 
 
 # Chinese
 ::s 邦 ::t bang ::t-alt bon, bum, bun, pon
@@ -963,6 +1069,23 @@
 ::s ﷸ ::t wasallam ::comment "and peace"
 ::s ﷺ ::t sallallahou alayhe wasallam ::comment "prayer of God be upon him and his family and peace"
 
+::s ࣓ ::t waw ::comment ARABIC SMALL LOW WAW
+::s ࣔ ::t al-rub ::comment ARABIC SMALL HIGH WORD AR-RUB
+::s ࣕ ::t s ::comment ARABIC SMALL HIGH SAD
+::s ࣖ ::t ' ::comment ARABIC SMALL HIGH AIN
+::s ࣗ ::t q ::comment ARABIC SMALL HIGH QAF
+::s ࣘ ::t n ::comment ARABIC SMALL HIGH NOON WITH KASRA
+::s ࣙ ::t n ::comment ARABIC SMALL LOW NOON WITH KASRA
+::s ࣚ ::t al-thalatha ::comment ARABIC SMALL HIGH WORD ATH-THALATHA
+::s ࣛ ::t al-sajda ::comment ARABIC SMALL HIGH WORD AS-SAJDA
+::s ࣜ ::t al-nisf ::comment ARABIC SMALL HIGH WORD AN-NISF
+::s ࣝ ::t sakta ::comment ARABIC SMALL HIGH WORD SAKTA
+::s ࣞ ::t qif ::comment ARABIC SMALL HIGH WORD QIF
+::s ࣟ ::t waqfa ::comment ARABIC SMALL HIGH WORD WAQFA
+::s ࣠ ::t ::comment ARABIC SMALL HIGH FOOTNOTE MARKER (CHECK)
+::s ࣡ ::t ::comment ARABIC SMALL HIGH SIGN SAFHA (CHECK)
+::s ࣢ ::t ::comment ARABIC DISPUTED END OF AYAH (CHECK)
+
 # Farsi
 ::s ی ::t i ::t-alt y ::comment Contributed by Nima
 ::s ای ::t i ::t-alt ai ::use-only-at-start-of-word ::comment Contributed by Nima
@@ -1027,6 +1150,8 @@
 ::s י ::t y
 ::s יּ ::t y
 ::s יָּ ::t ya
+::s ײ ::t yy ::comment Hebrew ligature Yiddish double Yod (CHECK)
+::s ׯ ::t yyy ::comment HEBREW YOD TRIANGLE (CHECK)
 ::s ע ::t '
 ::s ִי ::t i ::t-alt iy ::use-alt-in-pointed
 ::s ֵי ::t e
@@ -1219,6 +1344,13 @@
 ::s ᓫ ::t l ::comment syllable final
 ::s ᕑ ::t r ::comment syllable final
 
+# Mongolian
+::s ᢅ ::t ::comment MONGOLIAN LETTER ALI GALI BALUDA (CHECK) indicates assimilation
+::s ᢆ ::t ::comment MONGOLIAN LETTER ALI GALI THREE BALUDA (CHECK) indicates assimilation
+
+# Tibetan
+::s ྅ ::t ::comment TIBETAN MARK PALUTA (CHECK) indicates assimilation
+
 ## Punctuation
 # delete
 ::s ¿ ::t "" ::comment inverted question mark
@@ -1273,6 +1405,11 @@
 ::s ॥ ::t . ::comment double danda
 ::s ৷ ::t . ::comment Bengali currency numerator four; used as danda
 ::s ॰ ::t . ::comment Devanagari abbreviation sign
+# Bengali
+::s ৽ ::t . ::comment BENGALI ABBREVIATION SIGN
+::s ৾ ::t ::comment BENGALI SANDHI MARK (CHECK)
+# Gurmukhi
+::s ੶ ::t . ::comment GURMUKHI ABBREVIATION SIGN
 # Oriya/Odia (India)
 ::s ୤ ::t . ::comment danda (deprecated, should use Devanagari danda ।)
 ::s ୥ ::t . ::comment double danda (deprecated, should use Devanagari double danda ॥)
@@ -1336,11 +1473,21 @@ Khmer
 ::s ＜ ::t <
 ::s ＞ ::t >
 ::s ％ ::t %
+::s ＿ ::t _ ::comment FULLWIDTH LOW LINE (U+FF3F)
+::s ｛ ::t { ::comment FULLWIDTH LEFT CURLY BRACKET (U+FF5B)
+::s ｝ ::t } ::comment FULLWIDTH RIGHT CURLY BRACKET (U+FF5D)
 ::s 　 ::t " " ::comment ideographic space
 # Japanese
 ::s 『 ::t ' "'
 ::s 』 ::t '" '
 ::s ・ ::t " "  ::comment Katakana middle dot; separates name elements such as first and last name
+# N'ko
+::s ߽ ::t . ::comment NKO DANTAYALAN used to abbreviate units of measure
+# Medefaidrin
+::s 𖺗 ::t , ::comment MEDEFAIDRIN COMMA
+::s 𖺘 ::t . ::comment MEDEFAIDRIN FULL STOP
+# Khitan
+::s 𖿤 ::t ::comment KHITAN SMALL SCRIPT FILLER
 
 # Symbols
 ::s ∞ ::t ∞  ::comment infinity
@@ -1363,9 +1510,82 @@ Khmer
 ::s 〕 ::t ]  ::comment right tortoise shell bracket
 ::s ﹝ ::t (  ::comment small left tortoise shell bracket
 ::s ﹞ ::t )  ::comment small left tortoise shell bracket
-::s ♄ ::t ♄  ::comment Saturn
-::s ♆ ::t ♆  ::comment Neptune
-::s ♋ ::t ♋  ::comment Cancer
+::s ¦ ::t ¦ ::comment BROKEN BAR (U+00A6)
+::s ¨ ::t ::comment DIAERESIS (U+00A8)
+::s ¯ ::t ::comment MACRON (U+00AF)
+::s ¸ ::t ::comment CEDILLA (U+00B8)
+::s Ƿ ::t W ::comment LATIN CAPITAL LETTER WYNN (U+01F7)
+::s ˘ ::t ::comment BREVE (U+02D8)
+::s ˛ ::t ::comment OGONEK (U+02DB)
+::s ˜ ::t ~ ::comment SMALL TILDE (U+02DC)
+::s ̒ ::t ::comment COMBINING TURNED COMMA ABOVE (U+0312)
+::s ̔ ::t ::comment COMBINING REVERSED COMMA ABOVE (U+0314)
+::s ̜ ::t ::comment COMBINING LEFT HALF RING BELOW (U+031C)
+::s ̧ ::t ::comment COMBINING CEDILLA (U+0327)
+::s ̫ ::t ::comment COMBINING INVERTED DOUBLE ARCH BELOW (U+032B)
+::s ̲ ::t ::comment COMBINING LOW LINE (U+0332)
+::s ̳ ::t ::comment COMBINING DOUBLE LOW LINE (U+0333)
+::s ̹ ::t ::comment COMBINING RIGHT HALF RING BELOW (U+0339)
+::s ̺ ::t ::comment COMBINING INVERTED BRIDGE BELOW (U+033A)
+::s ̿ ::t ::comment COMBINING DOUBLE OVERLINE (U+033F)
+::s ͅ ::t ::comment COMBINING GREEK YPOGEGRAMMENI (U+0345)
+::s ͑ ::t ::comment COMBINING LEFT HALF RING ABOVE (U+0351)
+::s ͗ ::t ::comment COMBINING RIGHT HALF RING ABOVE (U+0357)
+::s ͚ ::t ::comment COMBINING DOUBLE RING BELOW (U+035A)
+::s ͜ ::t ::comment COMBINING DOUBLE BREVE BELOW (U+035C)
+::s ͝ ::t ::comment COMBINING DOUBLE BREVE (U+035D)
+::s ͞ ::t ::comment COMBINING DOUBLE MACRON (U+035E)
+::s ͟ ::t ::comment COMBINING DOUBLE MACRON BELOW (U+035F)
+::s ͠ ::t ::comment COMBINING DOUBLE TILDE (U+0360)
+
+::s ‐ ::t - ::comment HYPHEN (U+2010)
+::s ‗ ::t ‗ ::comment DOUBLE LOW LINE (U+2017)
+::s ‵ ::t ‵ ::comment REVERSED PRIME (U+2035)
+::s ‶ ::t ‶ ::comment REVERSED DOUBLE PRIME (U+2036)
+::s ‸ ::t ‸ ::comment CARET (U+2038)
+::s ‽ ::t ?! ::comment INTERROBANG (U+203D)
+::s ‾ ::t ‾ ::comment OVERLINE (U+203E)
+::s ‿ ::t ‿ ::comment UNDERTIE (U+203F)
+::s ⁂ ::t ⁂ ::comment ASTERISM (U+2042)
+::s ⁎ ::t * ::comment LOW ASTERISK (U+204E)
+::s ⁏ ::t ; ::comment REVERSED SEMICOLON (U+204F)
+::s ⁔ ::t ⁔ ::comment INVERTED UNDERTIE (U+2054)
+::s ⁝ ::t ⁝ ::comment TRICOLON (U+205D)
+::s   ::t " " ::comment MEDIUM MATHEMATICAL SPACE (U+205F)
+::s ₋ ::t - ::comment SUBSCRIPT MINUS (U+208B)
+::s ⃩ ::t ::comment COMBINING WIDE BRIDGE ABOVE (U+20E9)
+
+::s ﹔ ::t ; ::comment SMALL SEMICOLON (U+FE54)
+::s ﹕ ::t : ::comment SMALL COLON (U+FE55)
+::s ﹛ ::t { ::comment SMALL LEFT CURLY BRACKET (U+FE5B)
+::s ﹜ ::t } ::comment SMALL RIGHT CURLY BRACKET (U+FE5C)
+::s ﹠ ::t & ::comment SMALL AMPERSAND (U+FE60)
+::s ﹡ ::t * ::comment SMALL ASTERISK (U+FE61)
+::s ﹣ ::t - ::comment SMALL HYPHEN-MINUS (U+FE63)
+
+::s ℈ ::t ℈ ::comment SCRUPLE (U+2108)
+::s ℟ ::t ℟ ::comment RESPONSE (U+211F)
+::s ℣ ::t ℣ ::comment VERSICLE (U+2123)
+::s ℽ ::t ℽ ::comment DOUBLE-STRUCK SMALL GAMMA (U+213D)
+::s ℾ ::t ℾ ::comment DOUBLE-STRUCK CAPITAL GAMMA (U+213E)
+::s ⅋ ::t ⅋ ::comment TURNED AMPERSAND (U+214B)
+::s ⅍ ::t A/S::comment AKTIESELSKAB (U+214D)
+
+::s ⑃ ::t ⑃ ::comment OCR INVERTED FORK (U+2443)
+::s ⑊ ::t \\ ::comment OCR DOUBLE BACKSLASH (U+244A)
+::s ⟮ ::t ( ::comment MATHEMATICAL LEFT FLATTENED PARENTHESIS (U+27EE)
+::s ⟯ ::t ) ::comment MATHEMATICAL RIGHT FLATTENED PARENTHESIS (U+27EF)
+::s ⸨ ::t (( ::comment LEFT DOUBLE PARENTHESIS (U+2E28)
+::s ⸩ ::t )) ::comment RIGHT DOUBLE PARENTHESIS (U+2E29)
+
+# kavyka indicates alternative reading
+::s ᷶ ::t ::comment COMBINING KAVYKA ABOVE RIGHT (U+1DF6)
+::s ᷷ ::t ::comment COMBINING KAVYKA ABOVE LEFT (U+1DF7)
+::s ⹅ ::t ::comment INVERTED LOW KAVYKA (U+2E45)
+::s ⹆ ::t ::comment INVERTED LOW KAVYKA WITH KAVYKA ABOVE (U+2E46)
+::s ⹇ ::t ::comment LOW KAVYKA (U+2E47)
+::s ⹈ ::t ::comment LOW KAVYKA WITH DOT (U+2E48)
+::s ꙾ ::t ::comment CYRILLIC KAVYKA (U+A67E)
 
 # Braille
 ::s ⠁ ::t a
@@ -1750,3 +1970,27 @@ Khmer
 ::s ⠐⠽ ::t young ::lcode eng
 ::s ⠵ ::t z ::lcode eng
 ::s ⠠⠴ ::t ’ ::lcode eng
+
+::preserve ::from U+2190 ::to U+21FF ::comments Arrows
+::preserve ::from U+2200 ::to U+22FF ::comment Mathematical Operators
+::preserve ::from U+2300 ::to U+23FF ::comment Miscellaneous Technical
+::preserve ::from U+2500 ::to U+257F ::comment Box Drawing
+::preserve ::from U+2580 ::to U+259F ::comment Block Elements
+::preserve ::from U+25A0 ::to U+25FF ::comment Geometric Shapes
+::preserve ::from U+2600 ::to U+26FF ::comment Miscellaneous Symbols
+::preserve ::from U+27C0 ::to U+27ED ::comment Miscellaneous Mathematical Symbols-A
+::preserve ::from U+27F0 ::to U+27FF ::comment Supplemental Arrows-A
+::preserve ::from U+2900 ::to U+297F ::comment Supplemental Arrows-B
+::preserve ::from U+2980 ::to U+29FF ::comment Miscellaneous Mathematical Symbols-B
+::preserve ::from U+2A00 ::to U+2AFF ::comment Supplemental Mathematical Operators
+::preserve ::from U+2B00 ::to U+2BFF ::comment Miscellaneous Symbols and Arrows
+::preserve ::from U+2E00 ::to U+2E27 ::comment Supplemental Punctuation (excluding ⸨⸩)
+::preserve ::from U+2E2A ::to U+2E7F ::comment Supplemental Punctuation (cont'd)
+::preserve ::from U+18B00 ::to U+18CD5 ::comment Khitan Small Script
+::preserve ::from U+1D100 ::to U+1D1FF ::comment Musical Symbols
+::preserve ::from U+1D6A8 ::to U+1D7CB ::comment Mathematical Alphanumeric Symbols (Greek)
+::preserve ::from U+1D800 ::to U+1DAAF ::comment Sutton SignWriting
+::preserve ::from U+1F800 ::to U+1F8FF ::comment Supplemental Arrows-C
+::preserve ::from U+1FA00 ::to U+1FA6F ::comment Chess Symbols
+::preserve ::from U+1FB00 ::to U+1FBCF ::comment Symbols for Legacy Computing
+::preserve ::from U+1FA70 ::to U+1FAFF ::comment Symbols and Pictographs Extended-A

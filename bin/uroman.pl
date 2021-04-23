@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
-# uroman  Nov. 12, 2015 - Oct. 11, 2019
-$version = "v1.2.6";
+# uroman  Nov. 12, 2015 - Apr. 23, 2021
+$version = "v1.2.8";
 # Author: Ulf Hermjakob
 
 # Usage: uroman.pl {-l [ara|bel|bul|deu|ell|eng|fas|grc|heb|kaz|kir|lav|lit|mkd|mkd2|oss|pnt|rus|srp|srp2|tur|uig|ukr|yid]} {--chart|--offset-mapping} {--no-cache} {--workset} < STDIN
@@ -36,6 +36,12 @@ $return_offset_mappings_p = 0;
 $workset_p = 0;
 $cache_rom_tokens_p = 1;
 
+$script_data_filename = File::Spec->catfile($data_dir, "Scripts.txt");
+$unicode_data_overwrite_filename = File::Spec->catfile($data_dir, "UnicodeDataOverwrite.txt");
+$unicode_data_filename = File::Spec->catfile($data_dir, "UnicodeData.txt");
+$romanization_table_filename = File::Spec->catfile($data_dir, "romanization-table.txt");
+$chinese_tonal_pinyin_filename = File::Spec->catfile($data_dir, "Chinese_to_Pinyin.txt");
+
 while (@ARGV) {
    $arg = shift @ARGV;
    if ($arg =~ /^-+(l|lc|lang-code)$/) {
@@ -46,18 +52,19 @@ while (@ARGV) {
       $workset_p = 1;
    } elsif ($arg =~ /^-+offset[-_]*map/i) {
       $return_offset_mappings_p = 1;
+   } elsif ($arg =~ /^-+unicode[-_]?data/i) {
+      $filename = shift @ARGV;
+      if (-r $filename) {
+         $unicode_data_filename = $filename;
+      } else {
+         print STDERR "Ignoring invalid UnicodeData filename $filename\n";
+      }
    } elsif ($arg =~ /^-+(no-tok-cach|no-cach)/i) {
       $cache_rom_tokens_p = 0;
    } else {
       print STDERR "Ignoring unrecognized arg $arg\n";
    }
 }
-
-$script_data_filename = File::Spec->catfile($data_dir, "Scripts.txt");
-$unicode_data_filename = File::Spec->catfile($data_dir, "UnicodeData.txt");
-$unicode_data_overwrite_filename = File::Spec->catfile($data_dir, "UnicodeDataOverwrite.txt");
-$romanization_table_filename = File::Spec->catfile($data_dir, "romanization-table.txt");
-$chinese_tonal_pinyin_filename = File::Spec->catfile($data_dir, "Chinese_to_Pinyin.txt");
 
 $romanizer->load_script_data(*ht, $script_data_filename);
 $romanizer->load_unicode_data(*ht, $unicode_data_filename);
@@ -109,13 +116,22 @@ print " ]\n}\n" if $return_chart_p;
 
 $dev_test_p = 0;
 if ($dev_test_p) {
-   foreach $char_name (sort keys %{$ht{SUSPICIOUS_ROMANIZATION}}) {
+   $n_suspicious_code_points = 0;
+   $n_instances = 0;
+   foreach $char_name (sort { hex($ht{UTF_NAME_TO_UNICODE}->{$a}) <=> hex($ht{UTF_NAME_TO_UNICODE}->{$b}) }
+                            keys %{$ht{SUSPICIOUS_ROMANIZATION}}) {
+      $unicode_value = $ht{UTF_NAME_TO_UNICODE}->{$char_name};
+      $utf8_string = $ht{UTF_NAME_TO_CODE}->{$char_name};
       foreach $romanization (sort keys %{$ht{SUSPICIOUS_ROMANIZATION}->{$char_name}}) {
          $count = $ht{SUSPICIOUS_ROMANIZATION}->{$char_name}->{$romanization};
 	 $s = ($count == 1) ? "" : "s";
-         print STDERR "  *** Suspiciously lengthy romanization: $char_name -> $romanization ($count instance$s)\n";
+         print STDERR "*** Suspiciously lengthy romanization:\n" unless $n_suspicious_code_points;
+         print STDERR "::s $utf8_string ::t $romanization ::comment $char_name (U+$unicode_value)\n";
+	 $n_suspicious_code_points++;
+	 $n_instances += $count;
       }
    }
+   print STDERR "  *** Total of $n_suspicious_code_points suspicious code points ($n_instances instance$s)\n" if $n_suspicious_code_points;
 } 
 
 exit 0;

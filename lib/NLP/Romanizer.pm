@@ -45,6 +45,7 @@ sub load_unicode_data {
 	 if (($unicode_value, $char_name, $general_category, $canon_comb_classes, $bidir_category, $char_decomp_mapping, $decimal_digit_value, $digit_value, $numeric_value, $mirrored, $unicode_1_0_name, $comment_field, $uc_mapping, $lc_mapping, $title_case_mapping) = split(";", $_)) {
             $utf8_code = $utf8->unicode_hex_string2string($unicode_value);
 	    $ht{UTF_TO_CHAR_NAME}->{$utf8_code} = $char_name;
+	    $ht{UTF_NAME_TO_UNICODE}->{$char_name} = $unicode_value;
 	    $ht{UTF_NAME_TO_CODE}->{$char_name} = $utf8_code;
 	    $ht{UTF_TO_CAT}->{$utf8_code} = $general_category;
 	    $ht{UTF_TO_NUMERIC}->{$utf8_code} = $numeric_value unless $numeric_value eq "";
@@ -233,6 +234,31 @@ sub load_romanization_table {
       while (<IN>) {
          $line_number++;
 	 next if /^#/;
+	 if ($_ =~ /^::preserve\s/) {
+	    $from_unicode = $util->slot_value_in_double_colon_del_list($_, "from");
+	    $to_unicode = $util->slot_value_in_double_colon_del_list($_, "to");
+	    if ($from_unicode =~ /^(?:U\+|\\u)[0-9A-F]{4,}$/i) {
+	       $from_unicode =~ s/^(?:U\+|\\u)//;
+	       $from_code_point = hex($from_unicode);
+	    } else {
+	       $from_code_point = "";
+	    }
+	    if ($to_unicode =~ /^(?:U\+|\\u)[0-9A-F]{4,}$/i) {
+	       $to_unicode =~ s/^(?:U\+|\\u)//;
+	       $to_code_point = hex($to_unicode);
+	    } else {
+	       $to_code_point = $from_code_point;
+	    }
+	    if ($from_code_point ne "") {
+	       # print STDERR "Preserve code-points $from_unicode--$to_unicode = $from_code_point--$to_code_point\n";
+	       foreach $code_point (($from_code_point .. $to_code_point)) {
+	          $utf8_string = $utf8->unicode2string($code_point);
+                  $ht{UTF_CHAR_MAPPING}->{$utf8_string}->{$utf8_string} = 1;
+	       }
+	       $n++;
+	    }
+	    next;
+	 }
          $utf8_source_string = $util->slot_value_in_double_colon_del_list($_, "s");
          $utf8_target_string = $util->slot_value_in_double_colon_del_list($_, "t");
          $utf8_alt_target_string_s = $util->slot_value_in_double_colon_del_list($_, "t-alt");
@@ -1048,6 +1074,10 @@ sub romanize {
 	          $this->add_node("", $i, $i+1, *chart_ht, "", "empty-string-mapping");
                # consider adding something for implausible romanizations of length 6+
 
+	       # keep original character (instead of romanized_char lengthener, character-18b00 etc.)
+	       } elsif (($romanized_char =~ /^(character|lengthener|modifier)/)) {
+	          $this->add_node($char, $i, $i+1, *chart_ht, "", "nevermind-keep-original");
+
 	       # Syllabic suffix in Abudiga languages, e.g. -m, -ng
                } elsif (($romanized_char =~ /^\+(H|M|N|NG)$/i)
 		     && ($prev_script eq $current_script)
@@ -1615,7 +1645,9 @@ sub markup_orig_rom_strings {
 	 $numeric = "" unless defined($numeric);
 	 my $pic_descr = $ht{UTF_TO_PICTURE_DESCR}->{$char};
 	 $pic_descr = "" unless defined($pic_descr);
-	 if (($char =~ /^[\xE3-\xE9][\x80-\xBF]{2,2}$/) && $chinesePM->string_contains_utf8_cjk_unified_ideograph_p($char)) {
+	 if ($char =~ /^\xE4\xB7[\x80-\xBF]$/) {
+	    $orig_title .= "$char_name\n";
+	 } elsif (($char =~ /^[\xE3-\xE9][\x80-\xBF]{2,2}$/) && $chinesePM->string_contains_utf8_cjk_unified_ideograph_p($char)) {
 	    my $unicode = $utf8->utf8_to_unicode($char);
 	    $orig_title .= "CJK Unified Ideograph U+" . (uc sprintf("%04x", $unicode)) . "\n";
 	    $orig_title .= "Chinese: $tonal_translit\n" if $tonal_translit = $chinesePM->tonal_pinyin($char, *pinyin_ht, "");
@@ -1827,7 +1859,8 @@ sub romanize_char_at_position {
           || ($romanization =~ /\s/)
           || ($romanization =~ /^[bcdfghjklmnpqrstvwxyz]{2,3}[aeiou]-$/) # Khmer ngo-/nyo-/pho- OK
           || ($romanization =~ /^[bcdfghjklmnpqrstvwxyz]{2,2}[aeiougw][aeiou]{1,2}$/) # Canadian, Ethiopic syllable OK
-	  || ($romanization =~ /^(allah|bbux|nyaa|nnya|quuv|rrep|shch|shur|syrx)$/i); # Arabic; Yi; Ethiopic syllable nyaa; Cyrillic letter shcha
+	  || ($romanization =~ /^(allah|bbux|nyaa|nnya|quuv|rrep|shch|shur|syrx)$/i)  # Arabic; Yi; Ethiopic syllable nyaa; Cyrillic letter shcha
+          || (($char_name =~ /^(YI SYLLABLE|VAI SYLLABLE|ETHIOPIC SYLLABLE|CANADIAN SYLLABICS|CANADIAN SYLLABICS CARRIER)\s+(\S+)$/) && (length($romanization) <= 5));
    # print STDERR "romanize_char_at_position $i $char_name :: $romanization\n" if $char_name =~ /middle/i;
    return $romanization;
 }
@@ -1839,8 +1872,9 @@ sub romanize_charname {
    # print STDERR "(C) romanize_charname($char_name): $cached_result\n" if $cached_result && ($char_name =~ /middle/i);
    return $cached_result if defined($cashed_result);
    $orig_char_name = $char_name;
+   $char_name =~ s/^.* LETTER\s+([A-Z]+)-\d+$/$1/; # HENTAIGANA LETTER A-3
    $char_name =~ s/^.* LETTER\s+//;
-   $char_name =~ s/^.* SYLLABLE\s+B\d\d\d\s+/$1/; # Linear B syllables
+   $char_name =~ s/^.* SYLLABLE\s+B\d\d\d\s+//; # Linear B syllables
    $char_name =~ s/^.* SYLLABLE\s+//;
    $char_name =~ s/^.* SYLLABICS\s+//;
    $char_name =~ s/^.* LIGATURE\s+//;
@@ -1853,7 +1887,7 @@ sub romanize_charname {
    $char_name =~ s/\s+(ABOVE|AGUNG|BAR|BARREE|BELOW|CEDILLA|CEREK|DIGRAPH|DOACHASHMEE|FINAL FORM|GHUNNA|GOAL|INITIAL FORM|ISOLATED FORM|KAWI|LELET|LELET RASWADI|LONSUM|MAHAPRANA|MEDIAL FORM|MURDA|MURDA MAHAPRANA|REVERSED|ROTUNDA|SASAK|SUNG|TAM|TEDUNG|TYPE ONE|TYPE TWO|WOLOSO)\s*$//;
    $char_name =~ s/^([A-Z]+)\d+$/$1/; # Linear B syllables etc.
    foreach $_ ((1 .. 3)) {
-      $char_name =~ s/^.*\b(?:ABKHASIAN|ACADEMY|AFRICAN|AIVILIK|AITON|AKHMIMIC|ALEUT|ALI GALI|ALPAPRAANA|ALTERNATE|ALTERNATIVE|AMBA|ARABIC|ARCHAIC|ASPIRATED|ATHAPASCAN|BASELINE|BLACKLETTER|BARRED|BASHKIR|BERBER|BHATTIPROLU|BIBLE-CREE|BIG|BINOCULAR|BLACKFOOT|BLENDED|BOTTOM|BROAD|BROKEN|CANDRA|CAPITAL|CARRIER|CHILLU|CLOSE|CLOSED|COPTIC|CROSSED|CRYPTOGRAMMIC|CURLY|CYRILLIC|DANTAJA|DENTAL|DIALECT-P|DIAERESIZED|DOTLESS|DOUBLE|DOUBLE-STRUCK|EASTERN PWO KAREN|EGYPTOLOGICAL|FARSI|FINAL|FLATTENED|GLOTTAL|GREAT|GREEK|HALF|HIGH|INITIAL|INSULAR|INVERTED|IOTIFIED|JONA|KANTAJA|KASHMIRI|KHAKASSIAN|KHAMTI|KHANDA|KIRGHIZ|KOMI|L-SHAPED|LATINATE|LITTLE|LONG|LOOPED|LOW|MAHAAPRAANA|MANCHU|MANDAILING|MATHEMATICAL|MEDIAL|MIDDLE-WELSH|MON|MONOCULAR|MOOSE-CREE|MULTIOCULAR|MUURDHAJA|N-CREE|NASKAPI|NDOLE|NEUTRAL|NIKOLSBURG|NORTHERN|NUBIAN|NUNAVIK|NUNAVUT|OJIBWAY|OLD|OPEN|ORKHON|OVERLONG|PERSIAN|PHARYNGEAL|PRISHTHAMATRA|R-CREE|REDUPLICATION|REVERSED|ROMANIAN|ROUND|ROUNDED|RUDIMENTA|RUMAI PALAUNG|SANYAKA|SARA|SAYISI|SCRIPT|SEBATBEIT|SEMISOFT|SGAW KAREN|SHAN|SHARP|SHWE PALAUNG|SHORT|SIBE|SIDEWAYS|SIMALUNGUN|SMALL|SOGDIAN|SOFT|SOUTH-SLAVEY|SOUTHERN|SPIDERY|STIRRUP|STRAIGHT|STRETCHED|SUBSCRIPT|SWASH|TAI LAING|TAILED|TAILLESS|TAALUJA|TH-CREE|TALL|TURNED|TODO|TOP|TROKUTASTI|TUAREG|UKRAINIAN|VISIGOTHIC|VOCALIC|VOICED|VOICELESS|VOLAPUK|WAVY|WESTERN PWO KAREN|WEST-CREE|WESTERN|WIDE|WOODS-CREE|Y-CREE|YENISEI|YIDDISH)\s+//;
+      $char_name =~ s/^.*\b(?:ABKHASIAN|ACADEMY|AFRICAN|AIVILIK|AITON|AKHMIMIC|ALEUT|ALI GALI|ALPAPRAANA|ALTERNATE|ALTERNATIVE|AMBA|ARABIC|ARCHAIC|ASPIRATED|ATHAPASCAN|BASELINE|BLACKLETTER|BARRED|BASHKIR|BERBER|BHATTIPROLU|BIBLE-CREE|BIG|BINOCULAR|BLACKFOOT|BLENDED|BOTTOM|BROAD|BROKEN|CANDRA|CAPITAL|CARRIER|CHILLU|CLOSE|CLOSED|COPTIC|CROSSED|CRYPTOGRAMMIC|CURLED|CURLY|CYRILLIC|DANTAJA|DENTAL|DIALECT-P|DIAERESIZED|DOTLESS|DOUBLE|DOUBLE-STRUCK|EASTERN PWO KAREN|EGYPTOLOGICAL|FARSI|FINAL|FLATTENED|GLOTTAL|GREAT|GREEK|HALF|HIGH|INITIAL|INSULAR|INVERTED|IOTIFIED|JONA|KANTAJA|KASHMIRI|KHAKASSIAN|KHAMTI|KHANDA|KINNA|KIRGHIZ|KOMI|L-SHAPED|LATINATE|LITTLE|LONG|LONG-LEGGED|LOOPED|LOW|MAHAAPRAANA|MALAYALAM|MANCHU|MANDAILING|MATHEMATICAL|MEDIAL|MIDDLE-WELSH|MON|MONOCULAR|MOOSE-CREE|MULTIOCULAR|MUURDHAJA|N-CREE|NARROW|NASKAPI|NDOLE|NEUTRAL|NIKOLSBURG|NORTHERN|NUBIAN|NUNAVIK|NUNAVUT|OJIBWAY|OLD|OPEN|ORKHON|OVERLONG|PALI|PERSIAN|PHARYNGEAL|PRISHTHAMATRA|R-CREE|REDUPLICATION|REVERSED|ROMANIAN|ROUND|ROUNDED|RUDIMENTA|RUMAI PALAUNG|SANSKRIT|SANYAKA|SARA|SAYISI|SCRIPT|SEBATBEIT|SEMISOFT|SGAW KAREN|SHAN|SHARP|SHWE PALAUNG|SHORT|SIBE|SIDEWAYS|SIMALUNGUN|SMALL|SOGDIAN|SOFT|SOUTH-SLAVEY|SOUTHERN|SPIDERY|STIRRUP|STRAIGHT|STRETCHED|SUBSCRIPT|SWASH|TAI LAING|TAILED|TAILLESS|TAALUJA|TH-CREE|TALL|THREE-LEGGED|TURNED|TODO|TOP|TROKUTASTI|TUAREG|UKRAINIAN|UNBLENDED|VISIGOTHIC|VOCALIC|VOICED|VOICELESS|VOLAPUK|WAVY|WESTERN PWO KAREN|WEST-CREE|WESTERN|WIDE|WOODS-CREE|Y-CREE|YENISEI|YIDDISH)\s+//;
    }
    $char_name =~ s/\s+(ABOVE|AGUNG|BAR|BARREE|BELOW|CEDILLA|CEREK|DIGRAPH|DOACHASHMEE|FINAL FORM|GHUNNA|GOAL|INITIAL FORM|ISOLATED FORM|KAWI|LELET|LELET RASWADI|LONSUM|MAHAPRANA|MEDIAL FORM|MURDA|MURDA MAHAPRANA|REVERSED|ROTUNDA|SASAK|SUNG|TAM|TEDUNG|TYPE ONE|TYPE TWO|WOLOSO)\s*$//;
    if ($char_name =~ /THAI CHARACTER/) {

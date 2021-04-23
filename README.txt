@@ -1,5 +1,5 @@
-uroman version 1.2.7
-Release date: January 6, 2020
+uroman version 1.2.8
+Release date: April 23, 2021
 Author: Ulf Hermjakob, USC Information Sciences Institute
 
 uroman is a universal romanizer. It converts text in any script to the Latin alphabet.
@@ -23,6 +23,11 @@ No effect for other languages in this version.
 
 Bibliography: Ulf Hermjakob, Jonathan May, and Kevin Knight. 2018. Out-of-the-box universal romanization tool uroman. In Proceedings of the 56th Annual Meeting of Association for Computational Linguistics, Demo Track. [Best Demo Paper Award]
 
+Changes in version 1.2.8
+ * Improved support for Georgian.
+ * Updated UnicodeData.txt to version 13 (2021) with several new scripts (10% larger).
+ * Preserve various symbols (as opposed to mapping to the symbols' names).
+ * Various small improvements.
 Changes in version 1.2.7
  * Improved support for Pashto.
 Changes in version 1.2.6
