@@ -1,4 +1,4 @@
-# URoman
+# uroman
 
 *uroman* is a *universal romanizer*. It converts text in any script to the Latin alphabet.
 
