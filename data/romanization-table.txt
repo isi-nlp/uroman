@@ -969,6 +969,29 @@
 ::s 兆 ::num 1000000000000
 ::s 京 ::num 10000000000000000
 
+# numbers in non-number words (to be exptended)
+::s 一贯 ::t yiguan ::comment consistent
+
+::s 红十字会 ::t hongshizihui ::comment Red Cross
+
+::s 百度 ::t baidu ::comment Baidu (company)
+::s 百分 ::t baifen ::comment percent
+::s 百合 ::t baihe ::comment lily
+::s 百货 ::t baihuo ::comment general merchandise
+::s 百科 ::t baike ::comment encyclopedia
+::s 百老汇 ::t bailaohui
+::s 百灵 ::t bailing
+::s 百慕大 ::t baimuda
+::s 百日咳 ::t bairike
+::s 百色市 ::t baiseshi
+::s 百事可乐 ::t baishikele ::comment Pepsi Cola
+::s 百無 ::t baiwu
+::s 百香 ::t baixiang
+::s 百姓 ::t baixing
+::s 百叶 ::t baiye
+::s 百色 ::t bose
+::s 杨百翰 ::t yangbaihan ::comment Brigham Young
+
 ::s 北京 ::t beijing
 ::s 京都 ::t jingdou
 ::s 东京 ::t dongjing
