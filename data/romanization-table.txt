@@ -127,6 +127,23 @@
 ::s Ž ::t Z ::t-alt Zh ::lcode lit
 ::s ž ::t z ::t-alt zh ::lcode lit
 
+# Greek letter mu used as similarly looking micro sign for units such as µm
+::s μs ::t µs ::use-only-for-whole-word ::comment microsecond
+::s μm ::t µm ::use-only-for-whole-word ::comment micrometer
+::s μg ::t µg ::use-only-for-whole-word ::comment microgram
+::s μl ::t µl ::use-only-for-whole-word ::comment microliter
+::s μV ::t µV ::use-only-for-whole-word ::comment microvolt
+::s μC ::t µC ::use-only-for-whole-word ::comment microcoulomb
+::s μF ::t µF ::use-only-for-whole-word ::comment microfarad
+::s μJ ::t µJ ::use-only-for-whole-word ::comment microjoule
+::s μT ::t µT ::use-only-for-whole-word ::comment microtesla
+::s μA ::t µA ::use-only-for-whole-word ::comment microampere
+::s μW ::t µW ::use-only-for-whole-word ::comment microwatt
+::s μK ::t µK ::use-only-for-whole-word ::comment microkelvin
+::s μHz ::t µHz ::use-only-for-whole-word ::comment microhertz
+::s μcd ::t µcd ::use-only-for-whole-word ::comment microcandela
+::s μmol ::t µmol ::use-only-for-whole-word ::comment micromol
+
 # International Greek (e.g. as used in chemical compounds)
 ::s β ::t b
 ::s Β ::t B
@@ -1373,6 +1390,9 @@
 
 # Tibetan
 ::s ྅ ::t ::comment TIBETAN MARK PALUTA (CHECK) indicates assimilation
+
+# Limbu
+::s ॽ ::t ' ::comment glottal stop (U+097D)
 
 ## Punctuation
 # delete
