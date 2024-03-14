@@ -346,6 +346,7 @@
 ::u F8FD ::r ,   ::name KLINGON COMMA
 ::u F8FE ::r .   ::name KLINGON FULL STOP
 ::u F8FF ::name KLINGON MUMMIFICATION GLYPH
+::u FEFF ::r ""  ::comment Byte Order Mark (BOM); ZERO WIDTH NO-BREAK SPACE (deprecated)
 
 ::u 1163D ::r +m ::comment Modi sign anusvara
 ::u 1163E ::r +h ::comment Modi sign visarga
