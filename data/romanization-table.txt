@@ -1032,6 +1032,7 @@
 ::s ட ::t d ::comment most commonly d, but t when word-initial or in a doubled consonant
 ::s ஃப ::t f ::comment h+p=f
 ::s ஃஜ ::t z ::comment h+j=z
+::s ௐ ::t om ::comment TAMIL OM
 
 # Myanmar/Burmese
 # ::s ့ ::t ::comment dot below, denotes creaky tone 
@@ -1432,7 +1433,7 @@
 ::s ሡ ::t su ::comment Ethiopic syllable szu
 ::s ሢ ::t si ::comment Ethiopic syllable szi
 ::s ሣ ::t saa ::comment Ethiopic syllable szaa
-::s ሤ ::t see::comment Ethiopic syllable szee
+::s ሤ ::t see ::comment Ethiopic syllable szee
 ::s ሥ ::t se ::comment Ethiopic syllable sze
 ::s ሦ ::t so ::comment Ethiopic syllable szo
 ::s ጠ ::t te ::comment Ethiopic syllable the with ejective 't'
@@ -1444,6 +1445,7 @@
 ::s ጦ ::t to ::comment Ethiopic syllable tho with ejective 't'
 
 # Devanagari (Hindi etc.)
+::s ॺ ::t y ::comment DEVANAGARI LETTER HEAVY YA
 ::s । ::t . ::comment danda
 ::s ॥ ::t . ::comment double danda
 ::s ৷ ::t . ::comment Bengali currency numerator four; used as danda
@@ -1620,6 +1622,8 @@ Khmer
 ::s ⟯ ::t ) ::comment MATHEMATICAL RIGHT FLATTENED PARENTHESIS (U+27EF)
 ::s ⸨ ::t (( ::comment LEFT DOUBLE PARENTHESIS (U+2E28)
 ::s ⸩ ::t )) ::comment RIGHT DOUBLE PARENTHESIS (U+2E29)
+
+::s Ω ::t Ω ::comment OHM SIGN (NEW)
 
 # kavyka indicates alternative reading
 ::s ᷶ ::t ::comment COMBINING KAVYKA ABOVE RIGHT (U+1DF6)
