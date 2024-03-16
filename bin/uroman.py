@@ -10,26 +10,48 @@ numbers (e.g. 一万四千, ፲፱፻፸ and 𓆿𓍧𓎇𓏻) to ASCII numbers 
 It still needs a few language-specific adjustments for Tibetan, Gurmukhi, Khmer;
 all-caps and multi-digit number handling for Braille.
 It does not yet offer alternative romanizations for ambiguous sequences.
-This script provides token-size caching.
+This script provides token-size caching (for faster runtimes).
 Output formats include
   (1) best romanization string and
   (2) best romanization edges (incl. start and end positions with respect to the original string)
-Planned: (3) full lattice
+  (3) all edges (full lattice)
+See below for 'sample calls' under main()
 """
 
 from __future__ import annotations
 import argparse
 from collections import defaultdict
-# import datetime
+import cProfile
+import datetime
+from enum import Enum
+import gc
+import json
 import os
-# from pathlib import Path
+import pathlib
+from pathlib import Path
+import pstats
 import regex
 import sys
 from typing import List, Optional, Tuple, Union
 import unicodedata as ud
 
-
 # UTILITIES
+
+
+def timer(func):
+    def wrapper(*args, **kwargs):
+        start_time = datetime.datetime.now()
+        print(f"Calling: {func.__name__}{args}")
+        print(f"Start time: {start_time:%A, %B %d, %Y at %H:%M}")
+        result = func(*args, **kwargs)
+        end_time = datetime.datetime.now()
+        time_diff = (end_time-start_time).total_seconds()
+        print(f"End time: {end_time:%A, %B %d, %Y at %H:%M}")
+        print(f"Duration: {time_diff} seconds")
+        return result
+    return wrapper
+
+
 def slot_value_in_double_colon_del_list(line: str, slot: str, default: Optional = None) -> Optional[str]:
     """For a given slot, e.g. 'cost', get its value from a line such as '::s1 of course ::s2 ::cost 0.3' -> 0.3
     The value can be an empty string, as for ::s2 in the example above."""
@@ -117,13 +139,23 @@ class Script(DictClass):
     pass
 
 
+class RomFormat(Enum):
+    """Output format of romanization"""
+    STR = 'str'          # simple string
+    EDGES = 'edges'      # list of edges (includes character offsets in original string)
+    LATTICE = 'lattice'  # lattice including alternative edges
+
+    def __str__(self):
+        return self.value
+
+
 class Uroman:
     """This class loads and maintains uroman data independent of any specific text corpus.
     Typically, only a single instance will be used. (In contrast to multiple lattice instances, one per text.)
     Methods include some testing. And finally methods to romanize a string (romanize_string()) or an entire file
     (romanize_file())."""
-    def __init__(self, args: argparse.Namespace):
-        self.data_dir_path = args_get('data_dir_path', args)
+    def __init__(self, data_dir: Path, **args):  # args: load_log, rebuild_ud_props
+        self.data_dir = data_dir
         self.rom_rules = defaultdict(list)
         self.scripts = defaultdict(Script)
         self.dict_bool = defaultdict(bool)
@@ -131,12 +163,27 @@ class Uroman:
         self.dict_int = defaultdict(int)
         self.dict_num = defaultdict(lambda: None)  # values are int (most common), float, or str ("1/2")
         self.dict_set = defaultdict(set)
-        self.load_resource_files(args=args)
+        self.load_resource_files(data_dir, args.get('load_log', False), args.get('rebuild_ud_props', False))
         self.hangul_rom = {}
         self.rom_cache = {}   # key: (s, lcode) value: t
         self.stats = defaultdict(int)  # stats, e.g. for unprocessed numbers
 
-    def load_rom_file(self, filename: str, provenance: str, file_format: str = None, summary: bool = True):
+    def second_rom_filter(self, c: str, rom: str, name: Optional[str]) -> Tuple[Optional[str], str]:
+        """Much of this code will eventually move the old Perl code to generate cleaner primary data"""
+        if rom and (' ' in rom):
+            if name is None:
+                name = self.chr_name(c)
+            if "MYANMAR VOWEL SIGN KAYAH" in name:
+                if m := regex.search(r'kayah\s+(\S+)\s*$', rom):
+                    return m.group(1), name
+            if "MENDE KIKAKUI SYLLABLE" in name:
+                if m := regex.search(r'm\d+\s+(\S+)\s*$', rom):
+                    return m.group(1), name
+            if regex.search(r'\S\s+\S', rom):
+                return c, name
+        return None, name
+
+    def load_rom_file(self, filename: str, provenance: str, file_format: str = None, load_log: bool = True):
         """Reads in and processes the 3 main romanization data files: (1) romanization-auto-table.txt
         which was automatically generated from UnicodeData.txt (2) UnicodeDataOverwrite.txt that "corrects"
         some entries in romanization-auto-table.txt and (3) romanization-table.txt which was largely manually
@@ -187,6 +234,11 @@ class Uroman:
                 num = robust_str_to_num(num_s, filename, line_number, silent=False)
                 t_alt_s = slot_value_in_double_colon_del_list(line, 't-alt')
                 t_alts = regex.split(r'[,;]\s*', t_alt_s) if t_alt_s else []
+                t_mod, name2 = self.second_rom_filter(s, t, None)
+                if t_mod and (t_mod != t):
+                    if t != s:
+                        pass  # sys.stderr.write(f'UPDATE: {s} {name2} {t} -> {t_mod}\n')
+                    t = t_mod
                 if s is not None and ((t is not None) or (num is not None)):
                     for prefix_len in range(1, len(s)+1):
                         self.dict_bool[('s-prefix', s[:prefix_len])] = True
@@ -213,10 +265,10 @@ class Uroman:
                         self.rom_rules[s] = [new_rom_rule]  # overwrite
                     else:
                         self.rom_rules[s].append(new_rom_rule)
-        if summary:
+        if load_log:
             sys.stderr.write(f'Loaded {n_entries} from {filename}\n')
 
-    def load_script_file(self, filename: str, summary: bool = True):
+    def load_script_file(self, filename: str, load_log: bool = True):
         """Reads in (typically from Scripts.txt) information about various scripts such as Devanagari,
         incl. information such as the default abugida vowel letter (e.g. "a")."""
         n_entries, max_n_script_name_components = 0, 0
@@ -266,7 +318,7 @@ class Uroman:
                         max_n_script_name_components = n_script_name_components
         if max_n_script_name_components:
             self.dict_int['max_n_script_name_components'] = max_n_script_name_components
-        if summary:
+        if load_log:
             sys.stderr.write(f'Loaded {n_entries} script descriptions from {filename}'
                              f' (max_n_scripts_name_components: {max_n_script_name_components})\n')
 
@@ -283,7 +335,7 @@ class Uroman:
             script_name_plus = regex.sub(r'\s*\S*\s*$', '', script_name_plus)
         return None
 
-    def load_unicode_data_props(self, filename: str, summary: bool = True):
+    def load_unicode_data_props(self, filename: str, load_log: bool = True):
         """Loads Unicode derived data from (1) UnicodeDataProps.txt, (2) UnicodeDataPropsHangul.txt
         and UnicodeDataPropsCJK.txt with a list of valid script-specific characters."""
         n_script, n_script_char, n_script_vowel_sign, n_script_virama = 0, 0, 0, 0
@@ -310,7 +362,7 @@ class Uroman:
                     for char in slot_value_in_double_colon_del_list(line, 'sign-virama', []):
                         self.dict_bool[('is-virama', char)] = True
                         n_script_virama += 1
-        if summary:
+        if load_log:
             sys.stderr.write(f'Loaded from {filename} mappings of {n_script_char:,d} characters '
                              f'to {n_script} script{"" if n_script == 1 else "s"}')
             if n_script_vowel_sign or n_script_virama:
@@ -338,7 +390,7 @@ class Uroman:
                 result += char
         return result
 
-    def load_chinese_pinyin_file(self, filename: str, summary: bool = True):
+    def load_chinese_pinyin_file(self, filename: str, load_log: bool = True):
         """Loads file Chinese_to_Pinyin.txt which maps Chinese characters to their Latin form."""
         n_entries = 0
         try:
@@ -364,7 +416,7 @@ class Uroman:
                     for prefix_len in range(1, len(s)+1):
                         self.dict_bool[('s-prefix', s[:prefix_len])] = True
                     n_entries += 1
-        if summary:
+        if load_log:
             sys.stderr.write(f'Loaded {n_entries} script descriptions from {filename}\n')
 
     @staticmethod
@@ -435,26 +487,27 @@ class Uroman:
         sys.stderr.write(f"Rebuilt {out_filenames} with {n_script_refs} characters "
                          f"for {len(d['script-names'])} scripts.\n")
 
-    def load_resource_files(self, args: Optional[argparse.Namespace] = None):
+    def load_resource_files(self, data_dir: Path, load_log: bool = False, rebuild_ud_props: bool = False):
         """Loads all resource files needed for romanization."""
-        data_dir_path = args_get('data_dir_path', args)
-        if not isinstance(data_dir_path, str):
-            sys.stderr.write(f'Error: data_dir_path is of {type(data_dir_path)}, not a string.\n'
+        data_dir = data_dir
+        if not isinstance(data_dir, pathlib.Path):
+            sys.stderr.write(f'Error: data_dir is of {type(data_dir)}, not a Path.\n'
                              f'       Cannot load any resource files.\n')
             return
-        summary = bool(args_get('load_summary', args))
-        self.load_rom_file(os.path.join(data_dir_path, "romanization-auto-table.txt"), 'ud', summary=summary)
-        self.load_rom_file(os.path.join(data_dir_path, "UnicodeDataOverwrite.txt"),
-                           'ow', file_format='u2r', summary=summary)
-        self.load_chinese_pinyin_file(os.path.join(data_dir_path, "Chinese_to_Pinyin.txt"), summary=summary)
-        self.load_rom_file(os.path.join(data_dir_path, "romanization-table.txt"), 'rom', summary=summary)
-        self.load_script_file(os.path.join(data_dir_path, "Scripts.txt"), summary=summary)
-        if args and ('rebuild' in args) and args.rebuild:
-            self.rebuild_unicode_data_props(os.path.join(data_dir_path, "UnicodeDataProps.txt"),
-                                            cjk=os.path.join(data_dir_path, "UnicodeDataPropsCJK.txt"),
-                                            hangul=os.path.join(data_dir_path, "UnicodeDataPropsHangul.txt"))
+        self.load_rom_file(os.path.join(data_dir, "romanization-auto-table.txt"),
+                           'ud', file_format='rom', load_log=load_log)
+        self.load_rom_file(os.path.join(data_dir, "UnicodeDataOverwrite.txt"),
+                           'ow', file_format='u2r', load_log=load_log)
+        self.load_rom_file(os.path.join(data_dir, "romanization-table.txt"),
+                           'man', file_format='rom', load_log=load_log)
+        self.load_chinese_pinyin_file(os.path.join(data_dir, "Chinese_to_Pinyin.txt"), load_log=load_log)
+        self.load_script_file(os.path.join(data_dir, "Scripts.txt"), load_log=load_log)
+        if rebuild_ud_props:
+            self.rebuild_unicode_data_props(os.path.join(data_dir, "UnicodeDataProps.txt"),
+                                            cjk=os.path.join(data_dir, "UnicodeDataPropsCJK.txt"),
+                                            hangul=os.path.join(data_dir, "UnicodeDataPropsHangul.txt"))
         for base_file in ("UnicodeDataProps.txt", "UnicodeDataPropsCJK.txt", "UnicodeDataPropsHangul.txt"):
-            self.load_unicode_data_props(os.path.join(data_dir_path, base_file), summary=summary)
+            self.load_unicode_data_props(os.path.join(data_dir, base_file), load_log=load_log)
 
     def unicode_hangul_romanization(self, s: str, pass_through_p: bool = False):
         """Special algorithmic solution to convert (Korean) Hangul characters to the Latin alphabet."""
@@ -509,21 +562,22 @@ class Uroman:
 
     def test_output_of_selected_scripts_and_rom_rules(self):
         """Low level test function that checks and displays romanization information."""
+        output = ''
         for s in ("Oriya", "Chinese"):
             d = self.scripts[s.lower()]
-            print('SCRIPT', s, d)
-        for s in ('ƿ', 'β', 'и', 'न', 'ु', 'व', 'ा', 'द', '\u094D', 'μπ', '⠑', '⠹', '亿', '८', '㐭'):
+            output += f'SCRIPT {s} {d}\n'
+        for s in ('ƿ', 'β', 'и', 'μπ', '⠹', '亿', 'ちょ'):
             d = self.rom_rules[s]
-            print('DICT', s, d)
-        for s in ('ƿ', 'β', 'अ', 'न', 'ु', 'व', 'ा', 'द'):
-            print('SCRIPT-NAME', s, self.chr_script_name(s))
+            output += f'DICT {s} {d}\n'
+        for s in ('ƿ', 'β', 'न', 'ु'):
+            output += f'SCRIPT-NAME {s} {self.chr_script_name(s)}\n'
         for s in ('万', '\uF8F7', '\U00013368', '\U0001308B', '\u0E48', '\u0E40'):
             name = self.chr_name(s)
             num = self.dict_num[s]
             pic = self.dict_str[('pic', s)]
             tone_mark = self.dict_str[('tone-mark', s)]
             syllable_info = self.dict_str[('syllable-info', s)]
-            output = f'PROPS {s}'
+            output += f'PROPS {s}'
             if name:
                 output += f'  name: {name}'
             if num:
@@ -534,94 +588,158 @@ class Uroman:
                 output += f'  tone-mark: {tone_mark}'
             if syllable_info:
                 output += f'  syllable-info: {syllable_info}'
-            print(output)
+            output += '\n'
+        print(output)
 
-    def test_romanization(self, args: argparse.Namespace):
+    def test_romanization(self, **args):
         """A few full cases of romanization testing."""
-        tests = [('अनुवाद', None), ('यह एक अच्छा अनुवाद है.', 'hin'), ('केरल', 'hin'),
-                 ('Μπανγκαλόρ', 'ell'), ('Κεράλα', 'ell'), ('കേരളം', 'mal')]
+        tests = [('ألاسكا', None), ('यह एक अच्छा अनुवाद है.', 'hin'), ('ちょっとまってください', 'kor'),
+                 ('Μπανγκαλόρ', 'ell'), ('Зеленський', 'ukr'), ('കേരളം', 'mal')]
         for test in tests:
             s = test[0]
             lcode = test[1] if len(test) >= 2 else None
-            rom = self.romanize_string(s, args, lcode=lcode)
-            print('ROM', s, '->', rom)
+            rom = self.romanize_string(s, lcode=lcode, **args)
+            sys.stderr.write(f'ROM {s} -> {rom}\n')
+        n_alerts = 0
+        codepoint = -1
+        while codepoint < 0xF0000:
+            codepoint += 1
+            c = chr(codepoint)
+            rom = self.romanize_string(c)
+            if regex.search(r'\s', rom) and regex.search(r'\S', rom):
+                name = self.chr_name(c)
+                sys.stderr.write(f'U+{codepoint:04X} {c} {name}  {rom}\n')
+                n_alerts += 1
+        sys.stderr.write(f'{n_alerts} alerts for roms with spaces\n')
 
-    def romanize_file(self, args: argparse.Namespace):
+    def romanize_file(self, input_filename: Optional[str] = None, output_filename: Optional[str] = None,
+                      lcode: Optional[str] = None, direct_input: List[str] = None, **args):
         """Script to apply romanization to an entire file. Input and output files needed.
         Language code (lcode) recommended."""
-        input_filename = args_get('input_filename', args)
-        output_filename = args_get('output_filename', args)
-        error = False
-        if not isinstance(input_filename, str):
-            sys.stderr.write(f'args lacks input_filename\n')
-            error = True
-        if not isinstance(output_filename, str):
-            sys.stderr.write(f'args lacks output_filename\n')
-            error = True
-        if error:
-            return
-        try:
-            f_in = open(input_filename)
-        except OSError:
-            sys.stderr.write(f'Could not open {args.input_filename}\n')
+        f_in_to_be_closed, f_out_to_be_closed = False, False
+        if direct_input and (input_filename is None):
+            f_in = direct_input  # list of lines
+        elif isinstance(input_filename, str):
+            try:
+                f_in = open(input_filename)
+                f_in_to_be_closed = True
+            except OSError:
+                sys.stderr.write(f'Error in romanize_file: Cannot open file {input_filename}\n')
+                f_in = None
+        elif input_filename is None:
+            f_in = sys.stdin
+        else:
+            sys.stderr.write(f"Error in romanize_file: argument 'input_filename' {input_filename} "
+                             f"is of wrong type: {type(input_filename)} (should be str)\n")
             f_in = None
-        try:
-            f_out = open(output_filename, 'w')
-        except OSError:
-            sys.stderr.write(f'Could not write to {args.output_filename}\n')
+        if isinstance(output_filename, str):
+            try:
+                f_out = open(str(output_filename), 'w')
+                f_out_to_be_closed = True
+            except OSError:
+                sys.stderr.write(f'Error in romanize_file: Cannot write to file {output_filename}\n')
+                f_out = None
+        elif output_filename is None:
+            f_out = sys.stdout
+        else:
+            sys.stderr.write(f"Error in romanize_file: argument 'output_filename' {output_filename} "
+                             f"is of wrong type: {type(output_filename)} (should be str)\n")
             f_out = None
         if f_in and f_out:
-            with f_in, f_out:
-                for line in f_in:
-                    if m := regex.match(r'(::lcode\s+)([a-z]{3})(\s+.*)$', line):
-                        lcode_kw, lcode, snt = m.group(1, 2, 3)
-                        f_out.write(f"{lcode_kw}{lcode}{self.romanize_string(snt, args, lcode)}\n")
+            max_lines = args.get('max_lines', None)
+            progress_dots_output = False
+            for line_number, line in enumerate(f_in, 1):
+                if m := regex.match(r'(::lcode\s+)([a-z]{3})(\s+)(.*?)\s*$', line):
+                    lcode_kw, lcode2, space, snt = m.group(1, 2, 3, 4)
+                    rom_result = self.romanize_string(snt, lcode2 or lcode, **args)
+                    if args.get('rom_format', None) == RomFormat.STR:
+                        lcode_prefix = f"{lcode_kw}{lcode2}{space}"
+                        f_out.write(lcode_prefix + rom_result + '\n')
                     else:
-                        f_out.write(self.romanize_string(line.rstrip(), args) + '\n')
+                        lcode_prefix = f'[0, 0, "", "lcode: {lcode2}"]'  # meta edge with lcode info
+                        prefixed_edges = lcode_prefix + self.romanize_string(snt, lcode2 or lcode, **args)
+                        f_out.write(Edge.json_str(prefixed_edges) + '\n')
+                else:
+                    f_out.write(Edge.json_str(self.romanize_string(line.rstrip(), **args)) + '\n')
+                if line_number % 100 == 0:
+                    if line_number % 1000 == 0:
+                        sys.stderr.write(str(line_number))
+                    else:
+                        sys.stderr.write('.')
+                    progress_dots_output = True
+                    sys.stderr.flush()
+                    gc.collect()
+                if max_lines and line_number >= max_lines:
+                    break
+            if progress_dots_output:
+                sys.stderr.write('\n')
+                sys.stderr.flush()
+        if f_in_to_be_closed:
+            f_in.close()
+        if f_out_to_be_closed:
+            f_out.close()
 
-    def romanize_string_core(self, s: str, lcode: Optional[str], print_lattice_p: bool = False) -> str:
+    @staticmethod
+    def apply_any_offset_to_cached_rom_result(cached_rom_result: Union[str, List[Edge]], offset: int = 0) \
+            -> Union[str, List[Edge]]:
+        if isinstance(cached_rom_result, str):
+            return cached_rom_result
+        elif offset == 0:
+            return cached_rom_result
+        else:
+            return [Edge(edge.start + offset, edge.end + offset, edge.txt, edge.type) for edge in cached_rom_result]
+
+    def romanize_string_core(self, s: str, lcode: Optional[str], rom_format: RomFormat, cache_p: bool,
+                             offset: int = 0, **args) -> Union[str, List[Edge]]:
         """Script to support token-by-token romanization with caching for higher speed."""
-        if (cached_rom := self.rom_cache.get((s, lcode), None)) is not None:
-            return cached_rom
+        if cache_p:
+            cached_rom = self.rom_cache.get((s, lcode, rom_format), None)
+            if cached_rom is not None:
+                return self.apply_any_offset_to_cached_rom_result(cached_rom, offset)
         lat = Lattice(s, uroman=self, lcode=lcode)
-        lat.add_romanization()
+        lat.add_romanization(**args)
         lat.add_numbers(self)
-        edges = lat.find_rom_edge_path(0, len(s))
-        rom = lat.edge_path_to_surf(edges)
-        self.rom_cache[(s, lcode)] = rom
-        if print_lattice_p:
-            print('LAT', lat)
-        return rom
+        lat.add_rom_fall_back_singles(self)
+        if rom_format == RomFormat.LATTICE:
+            all_edges = lat.all_edges(0, len(s))
+            if cache_p:
+                self.rom_cache[(s, lcode, rom_format)] = all_edges
+            result = self.apply_any_offset_to_cached_rom_result(all_edges, offset)
+        else:
+            best_edges = lat.best_rom_edge_path(0, len(s))
+            if rom_format == RomFormat.EDGES:
+                if cache_p:
+                    self.rom_cache[(s, lcode, rom_format)] = best_edges
+                result = self.apply_any_offset_to_cached_rom_result(best_edges, offset)
+            else:
+                rom = lat.edge_path_to_surf(best_edges)
+                if cache_p:
+                    self.rom_cache[(s, lcode, rom_format)] = rom
+                result = rom
+        return result
 
-    def romanize_string(self, s: str, args: Optional[argparse.Namespace] = None, lcode: Optional[str] = None,
-                        recursive: bool = False, return_edges: bool = False) -> Union[str, List[Edge]]:
+    def romanize_string(self, s: str, lcode: Optional[str] = None, rom_format: RomFormat = RomFormat.STR, **args) \
+            -> Union[str, List[Edge]]:
         """Main entry point for romanizing a string. Recommended argument: lcode (language code).
-        recursive only used for development. return_edges will return edges (with start and end offsets)."""
-        lcode = lcode or args_get('lcode', args)
-        print_lattice_p = args_get('lat', args)
+        recursive only used for development.
+        Method returns a string or a list of edges (with start and end offsets)."""
+        lcode = lcode or args.get('lcode', None)
         # print('rom::', s, 'lcode:', lcode, 'print-lattice:', print_lattice_p)
 
-        # with caching (for string results for now)
-        if not return_edges:
-            result, rest = '', s
-            while m3 := regex.match(r'(.*?)([ 。])(.*)$', rest):
+        # with caching (for string format output only for now)
+        if cache_p := not args.get('no_caching', False):
+            rest, offset = s, 0
+            result = '' if rom_format == RomFormat.STR else []
+            while m3 := regex.match(r'(.*?)([.,;]*[ 。][.,;]*)(.*)$', rest):
                 pre, delimiter, rest = m3.group(1, 2, 3)
-                result += (self.romanize_string_core(pre, lcode, print_lattice_p=print_lattice_p)
-                           + self.romanize_string_core(delimiter, lcode, print_lattice_p=print_lattice_p))
-            result += self.romanize_string_core(rest, lcode, print_lattice_p=print_lattice_p)
+                result += self.romanize_string_core(pre, lcode, rom_format, cache_p, offset, **args)
+                offset += len(pre)
+                result += self.romanize_string_core(delimiter, lcode, rom_format, cache_p, offset, **args)
+                offset += len(delimiter)
+            result += self.romanize_string_core(rest, lcode, rom_format, cache_p, offset, **args)
             return result
         else:
-            lat = Lattice(s, uroman=self, lcode=lcode)
-            lat.add_romanization(recursive=recursive)
-            lat.add_numbers(self)
-            edges = lat.find_rom_edge_path(0, lat.max_vertex)
-            if print_lattice_p:
-                print('LAT', lat)
-            if return_edges:
-                return edges
-            else:
-                rom = lat.edge_path_to_surf(edges)
-                return rom
+            return self.romanize_string_core(s, lcode, rom_format, cache_p, 0, **args)
 
 
 class Edge:
@@ -631,14 +749,31 @@ class Edge:
     def __init__(self, start: int, end: int, s: str, annotation: str = None):
         self.start = start
         self.end = end
-        self.s = s
+        self.txt = s
         self.type = annotation
 
     def __str__(self):
-        return f'[{self.start}-{self.end}] {self.s} ({self.type})'
+        return f'[{self.start}-{self.end}] {self.txt} ({self.type})'
 
     def __repr__(self):
         return str(self)
+
+    def json(self) -> str:  # start - end - text - annotation
+        return json.dumps([self.start, self.end, self.txt, self.type])
+
+    @staticmethod
+    def json_str(rom_result: Union[List[Edge], str]) -> str:
+        if isinstance(rom_result, str):
+            return rom_result
+        else:
+            result = '['
+            for edge in rom_result:
+                if isinstance(edge, Edge):
+                    result += edge.json()
+                else:
+                    result += str(edge)
+            result += ']'
+            return result
 
 
 class Lattice:
@@ -661,7 +796,7 @@ class Lattice:
         for start in range(self.max_vertex):
             for end in self.lattice[(start, 'right')]:
                 for edge in self.lattice[(start, end)]:
-                    edges.append(f'[{start}-{end}] {edge.s} ({edge.type})')
+                    edges.append(f'[{start}-{end}] {edge.txt} ({edge.type})')
         return ' '.join(edges)
 
     def is_at_start_of_word(self, position: int) -> bool:
@@ -671,7 +806,7 @@ class Lattice:
             return not preceded_by_alpha
         for start in self.lattice[(end, 'left')]:
             for edge in self.lattice[(start, end)]:
-                if len(edge.s) and edge.s[-1].isalpha():
+                if len(edge.txt) and edge.txt[-1].isalpha():
                     self.props[('preceded_by_alpha', position)] = True
                     return False
         self.props[('preceded_by_alpha', position)] = False
@@ -703,27 +838,26 @@ class Lattice:
         except IndexError:
             return None
 
-    def expand_rom_with_special_chars(self, rom: str, start: int, end: int, annotation: str = '',
-                                      recursive: bool = False) \
-            -> Tuple[str, int, int]:
+    def expand_rom_with_special_chars(self, rom: str, start: int, end: int, **_args) \
+            -> Tuple[str, int, int, Optional[str]]:
         """This method contains a number of special romanization heuristics that typically modify
         an existing or preliminary edge based on context."""
         uroman = self.uroman
         full_string = self.s
         if rom == '':
-            return rom, start, end
+            return rom, start, end, None
         prev_char = (full_string[start-1] if start >= 1 else '')
         first_char = full_string[start]
         last_char = full_string[end-1]
         next_char = (full_string[end] if end < len(full_string) else '')
         # \u2820 is the Braille character indicating that the next letter is upper case
         if (prev_char == '\u2820') and regex.match(r'[a-z]', rom):
-            return rom[0].upper() + rom[1:], start-1, end
+            return rom[0].upper() + rom[1:], start-1, end, 'rom exp'
         # Japanese small tsu used as consonant doubler:
         if (prev_char and prev_char in 'っッ') \
                 and (uroman.chr_script_name(prev_char) == uroman.chr_script_name(prev_char)) \
                 and (m_double_consonant := regex.match(r'(ch|[bcdfghjklmnpqrstwz])', rom)):
-            return m_double_consonant.group(1).replace('ch', 't') + rom, start-1, end
+            return m_double_consonant.group(1).replace('ch', 't') + rom, start-1, end, 'rom exp'
         # Thai
         if uroman.chr_script_name(first_char) == 'Thai':
             if (uroman.chr_script_name(prev_char) == 'Thai') \
@@ -731,7 +865,7 @@ class Lattice:
                          == 'written-pre-consonant-spoken-post-consonant') \
                     and regex.match(r'[bcdfghjklmnpqrstvwxyz]', rom) \
                     and (vowel_rom := self.romanization_by_first_rule(prev_char)):
-                return rom + vowel_rom, start-1, end
+                return rom + vowel_rom, start-1, end, 'rom exp'
             # THAI CHARACTER O ANG
             if (first_char == '\u0E2D') and (end - start == 1):
                 prev_script = uroman.chr_script_name(prev_char)
@@ -749,20 +883,23 @@ class Lattice:
                         and regex.match(r'[bcdfghjklmnpqrstvwxz]+$', next_rom)):
                     # if not recursive:
                     #     print(f'* DELETE O ANG {first_char} {start}-{end}   LC: {lc[-40:]}  RC: {rc[:40]}')
-                    return '', start, end
+                    return '', start, end, 'rom del'
         # Japanese vowel lengthener (U+30FC)
         last_rom_char = last_chr(rom)
         if (next_char == 'ー') \
                 and (uroman.chr_script_name(last_char) in ('Hiragana', 'Katakana')) \
                 and (last_rom_char in 'aeiou'):
-            return rom + last_rom_char, start, end+1
+            return rom + last_rom_char, start, end+1, 'rom exp'
         # Japanese small y: ki + small ya = kya etc.
         if (next_char and next_char in 'ゃゅょャュョ') \
                 and (uroman.chr_script_name(last_char) == uroman.chr_script_name(next_char)) \
                 and regex.search(r'([bcdfghjklmnpqrstvwxyz]i$)', rom) \
                 and (y_rom := self.romanization_by_first_rule(next_char)):
-            return rom[:-1] + y_rom, start, end+1
-        return rom, start, end
+            return rom[:-1] + y_rom[1:], start, end+1, 'rom exp'
+        # Virama (in Indian languages)
+        if self.uroman.dict_bool[('is-virama', next_char)]:
+            return rom, start, end + 1, "rom exp"
+        return rom, start, end, None
 
     def add_default_abugida_vowel(self, rom: str, start: int, end: int, annotation: str = '') -> str:
         """Adds an abugida vowel (e.g. "a") where needed. Important for many languages in South Asia."""
@@ -813,43 +950,59 @@ class Lattice:
             # print('ABUGIDA', rom, start, script_name, script, abugida_default_vowel, prev_s_char, next_s_char)
         return rom
 
-    def add_romanization(self, recursive: bool = False):
+    def cand_is_valid(self, rom_rule: RomRule, start: int, end: int, rom: str) -> bool:
+        if rom is None:
+            return False
+        if rom_rule['dont_use_at_start_of_word'] and self.is_at_start_of_word(start):
+            return False
+        if rom_rule['use_only_at_start_of_word'] and not self.is_at_start_of_word(start):
+            return False
+        if rom_rule['dont_use_at_end_of_word'] and self.is_at_end_of_word(end):
+            return False
+        if rom_rule['use_only_at_end_of_word'] and not self.is_at_end_of_word(end):
+            return False
+        if rom_rule['use_only_for_whole_word'] \
+                and not (self.is_at_start_of_word(start) and self.is_at_end_of_word(end)):
+            return False
+        if (lcodes := rom_rule['lcodes']) and (self.lcode not in lcodes):
+            return False
+        return True
+
+    def simple_sorted_romanization_candidates_for_span(self, start, end) -> List[str]:
+        s = self.s[start:end]
+        if not self.uroman.dict_bool[('s-prefix', s)]:
+            return []
+        rom_rule_candidates = []
+        for rom_rule in self.uroman.rom_rules[s]:
+            rom = rom_rule['t']
+            if self.cand_is_valid(rom_rule, start, end, rom):
+                rom_rule_candidates.append((rom_rule['n_restr'] or 0, rom_rule['t']))
+        rom_rule_candidates.sort(reverse=True)
+        return [x[1] for x in rom_rule_candidates]
+
+    def simple_top_romanization_candidate_for_span(self, start, end) -> Optional[str]:
+        best_cand, best_n_restr = None, None
+        for rom_rule in self.uroman.rom_rules[self.s[start:end]]:
+            if self.cand_is_valid(rom_rule, start, end, rom_rule['t']):
+                n_restr = rom_rule['n_restr'] or 0
+                if best_n_restr is None or (n_restr > best_n_restr):
+                    best_cand, best_n_restr = rom_rule['t'], n_restr
+        return best_cand
+
+    def add_romanization(self, **args):
         """Adds a romanization edge to the romanization lattice."""
         for start in range(self.max_vertex):
             for end in range(start+1, self.max_vertex+1):
-                s = self.s[start:end]
-                if not self.uroman.dict_bool[('s-prefix', s)]:
-                    break
-                rom_rule_candidates = []
-                for rom_rule in self.uroman.rom_rules[s]:
-                    rom = rom_rule['t']
-                    # orig_rom = rom
-                    if rom is None:
-                        continue
-                    if rom_rule['dont_use_at_start_of_word'] and self.is_at_start_of_word(start):
-                        continue
-                    if rom_rule['use_only_at_start_of_word'] and not self.is_at_start_of_word(start):
-                        continue
-                    if rom_rule['dont_use_at_end_of_word'] and self.is_at_end_of_word(end):
-                        continue
-                    if rom_rule['use_only_at_end_of_word'] and not self.is_at_end_of_word(end):
-                        continue
-                    if rom_rule['use_only_for_whole_word'] \
-                            and not (self.is_at_start_of_word(start) and self.is_at_end_of_word(end)):
-                        continue
-                    if (lcodes := rom_rule['lcodes']) and (self.lcode not in lcodes):
-                        continue
-                    rom_rule_candidates.append((rom_rule['n_restr'] or 0, rom_rule['t']))
-                if rom_rule_candidates:
-                    rom_rule_candidates.sort(reverse=True)
-                    rom = rom_rule_candidates[0][1]
+                if (rom := self.simple_top_romanization_candidate_for_span(start, end)) is not None:
                     edge_annotation = 'rom'
                     if regex.match(r'\+(m|ng|n|h|r)', rom):
                         rom, edge_annotation = rom[1:], 'rom tail'
                     rom = self.add_default_abugida_vowel(rom, start, end, annotation=edge_annotation)
                     # orig_rom, orig_start, orig_end = rom, start, end
-                    rom, start, end = self.expand_rom_with_special_chars(rom, start, end, annotation=edge_annotation,
-                                                                         recursive=recursive)
+                    rom, start, end, exp_edge_annotation \
+                        = self.expand_rom_with_special_chars(rom, start, end, annotation=edge_annotation,
+                                                             recursive=args.get('recursive', False))
+                    edge_annotation = exp_edge_annotation or edge_annotation
                     # if (orig_rom, orig_start, orig_end) != (rom, start, end):
                     #     print(f'EXP {s} {orig_rom} {orig_start}-{orig_end} -> {rom} {start}-{end}')
                     # if rom != rom_orig: print('** Add ABUGIDA', rom, start, end, rom2)
@@ -876,25 +1029,14 @@ class Lattice:
                 else:
                     uroman.stats[('*NUM', start_char, num)] += 1
 
-    def find_rom_edge_path(self, start: int, end: int) -> List[Edge]:
-        """Finds the best romanization edge path through the romanization lattice, including
-        non-romanized pieces such as ASCII and non-ASCII punctuation."""
-        result = []
-        start2 = start
-        while start2 < end:
-            new_edge = None
-            for end2 in sorted(list(self.lattice[(start2, 'right')]), reverse=True):
-                edges = self.lattice[(start2, end2)]
-                # if len(edges) >= 2: print('Multi edge', start2, end2, self.s[start2:end2], edges)
-                for edge in edges:
-                    if regex.match(r'(?:rom|num)', edge.type):
-                        new_edge = edge
-                        break
-                if new_edge:
-                    break
-            # Try a few things if regular romanization didn't come up with anything.
-            if not new_edge:
-                rom, edge_annotation = self.s[start2], 'orig'
+    def add_rom_fall_back_singles(self, _uroman):
+        """For characters in the original string not covered by romanizations and numbers,
+        add a fallback edge based on type, romanization of single char, or original char."""
+        for start in range(self.max_vertex):
+            end = start+1
+            orig_char = self.s[start]
+            if not self.lattice[(start, end)]:
+                rom, edge_annotation = orig_char, 'orig'
                 if self.uroman.char_is_nonspacing_mark(rom):
                     rom, edge_annotation = '', 'Mn'
                 elif self.uroman.char_is_format_char(rom):  # e.g. zero-width non-joiner, zero-width joiner
@@ -903,10 +1045,50 @@ class Lattice:
                     edge_annotation = 'orig'
                 elif self.uroman.char_is_space_separator(rom):
                     rom, edge_annotation = ' ', 'Zs'
-                new_edge = Edge(start2, start2+1, rom, edge_annotation)
-            self.add_edge(new_edge)
-            result.append(new_edge)
-            start2 = new_edge.end
+                elif (rom2 := self.simple_top_romanization_candidate_for_span(start, end)) is not None:
+                    rom = rom2
+                    if regex.match(r'\+(m|ng|n|h|r)', rom):
+                        rom = rom[1:]
+                    edge_annotation = 'rom single'
+                # else the original values still hold: rom, edge_annotation = orig_char, 'orig'
+                self.add_edge(Edge(start, end, rom, edge_annotation))
+
+    def all_edges(self, start: int, end: int) -> List[Edge]:
+        result = []
+        for start2 in range(start, end):
+            for end2 in sorted(list(self.lattice[(start2, 'right')]), reverse=True):
+                if end2 <= end:
+                    result.extend(self.lattice[(start2, end2)])
+                else:
+                    break
+        return result
+
+    def best_edge_in_span(self, start: int, end: int) -> Optional[Edge]:
+        edges = self.lattice[(start, end)]
+        # if len(edges) >= 2: print('Multi edge', start2, end2, self.s[start2:end2], edges)
+        other_edge = None
+        for edge in edges:
+            if regex.match(r'(?:rom|num)', edge.type):
+                return edge
+            elif other_edge is None:
+                other_edge = edge  # plan B
+        return other_edge
+
+    def best_rom_edge_path(self, start: int, end: int) -> List[Edge]:
+        """Finds the best romanization edge path through the romanization lattice, including
+        non-romanized pieces such as ASCII and non-ASCII punctuation."""
+        result = []
+        start2 = start
+        while start2 < end:
+            best_edge = None
+            for end2 in sorted(list(self.lattice[(start2, 'right')]), reverse=True):
+                if best_edge := self.best_edge_in_span(start2, end2):
+                    break
+            if best_edge:
+                result.append(best_edge)
+                start2 = best_edge.end
+            else:  # should not happen
+                start2 += 1
         return result
 
     def find_rom_edge_path_backwards(self, start: int, end: int, min_char: Optional[int] = None,
@@ -929,7 +1111,7 @@ class Lattice:
                     break
             if new_edge:
                 result_edges = [new_edge] + result_edges
-                rom = new_edge.s + rom
+                rom = new_edge.txt + rom
                 end2 = new_edge.start
             if min_char and len(rom) >= min_char:
                 break
@@ -942,10 +1124,11 @@ class Lattice:
     def edge_path_to_surf(edges) -> str:
         result = ''
         for edge in edges:
-            result += edge.s
+            result += edge.txt
         return result
 
 
+# @timer
 def main():
     """This function provides a user interface, either using argparse for a command line interface,
     or providing direct function calls.
@@ -953,60 +1136,110 @@ def main():
     listed as default). This only needs to be done once.
     After that you can romanize from file to file, or just romanize a string."""
 
-    # Compute data_dir_path based on the location of this executable script.
-    src_dir_path = os.path.dirname(os.path.realpath(__file__))
-    root_dir_path = os.path.dirname(src_dir_path)
-    data_dir_path = os.path.join(root_dir_path, "data")
-    # print(src_dir_path, root_dir_path, data_dir_path)
+    # Compute data_dir based on the location of this executable script.
+    src_dir = os.path.dirname(os.path.realpath(__file__))
+    root_dir = os.path.dirname(src_dir)
+    data_dir = os.path.join(root_dir, "data")
+    # print(src_dir, root_dir, data)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('direct_input', nargs='*', type=str)
-    parser.add_argument('--data_dir_path', type=str, default=data_dir_path, help='uroman resource dir')
-    parser.add_argument('-i', '--input_filename', type=str)
-    parser.add_argument('-o', '--output_filename', type=str)
-    parser.add_argument('--lcode', type=str, default=None, help='ISO 639-3 language code, e.g. eng')
+    parser.add_argument('--data_dir', type=Path, default=data_dir, help='uroman resource dir')
+    parser.add_argument('-i', '--input_filename', type=str, help='default: sys.stdin')
+    parser.add_argument('-o', '--output_filename', type=str, help='default: sys.stdout')
+    parser.add_argument('-l', '--lcode', type=str, default=None,
+                        help='ISO 639-3 language code, e.g. eng')
+    # parser.add_argument('-f', '--rom_format', type=RomFormat, default=RomFormat.STR, help:'alt: RomFormat.EDGES')
+    parser.add_argument('-f', '--rom_format', type=RomFormat, default=RomFormat.STR,
+                        choices=list(RomFormat), help="Output format of romanization. 'edges' provides offsets")
     # The remaining arguments are mostly for development and test
-    parser.add_argument('--load_summary', action='count', default=1, help='report load stats')
+    parser.add_argument('--max_lines', type=int, default=None, help='limit uroman to first n lines')
+    parser.add_argument('--load_log', action='count', default=0, help='report load stats')
     parser.add_argument('--test', action='count', default=0, help='perform/display a few tests')
-    parser.add_argument('--lat', action='count', default=0, help='show lattice (for testing)')
-    parser.add_argument('--rebuild', action='count', default=0, help='rebuild UnicodeDataProps files')
+    parser.add_argument('--rebuild_ud_props', action='count', default=0,
+                        help='rebuild UnicodeDataProps files (for development mode only)')
+    parser.add_argument('--no_caching', action='count', default=0, help='for development mode: speed')
+    parser.add_argument('--stats', action='count', default=0, help='for development mode: numbers')
     parser.add_argument('--ignore_args', action='count', default=0, help='for usage illustration only')
+    parser.add_argument('--profile', type=argparse.FileType('w', encoding='utf-8', errors='ignore'),
+                        default=None, metavar='PROFILE-FILENAME', help='(optional output for performance analysis)')
     args = parser.parse_args()
-
+    # copy selected (minor) args from argparse.Namespace to dict
+    args_dict = {'rom_format': args.rom_format, 'load_log': args.load_log, 'test': args.test, 'stats': args.stats,
+                 'no_caching': args.no_caching, 'rebuild_ud_props': args.rebuild_ud_props, 'max_lines': args.max_lines}
+    pr = None
+    if args.profile:
+        gc.enable()
+        gc.set_debug(gc.DEBUG_STATS)
+        gc.set_debug(gc.DEBUG_LEAK)
+        pr = cProfile.Profile()
+        pr.enable()
     '''Sample calls:
-    uroman.py --help
-    uroman.py -i ../test/multi-script.txt -o ../test/multi-script-out2.txt
-    uroman.py Игорь
-    uroman.py Игорь ちょっとまってください --lcode ukr
-    uroman.py --test --load_summary
-    uroman.py --ignore_args
+uroman.py --help
+uroman.py -i ../test/multi-script.txt -o ../test/multi-script-out2.txt
+uroman.py  < ../test/multi-script.txt  > ../test/multi-script-out2.txt
+uroman.py Игорь
+uroman.py Игорь --lcode ukr
+uroman.py ألاسكا 서울 Καλιφόρνια
+uroman.py ちょっとまってください -f edges
+uroman.py "महात्मा गांधी" -f lattice
+uroman.py สวัสดี --load_log
+uroman.py --test
+uroman.py --ignore_args
+uroman.py Բարեւ -o ../test/tmp-out.txt -f edges
+# In double input cases such as in the line below,
+# the input-file's romanization is sent to stdout, while the direct-input romanization is sent to stderr
+uroman.py ⴰⵣⵓⵍ -i ../test/multi-script.txt > ../test/multi-script-out2.txt
     '''
 
     if args.ignore_args:
         # minimal calls
-        uroman = Uroman(argparse.Namespace(data_dir_path=data_dir_path))
-        s, s2 = 'Игорь', 'ちょっとまってください'
+        uroman = Uroman(args.data_dir)
+        s, s2, s3, s4 = 'Игорь', 'ちょっとまってください', 'ka‍n‍ne', 'महात्मा गांधी'
         print(s, uroman.romanize_string(s))
         print(s, uroman.romanize_string(s, lcode='ukr'))
-        print(s2, uroman.romanize_string(s2, return_edges=True))
+        print(s2, Edge.json_str(uroman.romanize_string(s2, rom_format=RomFormat.EDGES)))
+        print(s3, Edge.json_str(uroman.romanize_string(s3, rom_format=RomFormat.EDGES)))
+        print(s4, Edge.json_str(uroman.romanize_string(s4, rom_format=RomFormat.LATTICE)))
         # Note that ../test/multi-script.txt has several lines starting with ::lcode eng etc.
         # This allows users to select specific language codes to specific lines, overwriting the overall --lcodes
-        uroman.romanize_file(argparse.Namespace(input_filename='../test/multi-script.txt',
-                                                output_filename='../test/multi-script-out3.txt'))
+        uroman.romanize_file(input_filename='../test/multi-script.txt',
+                             output_filename='../test/multi-script-out3.txt')
     else:
         # build a Uroman object (once for many applications and different scripts and languages)
-        uroman = Uroman(args)
+        uroman = Uroman(args.data_dir, load_log=args.load_log, rebuild_ud_props=args.rebuild_ud_props)
+        romanize_file_p = (args.input_filename or args.output_filename
+                           or not (args.direct_input or args.test or args.ignore_args or args.rebuild_ud_props))
         # Romanize any positional arguments, interpreted as strings to be romanized.
         for s in args.direct_input:
-            print(uroman.romanize_string(s.rstrip(), args))
+            result = uroman.romanize_string(s.rstrip(), lcode=args.lcode, **args_dict)
+            result_json = Edge.json_str(result)
+            if romanize_file_p:
+                # input from both file/stdin (to file/stdout) and direct-input (to stderr)
+                if args.input_filename:
+                    sys.stderr.write(result_json + '\n')
+                # input from direct-input (but not from file/stdin) to stdout
+                # else pass
+            # no file/stdin or file/stdout, so we write romanization of direct-input to stdout
+            else:
+                print(result_json)
         # If provided, apply romanization to an entire file.
-        if args.input_filename and args.output_filename:
-            uroman.romanize_file(args)
+        if (args.input_filename or args.output_filename
+                or not (args.direct_input or args.test or args.ignore_args or args.rebuild_ud_props)):
+            uroman.romanize_file(args.input_filename, args.output_filename, lcode=args.lcode,
+                                 direct_input=args.direct_input, **args_dict)
         if args.test:
             uroman.test_output_of_selected_scripts_and_rom_rules()
-            uroman.test_romanization(args)
-        if uroman.stats:
-            sys.stderr.write(f'Stats: {dict(uroman.stats)}\n')
+            uroman.test_romanization()
+        if uroman.stats and args.stats:
+            stats100 = {k: uroman.stats[k] for k in list(dict(uroman.stats))[:100]}
+            sys.stderr.write(f'Stats: {stats100} ...\n')
+    if args.profile:
+        if pr:
+            pr.disable()
+            ps = pstats.Stats(pr, stream=args.profile).sort_stats(pstats.SortKey.TIME)
+            ps.print_stats()
+        print(gc.get_stats())
 
 
 if __name__ == "__main__":
