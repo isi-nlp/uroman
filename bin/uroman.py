@@ -566,7 +566,7 @@ class Uroman:
         for s in ("Oriya", "Chinese"):
             d = self.scripts[s.lower()]
             output += f'SCRIPT {s} {d}\n'
-        for s in ('ƿ', 'β', 'и', 'μπ', '⠹', '亿', 'ちょ'):
+        for s in ('ƿ', 'β', 'и', 'μπ', '⠹', '亿', 'ちょ', 'и'):
             d = self.rom_rules[s]
             output += f'DICT {s} {d}\n'
         for s in ('ƿ', 'β', 'न', 'ु'):
@@ -660,7 +660,7 @@ class Uroman:
                         prefixed_edges = lcode_prefix + self.romanize_string(snt, lcode2 or lcode, **args)
                         f_out.write(Edge.json_str(prefixed_edges) + '\n')
                 else:
-                    f_out.write(Edge.json_str(self.romanize_string(line.rstrip(), **args)) + '\n')
+                    f_out.write(Edge.json_str(self.romanize_string(line.rstrip(), lcode, **args)) + '\n')
                 if line_number % 100 == 0:
                     if line_number % 1000 == 0:
                         sys.stderr.write(str(line_number))
@@ -1100,21 +1100,28 @@ class Lattice:
         rom = ''
         end2 = end
         while start < end2:
+            old_end2 = end2
             new_edge = None
             for start2 in sorted(list(self.lattice[(end2, 'left')])):
                 edges = self.lattice[(start2, end2)]
+                other_edge = None
                 for edge in edges:
                     if regex.match(r'(?:rom|num)', edge.type):
                         new_edge = edge
                         break
+                    elif other_edge is None:
+                        other_edge = edge
                 if new_edge:
                     break
+                new_edge = other_edge
             if new_edge:
                 result_edges = [new_edge] + result_edges
                 rom = new_edge.txt + rom
                 end2 = new_edge.start
             if min_char and len(rom) >= min_char:
                 break
+            if old_end2 >= end2:
+                end2 -= 1
         if return_str:
             return rom
         else:
