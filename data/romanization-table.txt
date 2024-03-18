@@ -653,7 +653,7 @@
 ::s ᚗ ::t ui ::t-alt ua ::comment Ogham additional letter Uilleann
 ::s ᚘ ::t p ::t-alt io ::comment Ogham additional letter Ifín 
 ::s ᚙ ::t ch ::t-alt x, ai ::comment Ogham additional letter Eamhancholl
-::s   ::t " " ::comment Ogham space mark
+::s " " ::t " " ::comment Ogham space mark
 ::s ᚛ ::t "" ::comment Ogham feather mark
 ::s ᚜ ::t "" ::comment Ogham feather mark
 
