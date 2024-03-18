@@ -807,6 +807,9 @@
 ::s ジ ::t ji
 ::s ヂ ::t ji
 ::s ヅ ::t zu
+::s ャ ::t ya
+::s ュ ::t yu
+::s ョ ::t yo
 ::s シャ ::t sha
 ::s シュ ::t shu
 ::s ショ ::t sho
@@ -828,8 +831,8 @@
 ::s ヴィ ::t vi
 ::s ティ ::t ti
 ::s ディ ::t di
-::s ッ ::t (__SOKUON__) ::comment katakana double following consonant
-::s ー ::t (__CHOONPU__) ::comment katakana prolonged sound mark
+::s ッ ::t tsu ::comment katakana double following consonant
+::s ー ::t "" ::comment katakana prolonged sound mark
 ::s 𛅤 ::t i ::comment KATAKANA LETTER SMALL WI
 ::s 𛅥 ::t e ::comment KATAKANA LETTER SMALL WE
 ::s 𛅦 ::t o ::comment KATAKANA LETTER SMALL WO
@@ -842,6 +845,9 @@
 ::s じ ::t ji
 ::s ぢ ::t ji
 ::s づ ::t zu
+::s ゃ ::t ya
+::s ゅ ::t yu
+::s ょ ::t yo
 ::s しゃ ::t sha
 ::s しゅ ::t shu
 ::s しょ ::t sho
@@ -857,7 +863,7 @@
 ::s 𛅐 ::t i ::comment HIRAGANA LETTER SMALL WI
 ::s 𛅑 ::t e ::comment HIRAGANA LETTER SMALL WE
 ::s 𛅒 ::t o ::comment HIRAGANA LETTER SMALL WO
-::s っ ::t (__SOKUON__) ::comment hiragana double following consonant
+::s っ ::t tsu ::comment hiragana double following consonant
 ::s 々 ::t ² ::comment ideographic iteration mark ::annotation repetition-sign
 
 ::s フ ::t fu ::t-alt f
@@ -1051,7 +1057,7 @@
 ::s ລ ::t l ::comment lo loot
 ::s ຣ ::t l ::comment lo ling
 ::s ໝ ::t m ::comment ho mo
-::s ໜ ::n ::comment ho no
+::s ໜ ::t n ::comment ho no
 ::s ຢ ::t y ::comment yo
 ::s ໍ ::t oo ::comment niggahita (possibly also nasal -m in final position)
 ::s ໆ ::t ² ::comment Lao ko la ::annotation repetition-sign
