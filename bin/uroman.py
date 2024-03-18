@@ -371,8 +371,8 @@ class Uroman:
             sys.stderr.write('.\n')
 
     @staticmethod
-    def de_accent(s: str) -> str:
-        """De-accents a string from "liú" to "liu" (to help process file Chinese_to_Pinyin.txt)."""
+    def de_accent_pinyin(s: str) -> str:
+        """De-accents a string from "liú" to "liu" and "ü" to "u" (to help process file Chinese_to_Pinyin.txt)."""
         result = ''
         for char in s:
             if decomp := ud.decomposition(char).split():
@@ -388,6 +388,7 @@ class Uroman:
                     sys.stderr.write(f'Cannot decode {decomp} (expected 1 letter)\n')
             else:
                 result += char
+        result = result.replace('ü', 'u')
         return result
 
     def load_chinese_pinyin_file(self, filename: str, load_log: bool = True):
@@ -406,7 +407,7 @@ class Uroman:
                     continue
                 try:
                     chinese, pinyin = line.rstrip().split()
-                    rom = self.de_accent(pinyin)
+                    rom = self.de_accent_pinyin(pinyin)
                 except ValueError:
                     sys.stderr.write(f'Cannot process line {line_number} in file {filename}: {line}')
                 else:
@@ -441,12 +442,19 @@ class Uroman:
             c = chr(codepoint)
             if not (char_name := self.chr_name(c)):
                 continue
-            for prop_name_comp in ('VOWEL SIGN', 'SIGN VIRAMA'):
-                prop_class = prop_name_comp.lower().replace(' ', '-')
-                prop_classes.add(prop_class)
-                script_name_cand = regex.sub(fr'\s+{prop_name_comp}\b.*$', '', char_name)
-                if script_name := self.extract_script_name(script_name_cand, char_name):
-                    self.add_char_to_rebuild_unicode_data_dict(d, script_name, prop_class, c)
+            for prop_name_comp2 in ('VOWEL SIGN',
+                                    ('SIGN VIRAMA', 'SIGN ASAT', 'AL-LAKUNA', 'SIGN COENG', 'SIGN PAMAAEH')):
+                if prop_name_comp2 and isinstance(prop_name_comp2, tuple):
+                    prop_list = prop_name_comp2
+                else:
+                    prop_list = (prop_name_comp2,)
+                for prop_name_comp in prop_list:
+                    prop_class = prop_list[0].lower().replace(' ', '-')
+                    if prop_class not in prop_classes:
+                        prop_classes.add(prop_class)
+                    script_name_cand = regex.sub(fr'\s+{prop_name_comp}\b.*$', '', char_name)
+                    if script_name := self.extract_script_name(script_name_cand, char_name):
+                        self.add_char_to_rebuild_unicode_data_dict(d, script_name, prop_class, c)
             script_name_cand = regex.sub(r'\s+(CONSONANT|LETTER|LIGATURE|SIGN|SYLLABLE|SYLLABICS|VOWEL|'
                                          r'IDEOGRAPH|POINT|ACCENT|CHARACTER)\b.*$', '',
                                          char_name)
@@ -566,7 +574,7 @@ class Uroman:
         for s in ("Oriya", "Chinese"):
             d = self.scripts[s.lower()]
             output += f'SCRIPT {s} {d}\n'
-        for s in ('ƿ', 'β', 'и', 'μπ', '⠹', '亿', 'ちょ', 'и'):
+        for s in ('ƿ', 'β', 'и', 'μπ', '⠹', '亿', 'ちょ', 'и', ):
             d = self.rom_rules[s]
             output += f'DICT {s} {d}\n'
         for s in ('ƿ', 'β', 'न', 'ु'):
@@ -730,7 +738,7 @@ class Uroman:
         if cache_p := not args.get('no_caching', False):
             rest, offset = s, 0
             result = '' if rom_format == RomFormat.STR else []
-            while m3 := regex.match(r'(.*?)([.,;]*[ 。][.,;]*)(.*)$', rest):
+            while m3 := regex.match(r'(.*?)([.,; ]*[ 。][.,; ]*)(.*)$', rest):
                 pre, delimiter, rest = m3.group(1, 2, 3)
                 result += self.romanize_string_core(pre, lcode, rom_format, cache_p, offset, **args)
                 offset += len(pre)
@@ -842,8 +850,10 @@ class Lattice:
             -> Tuple[str, int, int, Optional[str]]:
         """This method contains a number of special romanization heuristics that typically modify
         an existing or preliminary edge based on context."""
+        orig_start = start
         uroman = self.uroman
         full_string = self.s
+        annot = None
         if rom == '':
             return rom, start, end, None
         prev_char = (full_string[start-1] if start >= 1 else '')
@@ -857,7 +867,12 @@ class Lattice:
         if (prev_char and prev_char in 'っッ') \
                 and (uroman.chr_script_name(prev_char) == uroman.chr_script_name(prev_char)) \
                 and (m_double_consonant := regex.match(r'(ch|[bcdfghjklmnpqrstwz])', rom)):
-            return m_double_consonant.group(1).replace('ch', 't') + rom, start-1, end, 'rom exp'
+            # return m_double_consonant.group(1).replace('ch', 't') + rom, start-1, end, 'rom exp'
+            # expansion might additional apply to the right
+            rom = m_double_consonant.group(1).replace('ch', 't') + rom
+            start = start-1
+            first_char = full_string[start]
+            prev_char = (full_string[start-1] if start >= 1 else '')
         # Thai
         if uroman.chr_script_name(first_char) == 'Thai':
             if (uroman.chr_script_name(prev_char) == 'Thai') \
@@ -884,22 +899,32 @@ class Lattice:
                     # if not recursive:
                     #     print(f'* DELETE O ANG {first_char} {start}-{end}   LC: {lc[-40:]}  RC: {rc[:40]}')
                     return '', start, end, 'rom del'
+        # Japanese small y: ki + small ya = kya etc.
+        if (next_char and next_char in 'ゃゅょャュョ') \
+                and (uroman.chr_script_name(last_char) == uroman.chr_script_name(next_char)) \
+                and regex.search(r'([bcdfghjklmnpqrstvwxyz]i$)', rom) \
+                and (y_rom := self.romanization_by_first_rule(next_char)) \
+                and (not self.simple_top_romanization_candidate_for_span(orig_start, end+1)) \
+                and (not self.simple_top_romanization_candidate_for_span(start, end+1)):
+            rom = rom[:-1] + y_rom
+            end = end+1
+            last_char = full_string[end - 1]
+            next_char = (full_string[end] if end < len(full_string) else '')
+            annot = 'rom exp'
         # Japanese vowel lengthener (U+30FC)
         last_rom_char = last_chr(rom)
         if (next_char == 'ー') \
                 and (uroman.chr_script_name(last_char) in ('Hiragana', 'Katakana')) \
                 and (last_rom_char in 'aeiou'):
             return rom + last_rom_char, start, end+1, 'rom exp'
-        # Japanese small y: ki + small ya = kya etc.
-        if (next_char and next_char in 'ゃゅょャュョ') \
-                and (uroman.chr_script_name(last_char) == uroman.chr_script_name(next_char)) \
-                and regex.search(r'([bcdfghjklmnpqrstvwxyz]i$)', rom) \
-                and (y_rom := self.romanization_by_first_rule(next_char)):
-            return rom[:-1] + y_rom[1:], start, end+1, 'rom exp'
         # Virama (in Indian languages)
         if self.uroman.dict_bool[('is-virama', next_char)]:
             return rom, start, end + 1, "rom exp"
-        return rom, start, end, None
+        if rom.startswith(' ') and ((start == 0) or (prev_char == ' ')):
+            rom = rom[1:]
+        if rom.endswith(' ') and ((end == len(full_string)+1) or (next_char == ' ')):
+            rom = rom[:-1]
+        return rom, start, end, annot
 
     def add_default_abugida_vowel(self, rom: str, start: int, end: int, annotation: str = '') -> str:
         """Adds an abugida vowel (e.g. "a") where needed. Important for many languages in South Asia."""
@@ -926,13 +951,17 @@ class Lattice:
                 return base_rom
             if self.uroman.dict_bool[('is-virama', next_s_char)]:
                 return base_rom
+            if self.uroman.char_is_nonspacing_mark(next_s_char) \
+                    and self.uroman.dict_bool[('is-virama', next2_s_char)]:
+                return base_rom
             if self.uroman.dict_bool[('is-virama', prev_s_char)]:
                 return base_rom + abugida_default_vowel
             if self.is_at_start_of_word(start) and not regex.search('r[aeiou]', rom):
                 return base_rom + abugida_default_vowel
             # print('G', start, end, rom)
+            # delete many final schwas from most Devanagari languages (except: Sanskrit)
             if self.is_at_end_of_word(end):
-                if script_name in ("Devanagari",):
+                if (script_name in ("Devanagari",)) and (self.lcode not in ('san',)):  # Sanskrit
                     return rom
                 else:
                     return base_rom + abugida_default_vowel
@@ -989,24 +1018,59 @@ class Lattice:
                     best_cand, best_n_restr = rom_rule['t'], n_restr
         return best_cand
 
+    def decomp_rom(self, char_position: int) -> Optional[str]:
+        """Input: decomposable character such as ﻼ or ½
+        Output: la or 1/2"""
+        full_string = self.s
+        char = full_string[char_position]
+        rom = None
+        if ud_decomp_s := ud.decomposition(char):
+            format_comps = []
+            other_comps = []
+            decomp_s = ''
+            name = self.uroman.chr_name(char)
+            for ud_decomp_elem in ud_decomp_s.split():
+                if ud_decomp_elem.startswith("<"):
+                    format_comps.append(ud_decomp_elem)
+                else:
+                    try:
+                        norm_char = chr(int(ud_decomp_elem, 16))
+                    except ValueError:
+                        other_comps.append(ud_decomp_elem)
+                    else:
+                        decomp_s += norm_char
+            if (format_comps and (format_comps[0] not in ('<super>', '<sub>', '<noBreak>', '<compat>'))
+                    # and (char not in '')
+                    and (not other_comps) and decomp_s):
+                rom = self.uroman.romanize_string(decomp_s, self.lcode)
+                # make sure to add a space for 23½ -> 23 1/2
+            if rom and ud.numeric(char, None):
+                if char_position >= 1 and ud.numeric(full_string[char_position-1], None):
+                    rom = ' ' + rom
+                if (char_position+1 < len(full_string)) and ud.numeric(full_string[char_position+1], None):
+                    rom += ' '
+        return rom
+
     def add_romanization(self, **args):
         """Adds a romanization edge to the romanization lattice."""
         for start in range(self.max_vertex):
             for end in range(start+1, self.max_vertex+1):
+                if not self.uroman.dict_bool[('s-prefix', self.s[start:end])]:
+                    break
                 if (rom := self.simple_top_romanization_candidate_for_span(start, end)) is not None:
                     edge_annotation = 'rom'
                     if regex.match(r'\+(m|ng|n|h|r)', rom):
                         rom, edge_annotation = rom[1:], 'rom tail'
                     rom = self.add_default_abugida_vowel(rom, start, end, annotation=edge_annotation)
                     # orig_rom, orig_start, orig_end = rom, start, end
-                    rom, start, end, exp_edge_annotation \
+                    rom, start2, end2, exp_edge_annotation \
                         = self.expand_rom_with_special_chars(rom, start, end, annotation=edge_annotation,
                                                              recursive=args.get('recursive', False))
                     edge_annotation = exp_edge_annotation or edge_annotation
                     # if (orig_rom, orig_start, orig_end) != (rom, start, end):
                     #     print(f'EXP {s} {orig_rom} {orig_start}-{orig_end} -> {rom} {start}-{end}')
                     # if rom != rom_orig: print('** Add ABUGIDA', rom, start, end, rom2)
-                    self.add_edge(Edge(start, end, rom, edge_annotation))
+                    self.add_edge(Edge(start2, end2, rom, edge_annotation))
             if start < len(self.s):
                 char = self.s[start]
                 cp = ord(char)
@@ -1014,6 +1078,9 @@ class Lattice:
                 if 0xAC00 <= cp <= 0xD7A3:
                     if rom := self.uroman.unicode_hangul_romanization(char):
                         self.add_edge(Edge(start, start+1, rom, 'rom'))
+                # character decomposition
+                if rom_decomp := self.decomp_rom(start):
+                    self.add_edge(Edge(start, start + 1, rom_decomp, 'rom decomp'))
 
     def add_numbers(self, uroman):
         """Adds a numerical romanization edge to the romanization lattice, currently just for digits.
@@ -1043,8 +1110,8 @@ class Lattice:
                     rom, edge_annotation = '', 'Cf'
                 elif rom == ' ':
                     edge_annotation = 'orig'
-                elif self.uroman.char_is_space_separator(rom):
-                    rom, edge_annotation = ' ', 'Zs'
+                # elif self.uroman.char_is_space_separator(rom):
+                #     rom, edge_annotation = ' ', 'Zs'
                 elif (rom2 := self.simple_top_romanization_candidate_for_span(start, end)) is not None:
                     rom = rom2
                     if regex.match(r'\+(m|ng|n|h|r)', rom):
@@ -1066,13 +1133,16 @@ class Lattice:
     def best_edge_in_span(self, start: int, end: int) -> Optional[Edge]:
         edges = self.lattice[(start, end)]
         # if len(edges) >= 2: print('Multi edge', start2, end2, self.s[start2:end2], edges)
-        other_edge = None
+        decomp_edge, other_edge = None, None
         for edge in edges:
-            if regex.match(r'(?:rom|num)', edge.type):
+            if edge.type.startswith('rom decomp'):
+                if decomp_edge is None:
+                    decomp_edge = edge  # plan B
+            elif regex.match(r'(?:rom|num)', edge.type):
                 return edge
             elif other_edge is None:
-                other_edge = edge  # plan B
-        return other_edge
+                other_edge = edge  # plan C
+        return decomp_edge or other_edge
 
     def best_rom_edge_path(self, start: int, end: int) -> List[Edge]:
         """Finds the best romanization edge path through the romanization lattice, including
