@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 from collections import defaultdict
 import cProfile
+from memory_profiler import profile
 import datetime
 from enum import Enum
 import gc
@@ -163,7 +164,9 @@ class Uroman:
         self.dict_int = defaultdict(int)
         self.dict_num = defaultdict(lambda: None)  # values are int (most common), float, or str ("1/2")
         self.dict_set = defaultdict(set)
+        gc.disable()
         self.load_resource_files(data_dir, args.get('load_log', False), args.get('rebuild_ud_props', False))
+        gc.enable()
         self.hangul_rom = {}
         self.rom_cache = {}   # key: (s, lcode) value: t
         self.stats = defaultdict(int)  # stats, e.g. for unprocessed numbers
@@ -665,7 +668,7 @@ class Uroman:
                         f_out.write(lcode_prefix + rom_result + '\n')
                     else:
                         lcode_prefix = f'[0, 0, "", "lcode: {lcode2}"]'  # meta edge with lcode info
-                        prefixed_edges = lcode_prefix + self.romanize_string(snt, lcode2 or lcode, **args)
+                        prefixed_edges = [lcode_prefix] + self.romanize_string(snt, lcode2 or lcode, **args)
                         f_out.write(Edge.json_str(prefixed_edges) + '\n')
                 else:
                     f_out.write(Edge.json_str(self.romanize_string(line.rstrip(), lcode, **args)) + '\n')
@@ -721,6 +724,7 @@ class Uroman:
                 result = self.apply_any_offset_to_cached_rom_result(best_edges, offset)
             else:
                 rom = lat.edge_path_to_surf(best_edges)
+                del lat
                 if cache_p:
                     self.rom_cache[(s, lcode, rom_format)] = rom
                 result = rom
@@ -863,6 +867,9 @@ class Lattice:
         # \u2820 is the Braille character indicating that the next letter is upper case
         if (prev_char == '\u2820') and regex.match(r'[a-z]', rom):
             return rom[0].upper() + rom[1:], start-1, end, 'rom exp'
+        # Normalize multi-upper case THessalonike -> Thessalonike, but don't change THESSALONIKE
+        if start+1 == end and rom.isupper() and next_char.islower():
+            rom = rom.capitalize()
         # Japanese small tsu used as consonant doubler:
         if (prev_char and prev_char in 'っッ') \
                 and (uroman.chr_script_name(prev_char) == uroman.chr_script_name(prev_char)) \
@@ -899,6 +906,14 @@ class Lattice:
                     # if not recursive:
                     #     print(f'* DELETE O ANG {first_char} {start}-{end}   LC: {lc[-40:]}  RC: {rc[:40]}')
                     return '', start, end, 'rom del'
+        # Coptic: consonant + grace-accent = e + consonant
+        if next_char and (next_char == "\u0300") and (uroman.chr_script_name(last_char) == "Coptic")\
+                and (not self.simple_top_romanization_candidate_for_span(orig_start, end+1)):
+            rom = 'e' + rom
+            end = end+1
+            last_char = full_string[end - 1]
+            next_char = (full_string[end] if end < len(full_string) else '')
+            annot = 'rom exp'
         # Japanese small y: ki + small ya = kya etc.
         if (next_char and next_char in 'ゃゅょャュョ') \
                 and (uroman.chr_script_name(last_char) == uroman.chr_script_name(next_char)) \
@@ -997,6 +1012,7 @@ class Lattice:
             return False
         return True
 
+    # @profile
     def simple_sorted_romanization_candidates_for_span(self, start, end) -> List[str]:
         s = self.s[start:end]
         if not self.uroman.dict_bool[('s-prefix', s)]:
