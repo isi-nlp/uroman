@@ -219,6 +219,44 @@
 ::s ` ::t ::comment GREEK VARIA (U+1FEF)
 ::s ´ ::t ::comment GREEK OXIA (U+1FFD)
 
+# Coptic
+::s ⲁ ::t a ::comment
+::s ⲁ̀ ::t a ::comment
+::s Ⲁ ::t A ::comment
+::s Ⲁ̀ ::t A ::comment
+::s ⲉ ::t e ::comment
+::s ⲉ̀ ::t e ::comment
+::s Ⲉ ::t e ::comment
+::s ⲓ ::t i ::comment
+::s ⲓ̀ ::t i ::comment
+::s Ⲓ ::t i ::comment
+::s ⲟ ::t o ::comment
+::s ⲟⲩ ::t u ::comment
+::s ⲟⲩⲁ ::t owe ::comment
+::s Ⲟ ::t O ::comment
+::s Ⲟⲩ ::t U ::comment
+::s ⲱ ::t o ::comment
+::s ⲱ̀ ::t o ::comment
+::s Ⲱ ::t o ::comment
+::s ⲏ ::t e  ::comment
+::s Ⲏ ::t E  ::comment
+::s Ⲩ ::t Y ::comment
+::s Ⲩ̀ ::t U ::comment
+::s ⲉⲩ ::t ev ::comment Ⲡⲓⲡ̀ⲛⲉⲩⲙⲁ
+::s Ⲉⲩ ::t Ev ::comment Ⲡⲓⲡ̀ⲛⲉⲩⲙⲁ
+::s ⲩ ::t u ::comment
+::s Ⲩ ::t U ::comment
+::s ⲃ ::t b ::t-alt v ::comment
+::s ϣ ::t sh ::comment
+::s Ϣ ::t Sh ::comment
+::s ⲧ ::t t ::t-alt d ::comment
+::s Ⲧ ::t T ::t-alt D ::comment
+::s ϯ ::t ti ::comment
+::s Ϯ ::t TI ::comment
+::s ϫ ::t j ::comment
+::s Ϫ ::t J ::comment
+::s ϭ ::t ch ::comment tsh
+
 # Glagolitic
 ::s Ⰿ ::t M ::comment GLAGOLITIC CAPITAL LETTER MYSLITE (U+2C0F)
 ::s Ⱞ ::t M ::comment GLAGOLITIC CAPITAL LETTER LATINATE MYSLITE (U+2C2E)
