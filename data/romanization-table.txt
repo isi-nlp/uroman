@@ -372,7 +372,9 @@
 ::s иї ::t yi ::lcode ukr ::comment avoid yyi
 ::s ій ::t iy ::lcode ukr
 ::s і́й ::t iy ::lcode ukr
-::s ий ::t y ::lcode ukr ::comment Зеленський/Zelensky
+::s ий ::t yi ::lcode ukr 
+::s ий ::t y ::lcode ukr ::use-only-at-end-of-word ::comment Зеленський/Zelensky
+::s ий ::t yi ::lcode ukr ::dont-use-at-end-of-word
 
 # Belarusian
 ::s Г ::t H ::t-alt G ::lcode bel ::comment capital letter he 
@@ -1009,26 +1011,49 @@
 
 ## Numbers
 # Chinese and Japanese numbers
-::s 零 ::num 0
-::s 〇 ::num 0
+::s 零 ::num 0 ::style formal
+::s 〇 ::num 0 ::style informal
 ::s 一 ::num 1
+::s 壹 ::num 1 ::style financial
 ::s 二 ::num 2
+::s 贰 ::num 2 ::style financial ::standard simplified
+::s 貳 ::num 2 ::style financial ::standard traditional
 ::s 三 ::num 3
+::s 叁 ::num 3 ::style financial ::standard simplified
+::s 參 ::num 3 ::style financial ::standard traditional
 ::s 四 ::num 4
+::s 肆 ::num 4 ::style financial
 ::s 五 ::num 5
+::s 伍 ::num 5 ::style financial
 ::s 六 ::num 6
+::s 陆 ::num 6 ::style financial ::standard simplified
+::s 陸 ::num 6 ::style financial ::standard traditional
 ::s 七 ::num 7
+::s 柒 ::num 7 ::style financial
 ::s 八 ::num 8
+::s 捌 ::num 8 ::style financial
 ::s 九 ::num 9
+::s 玖 ::num 9 ::style financial
 ::s 十 ::num 10
+::s 拾 ::num 10 ::style financial
 ::s 百 ::num 100
+::s 佰 ::num 100 ::style financial
 ::s 千 ::num 1000
-::s 万 ::num 10000
-::s 萬 ::num 10000
-::s 亿 ::num 100000000
-::s 億 ::num 100000000
-::s 兆 ::num 1000000000000
-::s 京 ::num 10000000000000000
+::s 仟 ::num 1000 ::style financial
+::s 万 ::num 10000 ::is-large-power ::standard simplified
+::s 萬 ::num 10000 ::is-large-power ::standard traditional
+::s 萬 ::num 10000 ::is-large-power ::style financial
+::s 亿 ::num 100000000 ::is-large-power ::standard simplified
+::s 億 ::num 100000000 ::is-large-power ::standard traditional
+::s 億 ::num 100000000 ::is-large-power ::style financial
+::s 兆 ::num 1000000000000 ::is-large-power
+::s 京 ::num 10000000000000000 ::is-large-power
+::s 负 ::is-minus-sign
+::s 正 ::is-plus-sign
+::s 点 ::is-decimal-point
+::s 分之 ::fraction-connector denominator * numerator
+::s 百分之 ::percentage-marker * numerator
+::s 又 ::int-frac-connector integer * fraction
 
 # numbers in non-number words (to be exptended)
 ::s 一贯 ::t yiguan ::comment consistent
@@ -1324,7 +1349,7 @@
 ::s זש ::t zh ::lcode yid
 ::s ח ::t ch ::lcode yid
 ::s טש ::t tsh ::lcode yid
-::s יִ::t i ::lcode yid
+::s יִ ::t i ::lcode yid
 ::s יי ::t ey ::lcode yid ::comment maybe "yi" at beginning of word
 ::s ײַ ::t ay ::lcode yid
 ::s כּ ::t k ::lcode yid
@@ -1433,9 +1458,6 @@
 ::s ᢅ ::t ::comment MONGOLIAN LETTER ALI GALI BALUDA (CHECK) indicates assimilation
 ::s ᢆ ::t ::comment MONGOLIAN LETTER ALI GALI THREE BALUDA (CHECK) indicates assimilation
 
-# Tibetan
-::s ྅ ::t ::comment TIBETAN MARK PALUTA (CHECK) indicates assimilation
-
 # Limbu
 ::s ॽ ::t ' ::comment glottal stop (U+097D)
 
@@ -1487,6 +1509,8 @@
 ::s ጤ ::t tee ::comment Ethiopic syllable thee with ejective 't'
 ::s ጥ ::t te ::comment Ethiopic syllable the with ejective 't'
 ::s ጦ ::t to ::comment Ethiopic syllable tho with ejective 't'
+::s ፻ ::num 100 ::is-large-power
+::s ፼ ::num 10000 ::is-large-power
 
 # Devanagari (Hindi etc.)
 ::s ॺ ::t y ::comment DEVANAGARI LETTER HEAVY YA
@@ -1503,6 +1527,15 @@
 ::s ୤ ::t . ::comment danda (deprecated, should use Devanagari danda ।)
 ::s ୥ ::t . ::comment double danda (deprecated, should use Devanagari double danda ॥)
 # Tibetan
+::s ྅ ::t ::comment TIBETAN MARK PALUTA (CHECK) indicates assimilation
+::s འ ::t ' ::comment Tibetan letter -a (U+0F60)
+::s ྰ ::t ' ::comment Tibetan letter -a (U+0FB0)
+::s ཨཱ ::t aa ::comment TIBETAN LETTER A + TIBETAN VOWEL SIGN AA
+::s ཨེ ::t e ::comment TIBETAN LETTER A + TIBETAN VOWEL SIGN E
+::s ཨི ::t i ::comment TIBETAN LETTER A + TIBETAN VOWEL SIGN I
+::s ཨོ ::t o ::comment TIBETAN LETTER A + TIBETAN VOWEL SIGN O
+::s ཨུ ::t u ::comment TIBETAN LETTER A + TIBETAN VOWEL SIGN U
+::s ཪ ::t r ::comment TIBETAN LETTER FIXED-FORM RA (U+0F6A)
 ::s ། ::t ,
 ::s །: ::t :
 ::s ༏ ::t ;
