@@ -1,27 +1,24 @@
 #!/usr/bin/env python
 
 """
-Written by Ulf Hermjakob, USC/ISI  March 2024
+Written by Ulf Hermjakob, USC/ISI  March-April 2024
 uroman is a universal romanizer. It converts text in any script to the Latin alphabet.
-This script is a Python reimplementation of an earlier Perl script.
-This script is still newly under development and still under large-scale testing.
-Compared to the original Perl version, this script does not offer full support for translating
-numbers (e.g. 一万四千, ፲፱፻፸ and 𓆿𓍧𓎇𓏻) to ASCII numbers (e.g. 14000, 1970 and 4622).
-It still needs a few language-specific adjustments for Tibetan, Gurmukhi, Khmer;
-all-caps and multi-digit number handling for Braille.
-It does not yet offer alternative romanizations for ambiguous sequences.
+This script is a Python reimplementation of an earlier Perl script, with some improvements.
+The tool has been tested on 250 languages, with 100 or more sentences each.
+This script is still under development and large-scale testing. Feedback welcome.
 This script provides token-size caching (for faster runtimes).
 Output formats include
-  (1) best romanization string and
-  (2) best romanization edges (incl. start and end positions with respect to the original string)
-  (3) all edges (full lattice)
+  (1) best romanization string
+  (2) best romanization edges ("best path"; incl. start and end positions with respect to the original string)
+  (3) best romanization with alternatives (as applicable for ambiguous romanization)
+  (4) best romanization full lattice (all edges, including superseded sub-edges)
 See below for 'sample calls' under main()
 """
+
 
 from __future__ import annotations
 import argparse
 from collections import defaultdict
-import cProfile
 # from memory_profiler import profile
 import datetime
 from enum import Enum
@@ -35,8 +32,11 @@ from pathlib import Path
 import pstats
 import regex
 import sys
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple
 import unicodedata as ud
+PROFILE_FLAG = "--profile"  # also used in argparse processing
+if PROFILE_FLAG in sys.argv:
+    import cProfile
 
 # UTILITIES
 
@@ -55,7 +55,7 @@ def timer(func):
     return wrapper
 
 
-def slot_value_in_double_colon_del_list(line: str, slot: str, default: Optional = None) -> Optional[str]:
+def slot_value_in_double_colon_del_list(line: str, slot: str, default: str | list | None = None) -> str | list | None:
     """For a given slot, e.g. 'cost', get its value from a line such as '::s1 of course ::s2 ::cost 0.3' -> 0.3
     The value can be an empty string, as for ::s2 in the example above."""
     m = regex.match(fr'(?:.*\s)?::{slot}(|\s+\S.*?)(?:\s+::\S.*|\s*)$', line)
@@ -81,7 +81,7 @@ def last_chr(s: str) -> str:
         ''
 
 
-def ud_numeric(char: str) -> Union[int, float, None]:
+def ud_numeric(char: str) -> int | float | None:
     try:
         num_f = ud.numeric(char)
         return int(num_f) if num_f.is_integer() else num_f
@@ -89,8 +89,8 @@ def ud_numeric(char: str) -> Union[int, float, None]:
         return None
 
 
-def robust_str_to_num(num_s: str, filename: str = None, line_number: Optional[int] = None, silent: bool = False) \
-        -> Union[int, float, None]:
+def robust_str_to_num(num_s: str, filename: str = None, line_number: int | None = None, silent: bool = False) \
+        -> int | float | None:
     if isinstance(num_s, str):
         try:
             return float(num_s) if "." in num_s else int(num_s)
@@ -126,8 +126,8 @@ def add_non_none_to_dict(d: dict, key: str, value) -> None:
         d[key] = value
 
 
-def fraction_char2fraction(fraction_char: str, fraction_value: Optional[float] = None,
-                           uroman: Optional[Uroman] = None) -> Optional[Fraction]:
+def fraction_char2fraction(fraction_char: str, fraction_value: float | None = None,
+                           uroman: Uroman | None = None) -> Fraction | None:
     s = ''
     fraction = None
     for ud_decomp_elem in ud.decomposition(fraction_char).split():
@@ -158,7 +158,7 @@ def chr_name(char: str) -> str:
         return ''
 
 
-def args_get(key: str, args: Optional[argparse.Namespace] = None):
+def args_get(key: str, args: argparse.Namespace | None = None):
     return vars(args)[key] if args and (key in args) else None
 
 
@@ -198,7 +198,8 @@ class RomFormat(Enum):
     """Output format of romanization"""
     STR = 'str'          # simple string
     EDGES = 'edges'      # list of edges (includes character offsets in original string)
-    LATTICE = 'lattice'  # lattice including alternative edges
+    ALTS = 'alts'        # lattice including alternative edges
+    LATTICE = 'lattice'  # lattice including alternative and superseded edges
 
     def __str__(self):
         return self.value
@@ -232,7 +233,7 @@ class Uroman:
         self.stats = defaultdict(int)  # stats, e.g. for unprocessed numbers
         self.abugida_cache = {}  # key: (script, char_rom) value: (base_rom, base_rom_plus_abugida_vowel, modified rom)
 
-    def second_rom_filter(self, c: str, rom: str, name: Optional[str]) -> Tuple[Optional[str], str]:
+    def second_rom_filter(self, c: str, rom: str, name: str | None) -> Tuple[str | None, str]:
         """Much of this code will eventually move the old Perl code to generate cleaner primary data"""
         if rom and (' ' in rom):
             if name is None:
@@ -258,7 +259,7 @@ class Uroman:
         except FileNotFoundError:
             sys.stderr.write(f'Cannot open file {filename}\n')
             return
-        with f:
+        with (f):
             for line_number, line in enumerate(f, 1):
                 if line.startswith('#'):
                     continue
@@ -266,6 +267,7 @@ class Uroman:
                     continue
                 line = regex.sub(r'\s{2,}#.*$', '', line)
                 if file_format == 'u2r':
+                    t_at_end_of_syllable = None
                     u = dequote_string(slot_value_in_double_colon_del_list(line, 'u'))
                     try:
                         cp = int(u, 16)
@@ -284,6 +286,8 @@ class Uroman:
                 else:
                     s = dequote_string(slot_value_in_double_colon_del_list(line, 's'))
                     t = dequote_string(slot_value_in_double_colon_del_list(line, 't'))
+                    t_at_end_of_syllable = dequote_string(slot_value_in_double_colon_del_list(line,
+                                                                                              't-end-of-syllable'))
                 if (num_s := slot_value_in_double_colon_del_list(line, 'num')) is not None:
                     num = robust_str_to_num(num_s)
                     self.dict_num[s] = (num_s if (num is None) else num)
@@ -305,6 +309,7 @@ class Uroman:
                 num = robust_str_to_num(num_s, filename, line_number, silent=False)
                 t_alt_s = slot_value_in_double_colon_del_list(line, 't-alt')
                 t_alts = regex.split(r'[,;]\s*', t_alt_s) if t_alt_s else []
+                t_alts = list(map(dequote_string, t_alts))
                 t_mod, name2 = self.second_rom_filter(s, t, None)
                 if t_mod and (t_mod != t):
                     if t != s:
@@ -317,8 +322,7 @@ class Uroman:
                             self.dict_bool[(bool_key, s)] = True
                     if any_not_none(t, num, is_minus_sign, is_plus_sign, is_decimal_point, is_large_power,
                                     fraction_connector, percentage_marker, int_frac_connector):
-                        for prefix_len in range(1, len(s)+1):
-                            self.dict_bool[('s-prefix', s[:prefix_len])] = True
+                        self.register_s_prefix(s)
                         n_entries += 1
                         # if regex.match(r'[\u2800-\u28FF]', s): print("Braille", s, t)
                         restrictions = [lcodes, use_only_at_start_of_word, dont_use_at_start_of_word,
@@ -333,6 +337,7 @@ class Uroman:
                                                use_only_at_end_of_word=use_only_at_end_of_word,
                                                dont_use_at_end_of_word=dont_use_at_end_of_word,
                                                use_only_for_whole_word=use_only_for_whole_word,
+                                               t_at_end_of_syllable=t_at_end_of_syllable,
                                                n_restr=n_restrictions,
                                                is_minus_sign=is_minus_sign,
                                                is_plus_sign=is_plus_sign,
@@ -349,6 +354,25 @@ class Uroman:
                             self.rom_rules[s] = [new_rom_rule]  # overwrite
                         else:
                             self.rom_rules[s].append(new_rom_rule)
+        # Thai
+        thai_cancellation_mark = '\u0E4C'
+        # cancellation applies to preceding letter incl. any vowel modifier letter (e.g. ศักดิ์สิทธิ์ -> saksit)
+        for cp in range(0x0E01, 0x0E4C):   # Thai
+            c = chr(cp)
+            s = c + thai_cancellation_mark
+            new_rom_rule = RomRule(s=s, t='', prov='auto cancel letter')
+            if not self.rom_rules[s]:
+                self.rom_rules[s] = [new_rom_rule]
+                self.register_s_prefix(s)
+        thai_consonants = list(map(chr, range(0x0E01, 0x0E2F)))
+        thai_vowel_modifiers = ['\u0E31', '\u0E47'] + list(map(chr, range(0x0E33, 0x0E3B)))
+        for c1 in thai_consonants:
+            for v in thai_vowel_modifiers:
+                s = c1 + v + thai_cancellation_mark
+                new_rom_rule = RomRule(s=s, t='', prov='auto cancel syllable')
+                if not self.rom_rules[s]:
+                    self.rom_rules[s] = [new_rom_rule]
+                    self.register_s_prefix(s)
         if load_log:
             sys.stderr.write(f'Loaded {n_entries} from {filename}\n')
 
@@ -406,7 +430,7 @@ class Uroman:
             sys.stderr.write(f'Loaded {n_entries} script descriptions from {filename}'
                              f' (max_n_scripts_name_components: {max_n_script_name_components})\n')
 
-    def extract_script_name(self, script_name_plus: str, full_char_name: str = None) -> Optional[str]:
+    def extract_script_name(self, script_name_plus: str, full_char_name: str = None) -> str | None:
         """Using info from Scripts.txt, this script selects the script name from a Unicode,
         e.g. given "OLD HUNGARIAN CAPITAL LETTER A", extract "Old Hungarian"."""
         if full_char_name and script_name_plus == full_char_name:
@@ -414,7 +438,7 @@ class Uroman:
         while script_name_plus:
             if script_name_plus.lower() in self.scripts:
                 if script := self.scripts[script_name_plus.lower()]:
-                    if script_name := script['script_name']:
+                    if script_name := script['script-name']:
                         return script_name
             script_name_plus = regex.sub(r'\s*\S*\s*$', '', script_name_plus)
         return None
@@ -422,7 +446,7 @@ class Uroman:
     def load_unicode_data_props(self, filename: str, load_log: bool = True):
         """Loads Unicode derived data from (1) UnicodeDataProps.txt, (2) UnicodeDataPropsHangul.txt
         and UnicodeDataPropsCJK.txt with a list of valid script-specific characters."""
-        n_script, n_script_char, n_script_vowel_sign, n_script_virama = 0, 0, 0, 0
+        n_script, n_script_char, n_script_vowel_sign, n_script_medial_consonant_sign, n_script_virama = 0, 0, 0, 0, 0
         try:
             f = open(filename)
         except FileNotFoundError:
@@ -446,14 +470,18 @@ class Uroman:
                     for char in slot_value_in_double_colon_del_list(line, 'vowel-sign', []):
                         self.dict_bool[('is-vowel-sign', char)] = True
                         n_script_vowel_sign += 1
+                    for char in slot_value_in_double_colon_del_list(line, 'medial-consonant-sign', []):
+                        self.dict_bool[('is-medial-consonant-sign', char)] = True
+                        n_script_medial_consonant_sign += 1
                     for char in slot_value_in_double_colon_del_list(line, 'sign-virama', []):
                         self.dict_bool[('is-virama', char)] = True
                         n_script_virama += 1
         if load_log:
             sys.stderr.write(f'Loaded from {filename} mappings of {n_script_char:,d} characters '
                              f'to {n_script} script{"" if n_script == 1 else "s"}')
-            if n_script_vowel_sign or n_script_virama:
-                sys.stderr.write(f', with a total of {n_script_vowel_sign} vowel signs '
+            if n_script_vowel_sign or n_script_virama or n_script_medial_consonant_sign:
+                sys.stderr.write(f', with a total of {n_script_vowel_sign} vowel signs, '
+                                 f'{n_script_medial_consonant_sign} medial consonant signs '
                                  f'and {n_script_virama} viramas')
             sys.stderr.write('.\n')
 
@@ -508,6 +536,10 @@ class Uroman:
         result = result.replace('ü', 'u')
         return result
 
+    def register_s_prefix(self, s: str):
+        for prefix_len in range(1, len(s) + 1):
+            self.dict_bool[('s-prefix', s[:prefix_len])] = True
+
     def load_chinese_pinyin_file(self, filename: str, load_log: bool = True):
         """Loads file Chinese_to_Pinyin.txt which maps Chinese characters to their Latin form."""
         n_entries = 0
@@ -531,8 +563,7 @@ class Uroman:
                     s = chinese
                     new_rom_rule = RomRule(s=s, t=rom, prov='rom pinyin', lcodes=[])
                     self.rom_rules[chinese].append(new_rom_rule)
-                    for prefix_len in range(1, len(s)+1):
-                        self.dict_bool[('s-prefix', s[:prefix_len])] = True
+                    self.register_s_prefix(s)
                     n_entries += 1
         if load_log:
             sys.stderr.write(f'Loaded {n_entries} script descriptions from {filename}\n')
@@ -560,7 +591,10 @@ class Uroman:
             if not (char_name := self.chr_name(c)):
                 continue
             for prop_name_comp2 in ('VOWEL SIGN',
-                                    ('SIGN VIRAMA', 'SIGN ASAT', 'AL-LAKUNA', 'SIGN COENG', 'SIGN PAMAAEH'),
+                                    ('MEDIAL CONSONANT SIGN', 'CONSONANT SIGN MEDIAL', 'CONSONANT SIGN SHAN MEDIAL',
+                                     'CONSONANT SIGN MON MEDIAL'),
+                                    ('SIGN VIRAMA', 'SIGN ASAT', 'AL-LAKUNA', 'SIGN COENG', 'SIGN PAMAAEH',
+                                     'CHARACTER PHINTHU'),
                                     ('NUMERAL', 'NUMBER', 'DIGIT', 'FRACTION')):
                 if prop_name_comp2 and isinstance(prop_name_comp2, tuple):
                     prop_list = prop_name_comp2
@@ -574,7 +608,9 @@ class Uroman:
                     if script_name := self.extract_script_name(script_name_cand, char_name):
                         self.add_char_to_rebuild_unicode_data_dict(d, script_name, prop_class, c)
             script_name_cand = regex.sub(r'\s+(CONSONANT|LETTER|LIGATURE|SIGN|SYLLABLE|SYLLABICS|VOWEL|'
-                                         r'IDEOGRAPH|HIEROGLYPH|POINT|ACCENT|CHARACTER)\b.*$', '',
+                                         r'IDEOGRAPH|HIEROGLYPH|POINT|ACCENT|CHARACTER|TIPPI|ADDAK|IRI|URA|'
+                                         r'SYMBOL GENITIVE|SYMBOL COMPLETED|SYMBOL LOCATIVE|SYMBOL AFOREMENTIONED|'
+                                         r'AU LENGTH MARK)\b.*$', '',
                                          char_name)
             if script_name := self.extract_script_name(script_name_cand, char_name):
                 self.add_char_to_rebuild_unicode_data_dict(d, script_name, 'char', c)
@@ -626,8 +662,8 @@ class Uroman:
                     continue
                 result_dict = {}
                 orig_txt = char
-                value: Optional[Union[int, float]] = None  # non-fraction-value(3 1/2) = 3
-                fraction: Optional[Fraction] = None  # fraction(3 1/2) = Fraction(1, 2)
+                value: int | float | None = None  # non-fraction-value(3 1/2) = 3
+                fraction: Fraction | None = None  # fraction(3 1/2) = Fraction(1, 2)
                 num_base = None  # num_base(500) = 100
                 base_multiplier = None  # base_multiplier(500) = 5
                 script = None
@@ -779,7 +815,7 @@ class Uroman:
                 return name
         return ''
 
-    def num_value(self, s: str) -> Optional[Union[int, float, Fraction]]:
+    def num_value(self, s: str) -> int | float | Fraction | None:
         """rom_rules include numeric values beyond UnicodeData.txt, e.g. for Egyptian numerals"""
         for rom_rule in self.rom_rules[s]:
             if (num := rom_rule['num']) is not None:
@@ -792,7 +828,7 @@ class Uroman:
                 return value
         return None
 
-    def unicode_float2fraction(self, num: float, precision: float = 0.000001) -> Optional[Tuple[int, int]]:
+    def unicode_float2fraction(self, num: float, precision: float = 0.000001) -> Tuple[int, int] | None:
         """only for common unicode fractions"""
         if chached_value := self.float2fraction.get(num, None):
             return chached_value
@@ -814,7 +850,7 @@ class Uroman:
         for s in ("Oriya", "Chinese"):
             d = self.scripts[s.lower()]
             output += f'SCRIPT {s} {d}\n'
-        for s in ('ƿ', 'β', 'и', 'μπ', '⠹', '亿', 'ちょ', 'и', '𓍧', '正', '分之', 'ऽ'):
+        for s in ('ƿ', 'β', 'и', 'μπ', '⠹', '亿', 'ちょ', 'и', '𓍧', '正', '分之', 'ऽ', 'ศ', 'ด์'):
             d = self.rom_rules[s]
             output += f'DICT {s} {d}\n'
         for s in ('ƿ', 'β', 'न', 'ु'):
@@ -871,8 +907,8 @@ class Uroman:
                 n_alerts += 1
         sys.stderr.write(f'{n_alerts} alerts for roms with spaces\n')
 
-    def romanize_file(self, input_filename: Optional[str] = None, output_filename: Optional[str] = None,
-                      lcode: Optional[str] = None, direct_input: List[str] = None, **args):
+    def romanize_file(self, input_filename: str | None = None, output_filename: str | None = None,
+                      lcode: str | None = None, direct_input: List[str] = None, **args):
         """Script to apply romanization to an entire file. Input and output files needed.
         Language code (lcode) recommended."""
         f_in_to_be_closed, f_out_to_be_closed = False, False
@@ -940,8 +976,8 @@ class Uroman:
             f_out.close()
 
     @staticmethod
-    def apply_any_offset_to_cached_rom_result(cached_rom_result: Union[str, List[Edge]], offset: int = 0) \
-            -> Union[str, List[Edge]]:
+    def apply_any_offset_to_cached_rom_result(cached_rom_result: str | List[Edge], offset: int = 0) \
+            -> str | List[Edge]:
         if isinstance(cached_rom_result, str):
             return cached_rom_result
         elif offset == 0:
@@ -949,8 +985,8 @@ class Uroman:
         else:
             return [Edge(edge.start + offset, edge.end + offset, edge.txt, edge.type) for edge in cached_rom_result]
 
-    def romanize_string_core(self, s: str, lcode: Optional[str], rom_format: RomFormat, cache_p: bool,
-                             offset: int = 0, **args) -> Union[str, List[Edge]]:
+    def romanize_string_core(self, s: str, lcode: str | None, rom_format: RomFormat, cache_p: bool,
+                             offset: int = 0, **args) -> str | List[Edge]:
         """Script to support token-by-token romanization with caching for higher speed."""
         if cache_p:
             cached_rom = self.rom_cache.get((s, lcode, rom_format), None)
@@ -958,17 +994,22 @@ class Uroman:
                 return self.apply_any_offset_to_cached_rom_result(cached_rom, offset)
         lat = Lattice(s, uroman=self, lcode=lcode)
         lat.pick_tibetan_vowel_edge(**args)
+        lat.prep_braille(**args)
         lat.add_romanization(**args)
         lat.add_numbers(self, **args)
-        lat.add_rom_fall_back_singles(self)
+        lat.add_braille_numbers(**args)
+        lat.add_rom_fall_back_singles(**args)
         if rom_format == RomFormat.LATTICE:
             all_edges = lat.all_edges(0, len(s))
+            lat.add_alternatives(all_edges)
             if cache_p:
                 self.rom_cache[(s, lcode, rom_format)] = all_edges
             result = self.apply_any_offset_to_cached_rom_result(all_edges, offset)
         else:
             best_edges = lat.best_rom_edge_path(0, len(s))
-            if rom_format == RomFormat.EDGES:
+            if rom_format in (RomFormat.EDGES, RomFormat.ALTS):
+                if rom_format == RomFormat.ALTS:
+                    lat.add_alternatives(best_edges)
                 if cache_p:
                     self.rom_cache[(s, lcode, rom_format)] = best_edges
                 result = self.apply_any_offset_to_cached_rom_result(best_edges, offset)
@@ -980,8 +1021,8 @@ class Uroman:
                 result = rom
         return result
 
-    def romanize_string(self, s: str, lcode: Optional[str] = None, rom_format: RomFormat = RomFormat.STR, **args) \
-            -> Union[str, List[Edge]]:
+    def romanize_string(self, s: str, lcode: str | None = None, rom_format: RomFormat = RomFormat.STR, **args) \
+            -> str | List[Edge]:
         """Main entry point for romanizing a string. Recommended argument: lcode (language code).
         recursive only used for development.
         Method returns a string or a list of edges (with start and end offsets)."""
@@ -1024,7 +1065,7 @@ class Edge:
         return json.dumps([self.start, self.end, self.txt, self.type])
 
     @staticmethod
-    def json_str(rom_result: Union[List[Edge], str]) -> str:
+    def json_str(rom_result: List[Edge] | str) -> str:
         if isinstance(rom_result, str):
             return rom_result
         else:
@@ -1039,7 +1080,7 @@ class Edge:
 
 
 class NumEdge(Edge):
-    def __init__(self, start: int, end: int, s: str, uroman: Optional[Uroman] = None, active: bool = False):
+    def __init__(self, start: int, end: int, s: str, uroman: Uroman | None, active: bool = False):
         """For NumEdge, the s argument is in original language (not yet romanized)."""
         # For speed, much of this processing should at some point be cached in data files.
         Edge.__init__(self, start, end, s)
@@ -1063,15 +1104,15 @@ class NumEdge(Edge):
                 self.update()
 
     def update(self,
-               value: Optional[Union[int, float]] = None,
-               value_s: Optional[str] = None,
-               fraction: Optional[Fraction] = None,
-               n_decimals: Optional[int] = None,
-               num_base: Optional[int] = None,
-               base_multiplier: Optional[Union[int, float]] = None,
-               script: Optional[str] = None,
-               e_type: Optional[str] = None,
-               orig_txt: Optional[str] = None) -> str:
+               value: int | float | None = None,
+               value_s: str | None = None,
+               fraction: Fraction | None = None,
+               n_decimals: int | None = None,
+               num_base: int | None = None,
+               base_multiplier: int | float | None = None,
+               script: str | None = None,
+               e_type: str | None = None,
+               orig_txt: str | None = None) -> str:
         self.value = first_non_none(value, self.value)
         self.value_s = first_non_none(value_s, self.value_s)
         self.fraction = first_non_none(fraction, self.fraction)
@@ -1121,6 +1162,16 @@ class Lattice:
         self.max_vertex = len(s)
         self.uroman = uroman
         self.props = {}
+        self.simple_top_rom_cache = {}
+        self.contains_script = defaultdict(bool)
+        self.check_for_scripts()
+
+    def check_for_scripts(self):
+        for c in self.s:
+            script_name = self.uroman.chr_script_name(c)
+            self.contains_script[script_name] = True
+            if regex.search(r'[\u2800-\u28FF]', self.s):
+                self.contains_script['Braille'] = True
 
     def add_edge(self, edge: Edge):
         self.lattice[(edge.start, edge.end)].add(edge)
@@ -1144,8 +1195,8 @@ class Lattice:
         return "SUBJOINED LETTER" in self.uroman.chr_name(c)
 
     def char_is_regular_letter(self, c: str) -> bool:
-        chr_name = self.uroman.chr_name(c)
-        return ("LETTER" in chr_name) and not ("SUBJOINED" in chr_name)
+        char_name = self.uroman.chr_name(c)
+        return ("LETTER" in char_name) and not ("SUBJOINED" in char_name)
 
     def char_is_letter(self, c: str) -> bool:
         return "LETTER" in self.uroman.chr_name(c)
@@ -1192,14 +1243,61 @@ class Lattice:
         self.props[('followed_by_alpha', position)] = False
         return True
 
-    def romanization_by_first_rule(self, s) -> Optional[str]:
+    def is_at_end_of_syllable(self, position: int) -> Tuple[bool, str]:
+        """At least initially for Thai"""
+        prev_char = self.s[position-2] if position >= 2 else None
+        # char = self.s[position-1] if position >= 1 else None
+        next_char = self.s[position] if position < self.max_vertex else None
+        if self.uroman.dict_str[('tone-mark', next_char)]:
+            adj_position = position + 1
+            next_char = self.s[adj_position] if adj_position < self.max_vertex else None
+            # print('TONE-MARK', position, next_char)
+        else:
+            adj_position = position
+        next_char2 = self.s[adj_position + 1] if adj_position + 1 < self.max_vertex else None
+        if prev_char is None:
+            return False, 'start-of-string'
+        if not regex.search(r'(?:\pL|\pM)$', prev_char):  # start of token
+            return False, 'start-of-token'
+        if self.uroman.dict_str[('syllable-info', prev_char)] == 'written-pre-consonant-spoken-post-consonant':
+            return False, 'pre-post-vowel-on-left'
+        if self.uroman.dict_str[('syllable-info', next_char)] == 'written-pre-consonant-spoken-post-consonant':
+            return True, 'pre-post-vowel-on-right'
+        if adj_position >= self.max_vertex:  # end of string
+            return True, 'end-of-string'
+        # if not self.char_is_letter_or_vowel_sign(next_char):  # end of token
+        if not regex.match(r'(?:\pL|\pM)', next_char):  # end of token
+            return True, 'end-of-token'
+        if position > 0:
+            left_edge = self.best_left_neighbor_edge(position-1)
+            if left_edge and regex.search(r'[bcdfghjklmnpqrstvxz]$', left_edge.txt):
+                return False, 'consonant-to-the-left'
+        next_char_rom = first_non_none(self.simple_top_romanization_candidate_for_span(adj_position,
+                                                                                       adj_position + 2,
+                                                                                       simple_search=True),
+                                       self.simple_top_romanization_candidate_for_span(adj_position,
+                                                                                       adj_position + 1,
+                                                                                       simple_search=True),
+                                       "?")
+        if not regex.match(r"[aeiou]", next_char_rom.lower()):  # followed by consonant
+            return True, f'not-followed-by-vowel {next_char_rom}'
+        if (next_char == '\u0E2D') and (next_char2 is not None):  # THAI CHARACTER O ANG
+            next_char2_rom = first_non_none(self.simple_top_romanization_candidate_for_span(adj_position+1,
+                                                                                            adj_position+2,
+                                                                                            simple_search=True),
+                                            "?")
+            if regex.match(r"[aeiou]", next_char2_rom.lower()):
+                return True, 'o-ang-followed-by-vowel'  # In that context Thai char. "o ang" is considered a consonant
+        return False, 'not-at-syllable-end-by-default'
+
+    def romanization_by_first_rule(self, s) -> str | None:
         try:
             return self.uroman.rom_rules[s][0]['t']
         except IndexError:
             return None
 
     def expand_rom_with_special_chars(self, rom: str, start: int, end: int, **args) \
-            -> Tuple[str, int, int, Optional[str]]:
+            -> Tuple[str, int, int, str | None]:
         """This method contains a number of special romanization heuristics that typically modify
         an existing or preliminary edge based on context."""
         orig_start = start
@@ -1220,18 +1318,35 @@ class Lattice:
             ablation = args.get('ablation', '')     # VERBOSE
             if not ('nocap' in ablation):
                 rom = rom.capitalize()
-        # Japanese small tsu used as consonant doubler:
-        if (prev_char and prev_char in 'っッ') \
+        # Japanese small tsu (and Gurmukhi addak) used as consonant doubler:
+        if (prev_char and prev_char in 'っッ\u0A71') \
                 and (uroman.chr_script_name(prev_char) == uroman.chr_script_name(prev_char)) \
                 and (m_double_consonant := regex.match(r'(ch|[bcdfghjklmnpqrstwz])', rom)):
             # return m_double_consonant.group(1).replace('ch', 't') + rom, start-1, end, 'rom exp'
             # expansion might additional apply to the right
-            rom = m_double_consonant.group(1).replace('ch', 't') + rom
+            if prev_char in 'っッ':  # for Japanese, per Hepburn, use tch
+                rom = m_double_consonant.group(1).replace('ch', 't') + rom
+            else:
+                rom = m_double_consonant.group(1).replace('ch', 'c') + rom
             start = start-1
             first_char = full_string[start]
             prev_char = (full_string[start-1] if start >= 1 else '')
         # Thai
         if uroman.chr_script_name(first_char) == 'Thai':
+            if (start+1 == end) and regex.match(r'[bcdfghjklmnpqrstvwxyz]+$', rom):
+                if uroman.dict_str[('syllable-info', prev_char)] == 'written-pre-consonant-spoken-post-consonant':
+                    for vowel_prefix_len in [1]:
+                        if vowel_prefix_len <= start:
+                            for vowel_suffix_len in [3, 2, 1]:
+                                if end + vowel_suffix_len <= len(full_string):
+                                    pattern = (full_string[start-vowel_prefix_len: start]
+                                               + '–'
+                                               + full_string[end:end+vowel_suffix_len])
+                                    if uroman.rom_rules[pattern]:
+                                        vowel_rom_rule = uroman.rom_rules[pattern][0]
+                                        vowel_rom = vowel_rom_rule['t']
+                                        # print(f" PATTERN {pattern} ({full_string[start:end]}/{rom}) {rom}{vowel_rom}")
+                                        return rom + vowel_rom, start-vowel_prefix_len, end+vowel_suffix_len, 'rom exp'
             if (uroman.chr_script_name(prev_char) == 'Thai') \
                     and (uroman.dict_str[('syllable-info', prev_char)]
                          == 'written-pre-consonant-spoken-post-consonant') \
@@ -1291,7 +1406,22 @@ class Lattice:
             rom = rom[:-1]
         return rom, start, end, annot
 
+    def prep_braille(self, **_args) -> None:
+        if self.contains_script['Braille']:
+            dots6 = '\u2820'  # characters in following word are upper case
+            all_caps = False
+            for i, c in enumerate(self.s):
+                if (i >= 1) and (self.s[i-1] == dots6) and (c == dots6):
+                    all_caps = True
+                elif all_caps:
+                    if c in '\u2800':  # Braille space
+                        all_caps = False
+                    else:
+                        self.props[('is-upper', i)] = True
+
     def pick_tibetan_vowel_edge(self, **args) -> None:
+        if not self.contains_script['Tibetan']:
+            return None
         verbose = bool(args.get('verbose'))
         s = self.s
         uroman = self.uroman
@@ -1456,6 +1586,8 @@ class Lattice:
                 return base_rom
             if self.uroman.dict_bool[('is-vowel-sign', next_s_char)]:
                 return base_rom
+            if self.uroman.dict_bool[('is-medial-consonant-sign', next_s_char)]:
+                return base_rom
             if self.char_is_subjoined_letter(next_s_char):
                 return base_rom
             if self.uroman.char_is_nonspacing_mark(next_s_char) \
@@ -1520,16 +1652,34 @@ class Lattice:
         rom_rule_candidates.sort(reverse=True)
         return [x[1] for x in rom_rule_candidates]
 
-    def simple_top_romanization_candidate_for_span(self, start, end) -> Optional[str]:
-        best_cand, best_n_restr = None, None
+    def simple_top_romanization_candidate_for_span(self, start, end, simple_search: bool = False) -> str | None:
+        if (start < 0) or (end > self.max_vertex):
+            return None
+        span_range = (start, end)
+        if (cached_result := self.simple_top_rom_cache.get(span_range)) is not None:
+            return cached_result
+        best_cand, best_n_restr, best_rom_rule = None, None, None
         for rom_rule in self.uroman.rom_rules[self.s[start:end]]:
             if self.cand_is_valid(rom_rule, start, end, rom_rule['t']):
                 n_restr = rom_rule['n-restr'] or 0
                 if best_n_restr is None or (n_restr > best_n_restr):
-                    best_cand, best_n_restr = rom_rule['t'], n_restr
+                    best_cand, best_n_restr, best_rom_rule = rom_rule['t'], n_restr, rom_rule
+        if simple_search:
+            return best_cand
+        if best_rom_rule:
+            t_at_end_of_syllable = best_rom_rule['t-at-end-of-syllable']
+            if t_at_end_of_syllable is not None:
+                is_at_end_of_syllable, rationale = self.is_at_end_of_syllable(end)
+                if is_at_end_of_syllable:
+                    best_cand = t_at_end_of_syllable
+                # print(f"   SIMPLE {start}-{end} {best_cand} ({best_rom_rule['t']},{t_at_end_of_syllable}) "
+                #       f"END:{is_at_end_of_syllable} ({rationale})")
+        self.simple_top_rom_cache[span_range] = best_cand
+        # if (best_rom_rule is not None) and ('cancel' in (prov := best_rom_rule['prov'])):
+        #     sys.stderr.write(f'   Cancel {self.s} ({start}-{end}) {prov} {self.s[start:end]}\n')
         return best_cand
 
-    def decomp_rom(self, char_position: int) -> Optional[str]:
+    def decomp_rom(self, char_position: int) -> str | None:
         """Input: decomposable character such as ﻼ or ½
         Output: la or 1/2"""
         full_string = self.s
@@ -1551,7 +1701,6 @@ class Lattice:
                     else:
                         decomp_s += norm_char
             if (format_comps and (format_comps[0] not in ('<super>', '<sub>', '<noBreak>', '<compat>'))
-                    # and (char not in '')
                     and (not other_comps) and decomp_s):
                 rom = self.uroman.romanize_string(decomp_s, self.lcode)
             # make sure to add a space for 23½ -> 23 1/2
@@ -1570,6 +1719,9 @@ class Lattice:
                 if not self.uroman.dict_bool[('s-prefix', self.s[start:end])]:
                     break
                 if (rom := self.simple_top_romanization_candidate_for_span(start, end)) is not None:
+                    if self.contains_script['Braille'] and (start+1 == end):
+                        if self.props.get(('is-upper', start)):
+                            rom = rom.upper()
                     edge_annotation = 'rom'
                     if regex.match(r'\+(m|ng|n|h|r)', rom):
                         rom, edge_annotation = rom[1:], 'rom tail'
@@ -1611,7 +1763,7 @@ class Lattice:
         return result
 
     @staticmethod
-    def edge_is_digit(edge: Optional[Edge]) -> bool:
+    def edge_is_digit(edge: Edge | None) -> bool:
         return (isinstance(edge, NumEdge)
                 and (edge.value is not None)
                 and isinstance(edge.value, int)
@@ -1622,6 +1774,37 @@ class Lattice:
     @staticmethod
     def is_gap_null_edge(edge: Edge) -> bool:
         return isinstance(edge, NumEdge) and (edge.orig_txt in ('零', '〇'))
+
+    @staticmethod
+    def braille_digit(char: str) -> str | None:
+        position = '\u281A\u2801\u2803\u2809\u2819\u2811\u280B\u281B\u2813\u280A'.find(char)  # Braille 0-9
+        return str(position) if position >= 0 else None
+
+    def add_braille_number(self, start: int, end: int, txt: str, **_args) -> None:
+        new_edge = NumEdge(start, end, txt, self.uroman)
+        new_edge.type = 'number'
+        self.add_edge(new_edge)
+
+    def add_braille_numbers(self, **_args):
+        if self.contains_script['Braille']:
+            s = self.s
+            num_s, start = '', None
+            for i in range(len(s)):
+                char = s[i]
+                if char == '\u283C':  # number mark
+                    if start is None:
+                        start = i
+                elif (start is not None) and (digit_s := self.braille_digit(char)):
+                    num_s += digit_s
+                elif (start is not None) and (char == '\u2832'):  # period
+                    num_s += '.'
+                elif (start is not None) and (char == '\u2802'):  # comma
+                    num_s += ','
+                elif isinstance(start, int):
+                    self.add_braille_number(start, i, num_s)
+                    num_s, start = '', None
+            if start is not None:
+                self.add_braille_number(start, len(s), num_s)
 
     def add_numbers(self, uroman, **args):
         """Adds a numerical romanization edge to the romanization lattice, currently just for digits.
@@ -1778,7 +1961,7 @@ class Lattice:
                     new_value = sum([e.value for e in sub_edges])
                     new_edge = NumEdge(sub_edges[0].start, sub_edges[-1].end, str(new_value), uroman, active=True)
                     new_edge.update(value=new_value, num_base=sub_edges[-1].num_base, e_type='G4',
-                                    orig_txt = ''.join([e.orig_txt for e in sub_edges]),
+                                    orig_txt=''.join([e.orig_txt for e in sub_edges]),
                                     script=sub_edges[-1].script)
                     self.add_edge(new_edge)
                     num_edges = self.update_edge_list(num_edges, new_edge, sub_edges)
@@ -1819,7 +2002,7 @@ class Lattice:
                 else:
                     uroman.stats[('*NUM', start_char, num)] += 1
 
-    def add_rom_fall_back_singles(self, _uroman):
+    def add_rom_fall_back_singles(self, **_args):
         """For characters in the original string not covered by romanizations and numbers,
         add a fallback edge based on type, romanization of single char, or original char."""
         for start in range(self.max_vertex):
@@ -1845,6 +2028,44 @@ class Lattice:
                 # else the original values still hold: rom, edge_annotation = orig_char, 'orig'
                 self.add_edge(Edge(start, end, rom, edge_annotation))
 
+    @staticmethod
+    def add_new_edge(old_edges: List[Edge], start: int, end: int, new_rom: str, new_type: str, position: int | None,
+                     old_edge_dict: dict)\
+            -> None:
+        if (start, end, new_rom) not in old_edge_dict:
+            new_edge = Edge(start, end, new_rom, new_type)
+            if position is None:
+                old_edges.append(new_edge)
+            else:
+                old_edges.insert(position + 1, new_edge)
+            old_edge_dict[(start, end, new_rom)] = new_edge
+            # print(f'  ALT {start}-{end} {new_rom}')
+
+    def add_alternatives(self, old_edges: List[Edge]) -> None:
+        old_edge_dict = {}
+        for old_edge in old_edges:
+            old_edge_dict[(old_edge.start, old_edge.end, old_edge.txt)] = old_edge
+        for position, old_edge in enumerate(old_edges):
+            if old_edge.type.startswith('rom-alt'):
+                continue   # not old
+            start, end = old_edge.start, old_edge.end
+            orig_s = self.s[start:end]
+            old_rom = old_edge.txt
+            # self.lattice[(start, end)]:
+            for rom_rule in self.uroman.rom_rules[orig_s]:
+                rom_t = rom_rule['t']
+                if self.cand_is_valid(rom_rule, start, end, rom_t):
+                    rom_alts = rom_rule['t-alts']
+                    rom_eosyl = rom_rule['t-at-end-of-syllable']
+                    if (rom_t == old_rom) and rom_alts:
+                        for rom_alt in rom_alts:
+                            self.add_new_edge(old_edges, start, end, rom_alt, 'rom-alt', position,
+                                              old_edge_dict)
+                    if (rom_t == old_rom) and rom_eosyl:
+                        self.add_new_edge(old_edges, start, end, rom_t, 'rom-alt2', position, old_edge_dict)
+                    if rom_eosyl == old_rom:
+                        self.add_new_edge(old_edges, start, end, rom_t, 'rom-alt3', position, old_edge_dict)
+
     def all_edges(self, start: int, end: int) -> List[Edge]:
         result = []
         for start2 in range(start, end):
@@ -1855,7 +2076,7 @@ class Lattice:
                     break
         return result
 
-    def best_edge_in_span(self, start: int, end: int, skip_num_edge: bool = False) -> Optional[Edge]:
+    def best_edge_in_span(self, start: int, end: int, skip_num_edge: bool = False) -> Edge | None:
         edges = self.lattice[(start, end)]
         # if len(edges) >= 2: print('Multi edge', start2, end2, self.s[start2:end2], edges)
         decomp_edge, other_edge, rom_edge = None, None, None
@@ -1875,13 +2096,13 @@ class Lattice:
                 other_edge = edge  # plan D
         return rom_edge or decomp_edge or other_edge
 
-    def best_right_neighbor_edge(self, start: int, skip_num_edge: bool = False) -> Optional[Edge]:
+    def best_right_neighbor_edge(self, start: int, skip_num_edge: bool = False) -> Edge | None:
         for end in sorted(list(self.lattice[(start, 'right')]), reverse=True):
             if best_edge := self.best_edge_in_span(start, end, skip_num_edge=skip_num_edge):
                 return best_edge
         return None
 
-    def best_left_neighbor_edge(self, end: int, skip_num_edge: bool = False) -> Optional[Edge]:
+    def best_left_neighbor_edge(self, end: int, skip_num_edge: bool = False) -> Edge | None:
         for start in sorted(list(self.lattice[(end, 'left')])):
             if best_edge := self.best_edge_in_span(start, end, skip_num_edge=skip_num_edge):
                 return best_edge
@@ -1900,8 +2121,8 @@ class Lattice:
                 start2 += 1
         return result
 
-    def find_rom_edge_path_backwards(self, start: int, end: int, min_char: Optional[int] = None,
-                                     return_str: bool = False, skip_num_edge: bool = False) -> Union[List[Edge], str]:
+    def find_rom_edge_path_backwards(self, start: int, end: int, min_char: int | None = None,
+                                     return_str: bool = False, skip_num_edge: bool = False) -> List[Edge] | str:
         """Finds a partial best path on the left from a start position to provide left contexts for
         romanization rules. Can return a string or a list of edges. Is typically used for a short context,
         as specified by min_char."""
@@ -1969,7 +2190,7 @@ def main():
     parser.add_argument('-a', '--ablation', type=str, default='', help='for development mode: nocap')
     parser.add_argument('--stats', action='count', default=0, help='for development mode: numbers')
     parser.add_argument('--ignore_args', action='count', default=0, help='for usage illustration only')
-    parser.add_argument('--profile', type=argparse.FileType('w', encoding='utf-8', errors='ignore'),
+    parser.add_argument(PROFILE_FLAG, type=argparse.FileType('w', encoding='utf-8', errors='ignore'),
                         default=None, metavar='PROFILE-FILENAME', help='(optional output for performance analysis)')
     args = parser.parse_args()
     # copy selected (minor) args from argparse.Namespace to dict
