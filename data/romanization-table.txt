@@ -1127,10 +1127,82 @@
 ::s ຯ ::t ...  ::comment Lao ellipsis
 
 # Thai
-::s ออ ::t o
-::s อั ::t a
-::s อิ ::t i
+::s ข ::t kh ::t-end-of-syllable k
+::s ฃ ::t kh ::t-end-of-syllable k
+::s ค ::t kh ::t-end-of-syllable k
+::s ฅ ::t kh ::t-end-of-syllable k
+::s ฆ ::t kh ::t-end-of-syllable k
+::s จ ::t ch ::t-end-of-syllable t
+::s ฉ ::t ch ::t-end-of-syllable t
+::s ช ::t ch ::t-end-of-syllable t
+::s ฌ ::t ch
+::s ฎ ::t d ::t-end-of-syllable t
+::s ด ::t d ::t-end-of-syllable t
+::s บ ::t b ::t-end-of-syllable p
+::s พ ::t ph ::t-end-of-syllable p
+::s ภ ::t ph ::t-end-of-syllable p
+::s ฟ ::t f ::t-end-of-syllable p
+::s ฝ ::t f
+::s ฐ ::t th ::t-end-of-syllable t
+::s ฑ ::t th ::t-end-of-syllable t
+::s ฒ ::t th ::t-end-of-syllable t
+::s ถ ::t th ::t-end-of-syllable t
+::s ท ::t th ::t-end-of-syllable t
+::s ธ ::t th ::t-end-of-syllable t
+::s ศ ::t s ::t-end-of-syllable t
+::s ษ ::t s ::t-end-of-syllable t
+::s ส ::t s ::t-end-of-syllable t
+::s ห ::t h ::t-end-of-syllable ::comment dropped at end of syllable
+::s ฮ ::t h
+::s ฬ ::t l ::t-end-of-syllable n
+::s ล ::t l ::t-end-of-syllable n
+::s ร ::t r ::t-end-of-syllable n
+::s ญ ::t y ::t-end-of-syllable n
+::s ย ::t y ::t-end-of-syllable i
+::s ว ::t w ::t-end-of-syllable ua
+::s ฦ ::t lue
+::s ฦๅ ::t lue
+::s ฤ ::t rue
+::s ฤๅ ::t rue
 ::s ๆ ::t ² ::comment Thai character maiyamok ::annotation repetition-sign
+# ::s ๅ ::comment THAI CHARACTER LAKKHANGYAO vowel lengthener
+::s ะ ::t a ::comment THAI CHARACTER SARA A
+::s  ั ::t a ::comment THAI CHARACTER MAI HAN-AKAT "stick turning in the air"
+::s รร ::t an ::t-end-of-syllable a
+::s อั ::t a
+::s แ–ะ ::t ae
+::s แ–็ว ::t aeo
+::s แ–ว ::t aeo
+::s ไ–ย ::t ai
+::s ัย ::t ai
+::s าย ::t ai
+::s เ–า ::t ao
+::s เ–้า ::t ao
+::s าว ::t ao
+::s เ–ะ ::t e
+::s เ–็ ::t e
+::s  ็ ::t o ::comment THAI CHARACTER MAITAIKHU U+0E47 vowel shortener/short vowel (ɔː)
+::s เ–็ว ::t eo
+::s เ–ว ::t eo
+::s อิ ::t i
+::s  ีย ::t ia
+::s เ–ียะ ::t ia
+::s เ–ีย ::t ia
+::s เ–ียว ::t iao
+::s ออ ::t o
+::s โ–ะ ::t o
+::s โ– ::t o
+::s เ–าะ ::t o
+::s เ–อะ ::t oe
+::s เ–ิ ::t oe
+::s เ–อ ::t oe
+::s เ–ย	 ::t oei
+::s โ–ย ::t oi
+# ::s อย ::t oi ::comment problematic if followed by further vowels
+::s วย ::t uai
+::s เ–ือะ ::t uea
+::s เ–ือ	 ::t uea
+::s เ–ือย ::t ueai
 
 # Khmer
 ::s ័ ::t "" ::comment Khmer samyok sannya: indicates deviation from the general rules of pronunciation
@@ -1522,6 +1594,7 @@
 ::s ৽ ::t . ::comment BENGALI ABBREVIATION SIGN
 ::s ৾ ::t ::comment BENGALI SANDHI MARK (CHECK)
 # Gurmukhi
+::s ੱ ::t ' ::comment GURMUKHI ADDAK U+0A71, which normally doubles following consonant; otherwise marked by '
 ::s ੶ ::t . ::comment GURMUKHI ABBREVIATION SIGN
 # Oriya/Odia (India)
 ::s ୤ ::t . ::comment danda (deprecated, should use Devanagari danda ।)
