@@ -1048,8 +1048,8 @@
 ::s 億 ::num 100000000 ::is-large-power ::style financial
 ::s 兆 ::num 1000000000000 ::is-large-power
 ::s 京 ::num 10000000000000000 ::is-large-power
-::s 负 ::is-minus-sign
-::s 正 ::is-plus-sign
+::s 负 ::is-minus-sign ::standard simplified
+::s 負 ::is-minus-sign ::standard traditional
 ::s 点 ::is-decimal-point
 ::s 分之 ::fraction-connector denominator * numerator
 ::s 百分之 ::percentage-marker * numerator
@@ -1574,7 +1574,7 @@
 ::s ሤ ::t see ::comment Ethiopic syllable szee
 ::s ሥ ::t se ::comment Ethiopic syllable sze
 ::s ሦ ::t so ::comment Ethiopic syllable szo
-::s ጠ ::t te ::comment Ethiopic syllable the with ejective 't'
+::s ጠ ::t ta ::comment Ethiopic syllable tha with ejective 't'
 ::s ጡ ::t tu ::comment Ethiopic syllable thu with ejective 't'
 ::s ጢ ::t ti ::comment Ethiopic syllable thi with ejective 't'
 ::s ጣ ::t taa ::comment Ethiopic syllable thaa with ejective 't'
@@ -1585,12 +1585,26 @@
 ::s ፼ ::num 10000 ::is-large-power
 
 # Devanagari (Hindi etc.)
+::s क़ ::t q ::comment DEVANAGARI LETTER KA plus DEVANAGARI SIGN NUKTA
+::s ख़ ::t kh ::comment DEVANAGARI LETTER KHA plus DEVANAGARI SIGN NUKTA
+::s ग़ ::t g ::comment DEVANAGARI LETTER GA plus DEVANAGARI SIGN NUKTA
+::s ज़ ::t z ::comment DEVANAGARI LETTER JA plus DEVANAGARI SIGN NUKTA
+::s फ़ ::t f ::comment DEVANAGARI LETTER PHA plus DEVANAGARI SIGN NUKTA
+::s ड़ ::t dd ::t-alt r ::comment DEVANAGARI LETTER DDA plus DEVANAGARI SIGN NUKTA
+::s ढ़ ::t ddh ::t-alt rh ::comment DEVANAGARI LETTER DDHA plus DEVANAGARI SIGN NUKTA
 ::s ॺ ::t y ::comment DEVANAGARI LETTER HEAVY YA
 ::s । ::t . ::comment danda
 ::s ॥ ::t . ::comment double danda
 ::s ৷ ::t . ::comment Bengali currency numerator four; used as danda
 ::s ॰ ::t . ::comment Devanagari abbreviation sign
 # Bengali
+::s ড় ::t r ::comment BENGALI LETTER DDA plus BENGALI SIGN NUKTA
+::s ঢ় ::t rh ::comment BENGALI LETTER DDHA plus BENGALI SIGN NUKTA
+::s য় ::t y ::comment BENGALI LETTER YA plus BENGALI SIGN NUKTA
+::s ক় ::t q ::comment BENGALI LETTER KA plus BENGALI SIGN NUKTA
+::s ফ় ::t f ::comment BENGALI LETTER PHA plus BENGALI SIGN NUKTA
+::s ভ় ::t v ::comment BENGALI LETTER BHA plus BENGALI SIGN NUKTA
+::s জ় ::t z ::comment BENGALI LETTER JA plus BENGALI SIGN NUKTA
 ::s ৽ ::t . ::comment BENGALI ABBREVIATION SIGN
 ::s ৾ ::t ::comment BENGALI SANDHI MARK (CHECK)
 # Gurmukhi
