@@ -4,7 +4,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;Example (Greek): Νεπάλ → Nepal<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Example (Hindi):&nbsp; नेपाल → nepaal<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Example (Urdu):&nbsp; نیپال → nypal<br>
-Romanization uses m-to-n character mapping, using context, and using a user-provided language code (optional), i.e. *uroman* does not just replace characters one by one.
+Romanization uses m-to-n character mappings, using context, and using a user-provided language code (optional), i.e. *uroman* does not just replace characters one by one.
 
 New Python version: 1.3.0 (to be released in June 2024)<br>
 Last Perl version: 1.2.8 (released April 23, 2021)<br>
