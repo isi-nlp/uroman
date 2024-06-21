@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Written by Ulf Hermjakob, USC/ISI  March-April 2024
