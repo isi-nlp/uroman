@@ -976,10 +976,10 @@ class Uroman:
             max_lines = args.get('max_lines')
             progress_dots_output = False
             for line_number, line in enumerate(f_in, 1):
-                if m := regex.match(r'(::lcode\s+)([a-z]{3})(\s+)(.*?)\s*$', line):
+                if m := regex.match(r'(::lcode\s+)([a-z]{3})(\s+)(.*)$', line):
                     lcode_kw, lcode2, space, snt = m.group(1, 2, 3, 4)
                     rom_result = self.romanize_string(snt, lcode2 or lcode, **args)
-                    if args.get('rom_format', None) == RomFormat.STR:
+                    if args.get('rom_format', RomFormat.STR) == RomFormat.STR:
                         lcode_prefix = f"{lcode_kw}{lcode2}{space}"
                         f_out.write(lcode_prefix + rom_result + '\n')
                     else:
@@ -987,7 +987,7 @@ class Uroman:
                         prefixed_edges = [lcode_prefix] + self.romanize_string(snt, lcode2 or lcode, **args)
                         f_out.write(Edge.json_str(prefixed_edges) + '\n')
                 else:
-                    f_out.write(Edge.json_str(self.romanize_string(line.rstrip(), lcode, **args)) + '\n')
+                    f_out.write(Edge.json_str(self.romanize_string(line.rstrip('\n'), lcode, **args)) + '\n')
                 if not args.get('silent'):
                     if line_number % 100 == 0:
                         if line_number % 1000 == 0:
@@ -1886,8 +1886,7 @@ class Lattice:
 
     # noinspection PyUnboundLocalVariable
     def add_numbers(self, uroman, **args):
-        """Adds a numerical romanization edge to the romanization lattice, currently just for digits.
-        To be significantly expanded to cover complex Chinese, Egyptian, Amharic numbers."""
+        """Adds a numerical romanization edge to the romanization lattice, currently just for digits."""
         verbose = bool(args.get('verbose'))
         s = self.s
         num_edges = []
@@ -2358,7 +2357,7 @@ def main():
     if args.ignore_args:
         # minimal calls
         uroman = Uroman(args.data_dir)
-        s, s2, s3, s4 = 'Игорь', 'ちょっとまってください', 'ka‍n‍ne', 'महात्मा गांधी'
+        s, s2, s3, s4 = 'Игорь', 'ちょっとまってください', 'ka‍n‍ne', 'महात्मा गांधी  '
         print(s, uroman.romanize_string(s))
         print(s, uroman.romanize_string(s, lcode='ukr'))
         print(s2, Edge.json_str(uroman.romanize_string(s2, rom_format=RomFormat.EDGES)))
@@ -2378,7 +2377,7 @@ def main():
                                    or args.rebuild_ud_props or args.rebuild_num_props))
         # Romanize any positional arguments, interpreted as strings to be romanized.
         for s in args.direct_input:
-            result = uroman.romanize_string(s.rstrip(), lcode=args.lcode, **args_dict)
+            result = uroman.romanize_string(s.rstrip('\n'), lcode=args.lcode, **args_dict)
             result_json = Edge.json_str(result)
             if romanize_file_p:
                 # input from both file/stdin (to file/stdout) and direct-input (to stderr)
