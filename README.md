@@ -1,6 +1,10 @@
 # uroman
 
-*uroman* is a *universal romanizer*. It converts text in any script to the Latin alphabet.
+*uroman* is a *universal romanizer*. It converts text in any script to the Latin alphabet.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Example (Greek): Νεπάλ → Nepal<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Example (Hindi):&nbsp; नेपाल → nepaal<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Example (Urdu):&nbsp; نیپال → nypal<br>
+Romanization uses m-to-n character mapping, using context, and using a user-provided language code (optional), i.e. *uroman* does not just replace characters one by one.
 
 New Python version: 1.3.0 (to be released in June 2024)<br>
 Last Perl version: 1.2.8 (released April 23, 2021)<br>
@@ -8,14 +12,23 @@ Author: Ulf Hermjakob, USC Information Sciences Institute
 
 ## (New) Python version
 
-### Command-line-interface (CLI) Examples
+### Command Line Interface (CLI) Examples
 ```bash
 $ bin/uroman.py Игорь
 $ bin/uroman.py Игорь -l ukr
 $ bin/uroman.py -l hin -i text/hin.txt
 $ bin/uroman.py -l fas -i text/fas.txt -o text/fas-rom.jsonl -f edges
 $ bin/uroman.py < test/multi-script.txt > test/multi-script.uroman-perl.txt
+$ bin/uroman.py -h
 ```
+
+Argument structure highlights:<br>
+Direct inputs (such as 'Игорь' above). Multi-word direct inputs can be provided jointly using quotes (e.g. "Λος Άντζελες") or separately without quotes (Λος Άντζελες).<br>
+-l &lt;ISO-639-3 language code&gt; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # (e.g. -l ukr for Ukrainian, -l hin for Hindi, -l fas for Persian)<br>
+-i &lt;input filename&gt;   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # (alternative: stdin)<br>
+-o &lt;output filename&gt;  &nbsp;&nbsp;&nbsp;&nbsp; # (alternative: stdout)<br>
+-f &lt;format: str (simple string, default), edges (includes positional information), lattice (includes alternatives)&gt;<br>
+-h    &nbsp;&nbsp;&nbsp;&nbsp; # Use -h/--help for more arguments and options.
 
 ### Examples embedded in Python
 
