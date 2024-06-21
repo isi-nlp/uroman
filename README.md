@@ -2,10 +2,47 @@
 
 *uroman* is a *universal romanizer*. It converts text in any script to the Latin alphabet.
 
-Version: 1.2.8
-Release date: April 23, 2021  
+New Python version: 1.3.0 (to be released in June 2024)<br>
+Last Perl version: 1.2.8 (released April 23, 2021)<br>
 Author: Ulf Hermjakob, USC Information Sciences Institute  
 
+## (New) Python version
+
+### Command-line-interface (CLI) Examples
+```bash
+$ bin/uroman.py Игорь
+$ bin/uroman.py Игорь -l ukr
+$ bin/uroman.py -l hin -i text/hin.txt
+$ bin/uroman.py -l fas -i text/fas.txt -o text/fas-rom.jsonl -f edges
+$ bin/uroman.py < test/multi-script.txt > test/multi-script.uroman-perl.txt
+```
+
+### Examples embedded in Python
+
+```bash
+import uroman
+uroman = Uroman()
+uroman.romanize_string('Игорь', lcode='ukr')
+uroman.romanize_file(input_filename='test/multi-script.txt',
+                     output_filename='test/multi-script.uroman.jsonl',
+                     rom_format=RomFormat.LATTICE)
+
+def __init__(self, data_dir, **args): ...
+    data_dir: data_directory (optional)
+def romanize_string(self, s, lcode, rom_format, **args) -> str | List[Edge]: ...
+    s: string to be romanized, e.g. "ایران"
+    lcode: language code, optional, a 3-letter code such as 'eng' for English (ISO-639-3)
+    rom_format (3 output format choices):
+       RomFormat.STR (best string, output format: string    Note: This is the default.)
+       RomFormat.EDGE (best edges, includes offset information, output format: JSONL)
+       RomFormat.LATTICE (all edges, includes offset information, output format: JSONL)
+def romanize_file(self, input_filename, output_filename, lcode, direct_input, **args): ...
+    lcode: language code (optional), a 3-letter code such as 'eng' for English (ISO-639-3)
+    direct_input: list of strings (optional)
+
+```
+
+## (Old) Perl Version
 
 ### Usage
 ```bash
@@ -35,6 +72,11 @@ No effect for other languages in this version.
 Ulf Hermjakob, Jonathan May, and Kevin Knight. 2018. Out-of-the-box universal romanization tool uroman. In Proceedings of the 56th Annual Meeting of Association for Computational Linguistics, Demo Track. ACL-2018 Best Demo Paper Award. [Paper in ACL Anthology](https://www.aclweb.org/anthology/P18-4003) | [Poster](https://www.isi.edu/~ulf/papers/poster-uroman-acl2018.pdf) | [BibTex](https://www.aclweb.org/anthology/P18-4003.bib)
 
 ### Change History
+
+Changes in version 1.3.0
+ * Added Python version
+ * Various improvements: Thai; final schwa deletion in several Indian languages; Chinese fractions and percentages; ... 
+
 Changes in version 1.2.8
  * Updated to Unicode 13.0 (2021), which supports several new scripts (10% larger UnicodeData.txt).
  * Improved support for Georgian.
