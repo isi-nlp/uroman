@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Written by Ulf Hermjakob, USC/ISI  March-April 2024
+Written by Ulf Hermjakob, USC/ISI  March-June 2024
 uroman is a universal romanizer. It converts text in any script to the Latin alphabet.
 This script is a Python reimplementation of an earlier Perl script, with some improvements.
 The tool has been tested on 250 languages, with 100 or more sentences each.
