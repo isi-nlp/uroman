@@ -49,7 +49,7 @@ ur.romanize_file(input_filename='test/multi-script.txt',
                  rom_format=RomFormat.LATTICE)
 ```
 
-#### def __init__(self, data_dir, **args):
+#### def \_\_init\_\_(self, data_dir, **args):
 <table>
   <tr><td>data_dir</td><td>data directory (optional, default="uroman/data")</td></tr>
 </table>
@@ -70,8 +70,6 @@ ur.romanize_file(input_filename='test/multi-script.txt',
 <table>
   <tr><td>lcode</td><td>language code (optional), a 3-letter code such as 'eng' for English (ISO-639-3)</td></tr>
   <tr><td>direct_input</td><td>list of strings (optional)</td></tr>
-  <tr><td></td><td></td></tr>
-  <tr><td></td><td></td></tr>
 </table>
 ```
 
