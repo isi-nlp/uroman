@@ -4,7 +4,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;Example (Greek): Νεπάλ → Nepal<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Example (Hindi):&nbsp; नेपाल → nepaal<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Example (Urdu):&nbsp; نیپال → nypal<br>
-Romanization uses m-to-n character mappings, using context, and using a user-provided language code (optional), i.e. *uroman* does not just replace characters one by one.
+Romanization uses m-to-n character mappings, context, and a user-provided language code (optional), i.e. *uroman* does not just replace characters one by one.
 
 New Python version: 1.3.0 (to be released in June 2024)<br>
 Last Perl version: 1.2.8 (released April 23, 2021)<br>
@@ -14,20 +14,21 @@ Author: Ulf Hermjakob, USC Information Sciences Institute
 
 #### Installation
 ```bash
-$ python -m pip install uroman
+python -m pip install uroman
 ```
 
 ### Command Line Interface (CLI)
 #### Examples
+<sup>Note: Directories _text_ and _test_ are under _uroman_'s root directory on GitHub.</sup>
 ```bash
-$ bin/uroman.py "Игорь Стравинский"
-$ bin/uroman.py Игорь -l ukr
-$ bin/uroman.py Ντέιβις Καπ -l ell
-$ bin/uroman.py "\u03C0\u03B9" -d
-$ bin/uroman.py -l hin -i text/hin.txt
-$ bin/uroman.py -l fas -i text/fas.txt -o text/fas-rom.jsonl -f edges
-$ bin/uroman.py < test/multi-script.txt > test/multi-script.uroman.txt
-$ bin/uroman.py -h
+uroman.py "Игорь Стравинский"
+uroman.py Игорь -l ukr
+uroman.py Ντέιβις Καπ -l ell
+uroman.py "\u03C0\u03B9" -d
+uroman.py -l hin -i text/hin.txt
+uroman.py -l fas -i text/fas.txt -o text/fas-rom.jsonl -f edges
+uroman.py < test/multi-script.txt > test/multi-script.uroman.txt
+uroman.py -h
 ```
 
 #### *uroman.py* &nbsp; Argument Structure Highlights 
@@ -93,11 +94,12 @@ $ uroman.pl [-l <lang-code>] [--chart] [--no-cache] < STDIN
        --no-cache disables caching.
 ```
 ### Examples
+<sup>Note: Directories _text_ and _test_ are under _uroman_'s root directory on GitHub.</sup>
 ```bash
-$ bin/uroman.pl < text/zho.txt
-$ bin/uroman.pl -l tur < text/tur.txt
-$ bin/uroman.pl -l heb --chart < text/heb.txt
-$ bin/uroman.pl < test/multi-script.txt > test/multi-script.uroman-perl.txt
+uroman.pl < text/zho.txt
+uroman.pl -l tur < text/tur.txt
+uroman.pl -l heb --chart < text/heb.txt
+uroman.pl < test/multi-script.txt > test/multi-script.uroman-perl.txt
 ```
 
 Identifying the input as Arabic, Belarusian, Bulgarian, English, Farsi, German,
