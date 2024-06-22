@@ -68,10 +68,11 @@ ur.romanize_file(input_filename='test/multi-script.txt',
 
 #### def romanize_file(self, input_filename, output_filename, lcode, direct_input, **args):
 <table>
+  <tr><td>-i<br>--input_filename</td><td></td></tr>
+  <tr><td width="200">-o<br><nobr>--output_filename</nobr></td><td></td></tr>
   <tr><td>lcode</td><td>language code (optional), a 3-letter code such as 'eng' for English (ISO-639-3)</td></tr>
   <tr><td>direct_input</td><td>list of strings (optional)</td></tr>
 </table>
-```
 
 ## (Old) Perl Version
 
