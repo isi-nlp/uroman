@@ -12,7 +12,13 @@ Author: Ulf Hermjakob, USC Information Sciences Institute
 
 ## (New) Python version
 
-### Command Line Interface (CLI) Examples
+#### Installation
+```bash
+$ python -m pip install uroman
+```
+
+### Command Line Interface (CLI)
+#### Examples
 ```bash
 $ bin/uroman.py Игорь
 $ bin/uroman.py Игорь -l ukr
@@ -22,37 +28,51 @@ $ bin/uroman.py < test/multi-script.txt > test/multi-script.uroman-perl.txt
 $ bin/uroman.py -h
 ```
 
-Argument structure highlights:<br>
-Direct inputs (such as 'Игорь' above). Multi-word direct inputs can be provided jointly using quotes (e.g. "Λος Άντζελες") or separately without quotes (Λος Άντζελες).<br>
--l &lt;ISO-639-3 language code&gt; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # (e.g. -l ukr for Ukrainian, -l hin for Hindi, -l fas for Persian)<br>
--i &lt;input filename&gt;   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # (alternative: stdin)<br>
--o &lt;output filename&gt;  &nbsp;&nbsp;&nbsp;&nbsp; # (alternative: stdout)<br>
--f &lt;format: str (simple string, default), edges (includes positional information), lattice (includes alternatives)&gt;<br>
--h    &nbsp;&nbsp;&nbsp;&nbsp; # Use -h/--help for more arguments and options.
+#### Argument Structure Highlights
+<table>
+  <tr><td><i>Direct input (optional)</i></td><td>such as 'Игорь' above. Multi-word direct inputs can be provided jointly using quotes (e.g. "Λος Άντζελες") or separately without quotes (Λος Άντζελες).</td></tr>
+  <tr><td>-l<br>--lcode</td><td>language code <a href="https://en.wikipedia.org/wiki/List_of_ISO_639-3_codes" target="_LCODE">ISO-639-3</a> e.g. <i>-l ukr</i> for Ukrainian, <i>-l hin</i> for Hindi, <i>-l fas</i> for Persian</td></tr>
+  <tr><td>-i<br>--input_filename</td><td>alternative: stdin</td></tr>
+  <tr><td width="200">-o<br><nobr>--output_filename</nobr></td><td>alternative: stdout</td></tr>
+  <tr><td>-f<br>--rom_format</td><td>Output format options: str (simple string, default), edges (includes positional information), lattice (includes alternatives</td></tr>
+  <tr><td>-h<br>--help</td><td>Use this option to see the full argument structure with all options.</td></tr>
+</table>
 
 ### Examples embedded in Python
 
 ```bash
 import uroman
-uroman = Uroman()
-uroman.romanize_string('Игорь', lcode='ukr')
-uroman.romanize_file(input_filename='test/multi-script.txt',
-                     output_filename='test/multi-script.uroman.jsonl',
-                     rom_format=RomFormat.LATTICE)
+ur = Uroman()
+ur.romanize_string('Игорь', lcode='ukr')
+ur.romanize_file(input_filename='test/multi-script.txt',
+                 output_filename='test/multi-script.uroman.jsonl',
+                 rom_format=RomFormat.LATTICE)
+```
 
-def __init__(self, data_dir, **args): ...
-    data_dir: data_directory (optional)
-def romanize_string(self, s, lcode, rom_format, **args) -> str | List[Edge]: ...
-    s: string to be romanized, e.g. "ایران"
-    lcode: language code, optional, a 3-letter code such as 'eng' for English (ISO-639-3)
-    rom_format (3 output format choices):
-       RomFormat.STR (best string, output format: string    Note: This is the default.)
-       RomFormat.EDGE (best edges, includes offset information, output format: JSONL)
-       RomFormat.LATTICE (all edges, includes offset information, output format: JSONL)
-def romanize_file(self, input_filename, output_filename, lcode, direct_input, **args): ...
-    lcode: language code (optional), a 3-letter code such as 'eng' for English (ISO-639-3)
-    direct_input: list of strings (optional)
+#### def __init__(self, data_dir, **args):
+<table>
+  <tr><td>data_dir</td><td>data directory (optional, default="uroman/data")</td></tr>
+</table>
 
+#### def romanize_string(self, s, lcode, rom_format, **args) -> str | List[Edge]:
+<table>
+  <tr><td>s</td><td>string to be romanized, e.g. "ایران"</td></tr>
+  <tr><td>lcode</td><td>language code, optional, a 3-letter code such as 'eng' for English (ISO-639-3)</td></tr>
+  <tr><td>rom_format</td><td>Output format choices:
+        <ul>
+           <li> RomFormat.STR (best string, output format: string    Note: This is the default.)
+           <li> RomFormat.EDGE (best edges, includes offset information, output format: JSONL)
+           <li> RomFormat.LATTICE (all edges, includes offset information, output format: JSONL)
+        </ul>
+</table>
+
+#### def romanize_file(self, input_filename, output_filename, lcode, direct_input, **args):
+<table>
+  <tr><td>lcode</td><td>language code (optional), a 3-letter code such as 'eng' for English (ISO-639-3)</td></tr>
+  <tr><td>direct_input</td><td>list of strings (optional)</td></tr>
+  <tr><td></td><td></td></tr>
+  <tr><td></td><td></td></tr>
+</table>
 ```
 
 ## (Old) Perl Version
