@@ -184,17 +184,17 @@ Changes in version 1.2
 
 Changes in version 1.1 (major upgrade)
  * Offers chart output (in JSON format) to represent alternative romanizations.
-   -- Location of first character is defined to be "line: 1, start:0, end:0".
+   * Location of first character is defined to be "line: 1, start:0, end:0".
  * Incremental improvements of Hebrew and Greek romanization; Chinese numbers.
- * Improved web-interface at http://www.isi.edu/~ulf/uroman.html
-   -- Shows corresponding original and romanization text in red
-      when hovering over a text segment.
-   -- Shows alternative romanizations when hovering over romanized text
-      marked by dotted underline.
-   -- Added right-to-left script detection and improved display for right-to-left
-      script text (as determined line by line).
-   -- On-page support for some scripts that are often not pre-installed on users'
-      computers (Burmese, Egyptian, Klingon).
+ * Improved web-interface (now) at https://uhermjakob.github.io/uroman.html
+   * Shows corresponding original and romanization text in red
+     when hovering over a text segment.
+   * Shows alternative romanizations when hovering over romanized text
+     marked by dotted underline.
+   * Added right-to-left script detection and improved display for right-to-left
+     script text (as determined line by line).
+   * On-page support for some scripts that are often not pre-installed on users'
+     computers (Burmese, Egyptian, Klingon).
 
 Changes in version 1.0 (major upgrade)
  * Upgraded principal internal data structure from string to lattice.
@@ -246,7 +246,7 @@ New features in version 0.3
  * Faster for South Asian languages
 
 ### Other features
- * Web interface: http://www.isi.edu/~ulf/uroman.html
+ * Web interface (old Perl): https://uhermjakob.github.io/uroman.html
  * Vowelization is provided when locally computable, e.g. for many South Asian languages and Tibetan.
 
 ### Limitations
