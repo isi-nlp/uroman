@@ -1,6 +1,6 @@
 # uroman
 
-*uroman* is a *universal romanizer*. It converts text in any script to the Latin alphabet.<br>
+*uroman* is a *universal romanizer*. It converts text in any script to the standard Latin alphabet.<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Example (Greek): Νεπάλ → Nepal<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Example (Hindi):&nbsp; नेपाल → nepaal<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Example (Urdu):&nbsp; نیپال → nypal<br>
