@@ -4,7 +4,11 @@
 &nbsp;&nbsp;&nbsp;&nbsp;Example (Greek): Νεπάλ → Nepal<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Example (Hindi):&nbsp; नेपाल → nepaal<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Example (Urdu):&nbsp; نیپال → nypal<br>
-Romanization uses m-to-n character mappings, context, and a user-provided language code (optional), i.e. *uroman* does not just replace characters one by one.
+&nbsp;&nbsp;&nbsp;&nbsp;Example (Chinese): 三万一 → 31000
+
+* *uroman* enables the application of string-similarity metrics to texts from different scripts without the need and complexity of an intermediate phonetic representation.
+* *uroman* converts digital numbers in various scripts to Western Arabic numerals.
+* *uroman* uses m-to-n character mappings, context, and a user-provided language code (optional), i.e. *uroman* does not just replace characters one by one.
 
 New Python version: 1.3.0 (to be released in June 2024)<br>
 Last Perl version: 1.2.8 (released April 23, 2021)<br>
@@ -116,12 +120,13 @@ uroman.pl -l heb --chart < text/heb.txt
 uroman.pl < test/multi-script.txt > test/multi-script.uroman-perl.txt
 ```
 
-Identifying the input as Arabic, Belarusian, Bulgarian, English, Farsi, German,
+Identifying the input as Arabic, Belarusian, Bulgarian, English, German,
 Ancient Greek, Modern Greek, Pontic Greek, Hebrew, Kazakh, Kyrgyz, Latvian,
-Lithuanian, North Macedonian, Russian, Serbian, Turkish, Ukrainian, Uyghur or 
-Yiddish will improve romanization for those languages as some letters in those 
+Lithuanian, North Macedonian, Ossetian, Persian, Russian, Serbian, Turkish, 
+Ukrainian, Uyghur or Yiddish 
+will improve romanization for those languages as some letters in those 
 languages have different sound values from other languages using the same script 
-(French, Russian, Hebrew respectively).
+(Arabic vs. Persian, Russian vs. Ukrainian, Hebrew vs. Yiddish).
 No effect for other languages in this version.
 
 ### Bibliography
@@ -130,8 +135,10 @@ Ulf Hermjakob, Jonathan May, and Kevin Knight. 2018. Out-of-the-box universal ro
 ### Change History
 
 Changes in version 1.3.0
- * Added Python version
- * Various improvements: Thai; final schwa deletion in several Indian languages; Chinese fractions and percentages; ... 
+ * Added Python version.
+ * Initial dedicated support for Coptic (Egypt); significantly improved support for Thai; improved support for Khmer, Tibetan and several Indian languages incl. better final schwa deletion.
+ * Chinese fractions and percentages.
+ * Various small improvements.
 
 Changes in version 1.2.8
  * Updated to Unicode 13.0 (2021), which supports several new scripts (10% larger UnicodeData.txt).
@@ -260,4 +267,4 @@ New features in version 0.3
    normal text in Arabic and Hebrew (without diacritics/points).
 
 ### Acknowledgments
-This research is based upon work supported in part by the Office of the Director of National Intelligence (ODNI), Intelligence Advanced Research Projects Activity (IARPA), via contract # FA8650-17-C-9116, and by research sponsored by Air Force Research Laboratory (AFRL) under agreement number FA8750-19-1-1000. The views and conclusions contained herein are those of the authors and should not be interpreted as necessarily representing the official policies, either expressed or implied, of ODNI, IARPA, Air Force Laboratory, DARPA, or the U.S. Government. The U.S. Government is authorized to reproduce and distribute reprints for governmental purposes notwithstanding any copyright annotation therein.
+Earlier versions of this tool were based upon work supported in part by the Office of the Director of National Intelligence (ODNI), Intelligence Advanced Research Projects Activity (IARPA), via contract # FA8650-17-C-9116, and by research sponsored by Air Force Research Laboratory (AFRL) under agreement number FA8750-19-1-1000. The views and conclusions contained herein are those of the authors and should not be interpreted as necessarily representing the official policies, either expressed or implied, of ODNI, IARPA, Air Force Laboratory, DARPA, or the U.S. Government. The U.S. Government is authorized to reproduce and distribute reprints for governmental purposes notwithstanding any copyright annotation therein.
