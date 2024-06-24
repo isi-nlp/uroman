@@ -1268,8 +1268,8 @@
 ::s ࣡ ::t ::comment ARABIC SMALL HIGH SIGN SAFHA (CHECK)
 ::s ࣢ ::t ::comment ARABIC DISPUTED END OF AYAH (CHECK)
 
-# Farsi
-::s ی ::t i ::t-alt y ::comment Contributed by Nima
+# Farsi/Persian
+::s ی ::t i ::t-alt y ::comment Farsi yeh, contributed by Nima
 ::s ای ::t i ::t-alt ai ::use-only-at-start-of-word ::comment Contributed by Nima
 ::s هٔ ::t eye ::use-only-at-end-of-word ::lcode fas ::comment Contributed by Nima
 ::s و ::t v ::t-alt o, u ::lcode fas ::comment Arabic letter waw
