@@ -45,7 +45,8 @@ uroman.py -h
         <ul>
            <li> -f str &nbsp;&nbsp;&nbsp;&nbsp;&nbsp (best string, default, output format: string)
            <li> -f edges (best edges, includes offset information, output format: JSONL)
-           <li> -f lattice (all edges, includes offset information, output format: JSONL)
+           <li> -f alts (lattice including alternative edges, output format: JSONL)
+           <li> -f lattice (lattice including alternative and superseded edges, output format: JSONL)
         </ul></td></tr>
   <tr><td>-d<br>--decode_unicode</td><td>Decode Unicode escape sequences such as ‘\u03C0\u03B9’ to ‘πι’ which in turn will be romanized to ‘pi’. This is useful for input formats such as JSON.</td></tr>
   <tr><td>-h<br>--help</td><td>Use this option to see the full argument structure with all options.</td></tr>
@@ -71,7 +72,7 @@ __`uroman = Uroman(data_dir)`__
 This constructor method loads data needed for the romanization of different languages.
 This constructor call might take about a second (real time) to load all of the romanization data, but it is necessary only once for multiple subsequent romanization calls.
 <table>
-  <tr><td>data_dir</td><td>data directory (optional, default="uroman/data")</td></tr>
+  <tr><td>data_dir</td><td>data directory (optional, default: standard uroman data directory)</td></tr>
 </table>
 
 <hr>
@@ -85,8 +86,9 @@ This method takes a string <i>s</i> and returns its romanization in the format a
   <tr><td>rom_format</td><td>Output format choices:
         <ul>
            <li> RomFormat.STR &nbsp;&nbsp;&nbsp;&nbsp;(best string, default, output format: string)
-           <li> RomFormat.EDGE &nbsp;(best edges, includes offset information, output format: JSONL)
-           <li> RomFormat.LATTICE (all edges, includes offset information, output format: JSONL)
+           <li> RomFormat.EDGES &nbsp;(best edges, includes offset information, output format: JSONL)
+           <li> RomFormat.ALTS &nbsp;(lattice including alternative edges, output format: JSONL)
+           <li> RomFormat.LATTICE (lattice including alternative and superseded edges, output format: JSONL)
         </ul>
 </table>
 
