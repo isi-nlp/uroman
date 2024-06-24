@@ -27,13 +27,13 @@ import gc
 import json
 import math
 import os
-import pathlib
 from pathlib import Path
 import pstats
 import regex
 import sys
 from typing import List, Tuple
 import unicodedata as ud
+from __init__ import __version__, last_mod_date
 DEFAULT_ROM_MAX_CACHE_SIZE = 65536
 PROFILE_FLAG = "--profile"  # also used in argparse processing
 if PROFILE_FLAG in sys.argv:
@@ -211,8 +211,8 @@ class Uroman:
     Typically, only a single instance will be used. (In contrast to multiple lattice instances, one per text.)
     Methods include some testing. And finally methods to romanize a string (romanize_string()) or an entire file
     (romanize_file())."""
-    def __init__(self, data_dir: Path, **args):  # args: load_log, rebuild_ud_props
-        self.data_dir = data_dir
+    def __init__(self, data_dir: Path | None = None, **args):  # args: load_log, rebuild_ud_props
+        self.data_dir = data_dir or self.default_data_dir()
         self.rom_rules = defaultdict(list)
         self.scripts = defaultdict(Script)
         self.dict_bool = defaultdict(bool)
@@ -239,6 +239,10 @@ class Uroman:
                                  args.get('rebuild_ud_props', False),
                                  args.get('rebuild_num_props', False))
         gc.enable()
+
+    @staticmethod
+    def default_data_dir() -> Path:
+        return Path(__file__).parent / "data"
 
     def reset_cache(self, cache_size: int = DEFAULT_ROM_MAX_CACHE_SIZE):
         self.rom_cache = {}
@@ -775,7 +779,7 @@ class Uroman:
                             rebuild_ud_props: bool = False, rebuild_num_props: bool = False):
         """Loads all resource files needed for romanization."""
         data_dir = data_dir
-        if not isinstance(data_dir, pathlib.Path):
+        if not isinstance(data_dir, Path):
             sys.stderr.write(f'Error: data_dir is of {type(data_dir)}, not a Path.\n'
                              f'       Cannot load any resource files.\n')
             return
@@ -2322,6 +2326,8 @@ def main():
     parser.add_argument('--ignore_args', action='count', default=0, help='for usage illustration only')
     parser.add_argument(PROFILE_FLAG, type=argparse.FileType('w', encoding='utf-8', errors='ignore'),
                         default=None, metavar='PROFILE-FILENAME', help='(optional output for performance analysis)')
+    parser.add_argument('--version', action='version',
+                        version=f'%(prog)s {__version__} last modified: {last_mod_date}')
     args = parser.parse_args()
     # copy selected (minor) args from argparse.Namespace to dict
     args_dict = {'rom_format': args.rom_format, 'load_log': args.load_log, 'test': args.test, 'stats': args.stats,
