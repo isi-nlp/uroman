@@ -25,14 +25,14 @@ python -m pip install uroman
 #### Examples
 <sup>Note: Directories _text_ and _test_ are under _uroman_'s root directory on GitHub.</sup>
 ```bash
-uroman.py "Игорь Стравинский"
-uroman.py Игорь -l ukr
-uroman.py Ντέιβις Καπ -l ell
-uroman.py "\u03C0\u03B9" -d
-uroman.py -l hin -i text/hin.txt
-uroman.py -l fas -i text/fas.txt -o text/fas-rom.jsonl -f edges
-uroman.py < test/multi-script.txt > test/multi-script.uroman.txt
-uroman.py -h
+python3 -m uroman "Игорь Стравинский"
+python3 -m uroman Игорь -l ukr
+python3 -m uroman Ντέιβις Καπ -l ell
+python3 -m uroman "\u03C0\u03B9" -d
+python3 -m uroman -l hin -i text/hin.txt
+python3 -m uroman -l fas -i text/fas.txt -o text/fas-rom.jsonl -f edges
+python3 -m uroman < test/multi-script.txt > test/multi-script.uroman.txt
+python3 -m uroman -h
 ```
 
 #### *uroman.py* &nbsp; Argument Structure Highlights 
@@ -58,16 +58,16 @@ uroman.py -h
 ```bash
 import uroman
 
-uroman = Uroman()
-print(uroman.romanize_string('Игорь Стравинский'))
-print(uroman.romanize_string('Игорь', lcode='ukr'))
-uroman.romanize_file(input_filename='test/multi-script.txt',
-                     output_filename='test/multi-script.uroman.jsonl',
-                     rom_format=RomFormat.LATTICE)
+ur = uroman.uroman.Uroman()   # load uroman data into ur
+print(ur.romanize_string('Игорь Стравинский'))
+print(ur.romanize_string('Игорь', lcode='ukr'))
+ur.romanize_file(input_filename='test/multi-script.txt',
+                 output_filename='test/multi-script.uroman.jsonl',
+                 rom_format=RomFormat.LATTICE)
 ```
 
 #### Methods
-__`uroman = Uroman(data_dir)`__
+__`uroman = uroman.uroman.Uroman(data_dir)`__
 
 This constructor method loads data needed for the romanization of different languages.
 This constructor call might take about a second (real time) to load all of the romanization data, but it is necessary only once for multiple subsequent romanization calls.
@@ -77,7 +77,7 @@ This constructor call might take about a second (real time) to load all of the r
 
 <hr>
 
-__`uroman.romanize_string(s, lcode, rom_format)`__
+__`ur.romanize_string(s, lcode, rom_format)`__
 
 This method takes a string <i>s</i> and returns its romanization in the format according to <i>rom_format</i>: a string (default), or a list of edges.
 <table>
@@ -94,7 +94,7 @@ This method takes a string <i>s</i> and returns its romanization in the format a
 
 <hr>
 
-__`uroman.romanize_file(input_filename, output_filename, lcode)`__
+__`ur.romanize_file(input_filename, output_filename, lcode)`__
 
 This method romanizes a file <i>input_filename</i> to <i>output_filename</i>.
 <table>
