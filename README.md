@@ -18,7 +18,7 @@ Author: Ulf Hermjakob, USC Information Sciences Institute
 
 #### Installation
 ```bash
-python -m pip install uroman
+python3 -m pip install uroman
 ```
 
 ### Command Line Interface (CLI)
