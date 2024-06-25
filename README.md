@@ -103,7 +103,8 @@ This method romanizes a file <i>input_filename</i> to <i>output_filename</i>.
   <tr><td>lcode</td><td>language code (optional), a 3-letter code such as 'eng' for English (ISO-639-3)</td></tr>
 </table>
 
-## (Old) Perl Version
+## Old Perl Version
+<sup>Old Perl Version included on GitHub, but not included on PyPI.</sup>
 
 ### Usage
 ```bash
