@@ -1,1 +1,2 @@
-from . import uroman
+from .uroman import Uroman
+_all_ = [Uroman]
