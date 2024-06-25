@@ -1,0 +1,7 @@
+include README.md
+include uroman/__init__.py
+include uroman/__main__.py
+include uroman/uroman.py
+include uroman/data/*.txt
+include uroman/data/*.jsonl
+global-exclude *.pyc
