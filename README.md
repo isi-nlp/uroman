@@ -10,8 +10,8 @@
 * *uroman* converts digital numbers in various scripts to Western Arabic numerals.
 * *uroman* uses m-to-n character mappings, context, and a user-provided language code (optional), i.e. *uroman* does not just replace characters one by one.
 
-New Python version: 1.3.1 (released in June 24, 2024)<br>
-Last Perl version: 1.2.8 (released April 23, 2021)<br>
+New Python version: 1.3.1 (released on June 25, 2024)<br>
+Last Perl version: 1.2.8 (released on April 23, 2021)<br>
 Author: Ulf Hermjakob, USC Information Sciences Institute  
 
 ## (New) Python version
