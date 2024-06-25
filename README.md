@@ -67,7 +67,7 @@ ur.romanize_file(input_filename='test/multi-script.txt',
 ```
 
 #### Methods
-__`uroman = uroman.uroman.Uroman(data_dir)`__
+__`ur = uroman.uroman.Uroman(data_dir)`__
 
 This constructor method loads data needed for the romanization of different languages.
 This constructor call might take about a second (real time) to load all of the romanization data, but it is necessary only once for multiple subsequent romanization calls.
