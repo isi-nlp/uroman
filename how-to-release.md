@@ -2,7 +2,7 @@
 
 Using twine : https://twine.readthedocs.io/en/latest/ 
 
-1. Update the `__version__` in `uroman/bin/__init__.py`  
+1. Update the `__version__` and `__last_mod_date__` in `uroman.py`  
    Clear `rm -r build dist *.egg-info`   if those dir exist.
 2. Build :: `$ python setup.py sdist bdist_wheel`   
    where `sdist` is source code; `bdist_wheel` is universal ie. for all platforms
