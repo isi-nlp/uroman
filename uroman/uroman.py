@@ -33,11 +33,14 @@ import regex
 import sys
 from typing import List, Tuple
 import unicodedata as ud
-from __init__ import __version__, last_mod_date
 DEFAULT_ROM_MAX_CACHE_SIZE = 65536
 PROFILE_FLAG = "--profile"  # also used in argparse processing
 if PROFILE_FLAG in sys.argv:
     import cProfile
+
+__version__ = '1.3.0.23'
+__last_mod_date__ = 'June 24, 2024'
+__description__ = "uroman is a universal romanizer. It converts text in any script to the standard Latin alphabet."
 
 # UTILITIES
 
@@ -235,14 +238,24 @@ class Uroman:
         self.hangul_rom = {}
         self.stats = defaultdict(int)  # stats, e.g. for unprocessed numbers
         self.abugida_cache = {}  # key: (script, char_rom) value: (base_rom, base_rom_plus_abugida_vowel, modified rom)
-        self.load_resource_files(data_dir, args.get('load_log', False),
+        self.load_resource_files(self.data_dir, args.get('load_log', False),
                                  args.get('rebuild_ud_props', False),
                                  args.get('rebuild_num_props', False))
         gc.enable()
 
     @staticmethod
     def default_data_dir() -> Path:
-        return Path(__file__).parent / "data"
+        # cwd = os.getcwd()
+        # cwd = os.path.dirname(os.path.realpath(__file__))
+        # cwd = os.path.dirname(os.path.abspath(__file__))
+        # cwd = Path(__file__).parent
+        # cwd = '.'
+        # data_dir = Path(cwd).parent / "data"
+        # data_dir = Path('data')
+        data_dir = Path(__file__).parent / "data"
+        data_dir_path = data_dir.resolve()
+        sys.stderr.write(f"data_dir: {str(data_dir_path)}\n")
+        return data_dir_path
 
     def reset_cache(self, cache_size: int = DEFAULT_ROM_MAX_CACHE_SIZE):
         self.rom_cache = {}
@@ -2291,15 +2304,9 @@ def main():
     listed as default). This only needs to be done once.
     After that you can romanize from file to file, or just romanize a string."""
 
-    # Compute data_dir based on the location of this executable script.
-    src_dir = os.path.dirname(os.path.realpath(__file__))
-    root_dir = os.path.dirname(src_dir)
-    data_dir = os.path.join(root_dir, "data")
-    # print(src_dir, root_dir, data)
-
     parser = argparse.ArgumentParser()
     parser.add_argument('direct_input', nargs='*', type=str)
-    parser.add_argument('--data_dir', type=Path, default=data_dir, help='uroman resource dir')
+    parser.add_argument('--data_dir', type=Path, default=None, help='uroman resource dir')
     parser.add_argument('-i', '--input_filename', type=str, help='default: sys.stdin')
     parser.add_argument('-o', '--output_filename', type=str, help='default: sys.stdout')
     parser.add_argument('-l', '--lcode', type=str, default=None,
@@ -2327,7 +2334,7 @@ def main():
     parser.add_argument(PROFILE_FLAG, type=argparse.FileType('w', encoding='utf-8', errors='ignore'),
                         default=None, metavar='PROFILE-FILENAME', help='(optional output for performance analysis)')
     parser.add_argument('--version', action='version',
-                        version=f'%(prog)s {__version__} last modified: {last_mod_date}')
+                        version=f'%(prog)s {__version__} last modified: {__last_mod_date__}')
     args = parser.parse_args()
     # copy selected (minor) args from argparse.Namespace to dict
     args_dict = {'rom_format': args.rom_format, 'load_log': args.load_log, 'test': args.test, 'stats': args.stats,

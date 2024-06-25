@@ -105,6 +105,7 @@ while (<>) {
       print "::rom $best_romanization\n";
       print "::align $offset_mappings\n\n";
    } elsif ($cache_rom_tokens_p) {
+      # print STDERR "CC: $lang_code  S: $line";
       print $romanizer->romanize_by_token_with_caching($line, $lang_code, "", *ht, *pinyin_ht, 0, "", $line_number) . "\n";
    } else {
       print $romanizer->romanize($line, $lang_code, "", *ht, *pinyin_ht, 0, "", $line_number) . "\n";
