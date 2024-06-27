@@ -126,7 +126,7 @@ uroman.pl < test/multi-script.txt > test/multi-script.uroman-perl.txt
 
 Identifying the input as Arabic, Belarusian, Bulgarian, English, German,
 Ancient Greek, Modern Greek, Pontic Greek, Hebrew, Kazakh, Kyrgyz, Latvian,
-Lithuanian, North Macedonian, Ossetian, Persian, Russian, Serbian, Turkish, 
+Lithuanian, Macedonian, Ossetian, Persian, Russian, Serbian, Turkish, 
 Ukrainian, Uyghur or Yiddish 
 will improve romanization for those languages as some letters in those 
 languages have different sound values from other languages using the same script 
@@ -156,7 +156,7 @@ Changes in version 1.2.7
 Changes in version 1.2.6
  * Improved support for Ukrainian, Russian and Ogham (ancient Irish script).
  * Added support for English Braille.
- * Added alternative Romanization for North Macedonian and Serbian (mkd2/srp2)
+ * Added alternative Romanization for Macedonian and Serbian (mkd2/srp2)
    reflecting a casual style that many native speakers of those languages use
    when writing text in Latin script, e.g. non-accented single letters (e.g. "s")
    rather than phonetically motivated combinations of letters (e.g. "sh").
