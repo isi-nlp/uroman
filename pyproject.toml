@@ -34,7 +34,6 @@ classifiers = [  # copied from https://pypi.org/classifiers/
 Homepage = "https://github.com/isi-nlp/uroman"
 Repository = "https://github.com/isi-nlp/uroman"
 "Bug Tracker" = "https://github.com/isi-nlp/uroman/issues"
-Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
 
 [project.scripts]
 uroman = "uroman.uroman:main"
@@ -42,13 +41,23 @@ uroman = "uroman.uroman:main"
 [tool.hatch.build.targets.wheel]
 exclude = [
   "test",
+  "text",
   "*.pl",
   "lib",
+  "tarballs",
+  "uroman-tsv.sh",
+  "how-to-release.md",
+  "string-distance-cost-rules.txt",
 ]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
   "test",
+  "text",
   "*.pl",
   "lib",
+  "tarballs",
+  "uroman-tsv.sh",
+  "how-to-release.md",
+  "string-distance-cost-rules.txt",
 ]
