@@ -38,8 +38,8 @@ PROFILE_FLAG = "--profile"  # also used in argparse processing
 if PROFILE_FLAG in sys.argv:
     import cProfile
 
-__version__ = '1.3.0.23'
-__last_mod_date__ = 'June 24, 2024'
+__version__ = '1.3.0.34'
+__last_mod_date__ = 'June 27, 2024'
 __description__ = "uroman is a universal romanizer. It converts text in any script to the standard Latin alphabet."
 
 # UTILITIES
@@ -215,7 +215,7 @@ class Uroman:
     Methods include some testing. And finally methods to romanize a string (romanize_string()) or an entire file
     (romanize_file())."""
     def __init__(self, data_dir: Path | None = None, **args):  # args: load_log, rebuild_ud_props
-        self.data_dir = data_dir or self.default_data_dir()
+        self.data_dir = data_dir or self.default_data_dir(**args)
         self.rom_rules = defaultdict(list)
         self.scripts = defaultdict(Script)
         self.dict_bool = defaultdict(bool)
@@ -244,17 +244,11 @@ class Uroman:
         gc.enable()
 
     @staticmethod
-    def default_data_dir() -> Path:
-        # cwd = os.getcwd()
-        # cwd = os.path.dirname(os.path.realpath(__file__))
-        # cwd = os.path.dirname(os.path.abspath(__file__))
-        # cwd = Path(__file__).parent
-        # cwd = '.'
-        # data_dir = Path(cwd).parent / "data"
-        # data_dir = Path('data')
+    def default_data_dir(**args) -> Path:
         data_dir = Path(__file__).parent / "data"
         data_dir_path = data_dir.resolve()
-        sys.stderr.write(f"data_dir: {str(data_dir_path)}\n")
+        if args.get('verbose'):
+            sys.stderr.write(f"data_dir: {str(data_dir_path)}\n")
         return data_dir_path
 
     def reset_cache(self, cache_size: int = DEFAULT_ROM_MAX_CACHE_SIZE):
@@ -286,7 +280,7 @@ class Uroman:
         created and allows complex romanization rules, some for specific languages, some for specific contexts."""
         n_entries = 0
         try:
-            f = open(filename)
+            f = open(filename, 'r', encoding='utf-8')
         except FileNotFoundError:
             sys.stderr.write(f'Cannot open file {filename}\n')
             return
@@ -419,7 +413,7 @@ class Uroman:
         incl. information such as the default abugida vowel letter (e.g. "a")."""
         n_entries, max_n_script_name_components = 0, 0
         try:
-            f = open(filename)
+            f = open(filename, 'r', encoding='utf-8')
         except FileNotFoundError:
             sys.stderr.write(f'Cannot open file {filename}\n')
             return
@@ -486,7 +480,7 @@ class Uroman:
         and UnicodeDataPropsCJK.txt with a list of valid script-specific characters."""
         n_script, n_script_char, n_script_vowel_sign, n_script_medial_consonant_sign, n_script_virama = 0, 0, 0, 0, 0
         try:
-            f = open(filename)
+            f = open(filename, 'r', encoding='utf-8')
         except FileNotFoundError:
             sys.stderr.write(f'Cannot open file {filename}\n')
             return
@@ -528,7 +522,7 @@ class Uroman:
         and UnicodeDataPropsCJK.txt with a list of valid script-specific characters."""
         n_entries = 0
         try:
-            f = open(filename)
+            f = open(filename, 'r', encoding='utf-8')
         except FileNotFoundError:
             sys.stderr.write(f'Cannot open file {filename}\n')
             return
@@ -582,7 +576,7 @@ class Uroman:
         """Loads file Chinese_to_Pinyin.txt which maps Chinese characters to their Latin form."""
         n_entries = 0
         try:
-            f = open(filename)
+            f = open(filename, 'r', encoding='utf-8')
         except FileNotFoundError:
             sys.stderr.write(f'Cannot open file {filename}\n')
             return
@@ -667,7 +661,7 @@ class Uroman:
         hangul2 = hangul if hangul else out_filename
         for out_file in out_filenames:
             try:
-                f_out = open(out_file, 'w')
+                f_out = open(out_file, 'w', encoding='utf-8')
             except OSError:
                 sys.stderr.write(f'Cannot write to file {out_file}\n')
                 continue
@@ -698,7 +692,8 @@ class Uroman:
 
     def rebuild_num_props(self, out_filename: str, err_filename: str):
         n_out, n_err = 0, 0
-        with open(out_filename, 'w') as f_out, open(err_filename, 'w') as f_err:
+        with (open(out_filename, 'w', encoding='utf-8') as f_out,
+              open(err_filename, 'w', encoding='utf-8') as f_err):
             codepoint = -1
             while codepoint < 0xF0000:
                 codepoint += 1
@@ -965,7 +960,7 @@ class Uroman:
             f_in = direct_input  # list of lines
         elif isinstance(input_filename, str):
             try:
-                f_in = open(input_filename)
+                f_in = open(input_filename, 'r', encoding='utf-8')
                 f_in_to_be_closed = True
             except OSError:
                 sys.stderr.write(f'Error in romanize_file: Cannot open file {input_filename}\n')
@@ -978,7 +973,7 @@ class Uroman:
             f_in = None
         if isinstance(output_filename, str):
             try:
-                f_out = open(str(output_filename), 'w')
+                f_out = open(str(output_filename), 'w', encoding='utf-8')
                 f_out_to_be_closed = True
             except OSError:
                 sys.stderr.write(f'Error in romanize_file: Cannot write to file {output_filename}\n')
