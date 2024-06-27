@@ -1,9 +1,0 @@
-include README.md
-include uroman/__init__.py
-include uroman/__main__.py
-include uroman/uroman.py
-include uroman/data/*.txt
-include uroman/data/NumProps.jsonl
-global-exclude *.pyc
-global-exclude cp_to_curr.py
-global-exclude check_unicodedata_scripts.py

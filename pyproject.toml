@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "uroman"
+version = "1.3.0.23"
+dependencies = [
+  "regex>=2024.5.15",
+]
+requires-python = ">=3.10"
+authors = [
+  {name = "Ulf Hermjakob", email = "ulf@isi.edu"},
+]
+maintainers = [
+  {name = "Ulf Hermjakob", email = "ulf@isi.edu"},
+]
+description = "uroman is a universal romanizer. It converts text in any script to the standard Latin alphabet."
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+keywords = ['machine translation', 'romanization', 'NLP', 'natural language processing', 'computational linguistics', 'string similarity']
+classifiers = [  # copied from https://pypi.org/classifiers/
+    'Development Status :: 4 - Beta',
+    'Intended Audience :: Developers',
+    'Topic :: Utilities',
+    'Topic :: Text Processing',
+    'Topic :: Text Processing :: General',
+    'Topic :: Text Processing :: Linguistic',
+    'License :: OSI Approved :: Apache Software License',
+    'Programming Language :: Python :: 3 :: Only',
+]
+
+[project.urls]
+Homepage = "https://github.com/isi-nlp/uroman"
+Repository = "https://github.com/isi-nlp/uroman"
+"Bug Tracker" = "https://github.com/isi-nlp/uroman/issues"
+Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
+
+[project.scripts]
+uroman = "uroman.uroman:main"
+
+[tool.hatch.build.targets.wheel]
+exclude = [
+  "test",
+  "*.pl",
+  "lib",
+]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "test",
+  "*.pl",
+  "lib",
+]
