@@ -372,7 +372,9 @@
 ::s иї ::t yi ::lcode ukr ::comment avoid yyi
 ::s ій ::t iy ::lcode ukr
 ::s і́й ::t iy ::lcode ukr
-::s ий ::t y ::lcode ukr ::comment Зеленський/Zelensky
+::s ий ::t yi ::lcode ukr 
+::s ий ::t y ::lcode ukr ::use-only-at-end-of-word ::comment Зеленський/Zelensky
+::s ий ::t yi ::lcode ukr ::dont-use-at-end-of-word
 
 # Belarusian
 ::s Г ::t H ::t-alt G ::lcode bel ::comment capital letter he 
@@ -1009,26 +1011,49 @@
 
 ## Numbers
 # Chinese and Japanese numbers
-::s 零 ::num 0
-::s 〇 ::num 0
+::s 零 ::num 0 ::style formal
+::s 〇 ::num 0 ::style informal
 ::s 一 ::num 1
+::s 壹 ::num 1 ::style financial
 ::s 二 ::num 2
+::s 贰 ::num 2 ::style financial ::standard simplified
+::s 貳 ::num 2 ::style financial ::standard traditional
 ::s 三 ::num 3
+::s 叁 ::num 3 ::style financial ::standard simplified
+::s 參 ::num 3 ::style financial ::standard traditional
 ::s 四 ::num 4
+::s 肆 ::num 4 ::style financial
 ::s 五 ::num 5
+::s 伍 ::num 5 ::style financial
 ::s 六 ::num 6
+::s 陆 ::num 6 ::style financial ::standard simplified
+::s 陸 ::num 6 ::style financial ::standard traditional
 ::s 七 ::num 7
+::s 柒 ::num 7 ::style financial
 ::s 八 ::num 8
+::s 捌 ::num 8 ::style financial
 ::s 九 ::num 9
+::s 玖 ::num 9 ::style financial
 ::s 十 ::num 10
+::s 拾 ::num 10 ::style financial
 ::s 百 ::num 100
+::s 佰 ::num 100 ::style financial
 ::s 千 ::num 1000
-::s 万 ::num 10000
-::s 萬 ::num 10000
-::s 亿 ::num 100000000
-::s 億 ::num 100000000
-::s 兆 ::num 1000000000000
-::s 京 ::num 10000000000000000
+::s 仟 ::num 1000 ::style financial
+::s 万 ::num 10000 ::is-large-power ::standard simplified
+::s 萬 ::num 10000 ::is-large-power ::standard traditional
+::s 萬 ::num 10000 ::is-large-power ::style financial
+::s 亿 ::num 100000000 ::is-large-power ::standard simplified
+::s 億 ::num 100000000 ::is-large-power ::standard traditional
+::s 億 ::num 100000000 ::is-large-power ::style financial
+::s 兆 ::num 1000000000000 ::is-large-power
+::s 京 ::num 10000000000000000 ::is-large-power
+::s 负 ::is-minus-sign ::standard simplified
+::s 負 ::is-minus-sign ::standard traditional
+::s 点 ::is-decimal-point
+::s 分之 ::fraction-connector denominator * numerator
+::s 百分之 ::percentage-marker * numerator
+::s 又 ::int-frac-connector integer * fraction
 
 # numbers in non-number words (to be exptended)
 ::s 一贯 ::t yiguan ::comment consistent
@@ -1102,10 +1127,82 @@
 ::s ຯ ::t ...  ::comment Lao ellipsis
 
 # Thai
-::s ออ ::t o
-::s อั ::t a
-::s อิ ::t i
+::s ข ::t kh ::t-end-of-syllable k
+::s ฃ ::t kh ::t-end-of-syllable k
+::s ค ::t kh ::t-end-of-syllable k
+::s ฅ ::t kh ::t-end-of-syllable k
+::s ฆ ::t kh ::t-end-of-syllable k
+::s จ ::t ch ::t-end-of-syllable t
+::s ฉ ::t ch ::t-end-of-syllable t
+::s ช ::t ch ::t-end-of-syllable t
+::s ฌ ::t ch
+::s ฎ ::t d ::t-end-of-syllable t
+::s ด ::t d ::t-end-of-syllable t
+::s บ ::t b ::t-end-of-syllable p
+::s พ ::t ph ::t-end-of-syllable p
+::s ภ ::t ph ::t-end-of-syllable p
+::s ฟ ::t f ::t-end-of-syllable p
+::s ฝ ::t f
+::s ฐ ::t th ::t-end-of-syllable t
+::s ฑ ::t th ::t-end-of-syllable t
+::s ฒ ::t th ::t-end-of-syllable t
+::s ถ ::t th ::t-end-of-syllable t
+::s ท ::t th ::t-end-of-syllable t
+::s ธ ::t th ::t-end-of-syllable t
+::s ศ ::t s ::t-end-of-syllable t
+::s ษ ::t s ::t-end-of-syllable t
+::s ส ::t s ::t-end-of-syllable t
+::s ห ::t h ::t-end-of-syllable ::comment dropped at end of syllable
+::s ฮ ::t h
+::s ฬ ::t l ::t-end-of-syllable n
+::s ล ::t l ::t-end-of-syllable n
+::s ร ::t r ::t-end-of-syllable n
+::s ญ ::t y ::t-end-of-syllable n
+::s ย ::t y ::t-end-of-syllable i
+::s ว ::t w ::t-end-of-syllable ua
+::s ฦ ::t lue
+::s ฦๅ ::t lue
+::s ฤ ::t rue
+::s ฤๅ ::t rue
 ::s ๆ ::t ² ::comment Thai character maiyamok ::annotation repetition-sign
+# ::s ๅ ::comment THAI CHARACTER LAKKHANGYAO vowel lengthener
+::s ะ ::t a ::comment THAI CHARACTER SARA A
+::s  ั ::t a ::comment THAI CHARACTER MAI HAN-AKAT "stick turning in the air"
+::s รร ::t an ::t-end-of-syllable a
+::s อั ::t a
+::s แ–ะ ::t ae
+::s แ–็ว ::t aeo
+::s แ–ว ::t aeo
+::s ไ–ย ::t ai
+::s ัย ::t ai
+::s าย ::t ai
+::s เ–า ::t ao
+::s เ–้า ::t ao
+::s าว ::t ao
+::s เ–ะ ::t e
+::s เ–็ ::t e
+::s  ็ ::t o ::comment THAI CHARACTER MAITAIKHU U+0E47 vowel shortener/short vowel (ɔː)
+::s เ–็ว ::t eo
+::s เ–ว ::t eo
+::s อิ ::t i
+::s  ีย ::t ia
+::s เ–ียะ ::t ia
+::s เ–ีย ::t ia
+::s เ–ียว ::t iao
+::s ออ ::t o
+::s โ–ะ ::t o
+::s โ– ::t o
+::s เ–าะ ::t o
+::s เ–อะ ::t oe
+::s เ–ิ ::t oe
+::s เ–อ ::t oe
+::s เ–ย	 ::t oei
+::s โ–ย ::t oi
+# ::s อย ::t oi ::comment problematic if followed by further vowels
+::s วย ::t uai
+::s เ–ือะ ::t uea
+::s เ–ือ	 ::t uea
+::s เ–ือย ::t ueai
 
 # Khmer
 ::s ័ ::t "" ::comment Khmer samyok sannya: indicates deviation from the general rules of pronunciation
@@ -1171,8 +1268,8 @@
 ::s ࣡ ::t ::comment ARABIC SMALL HIGH SIGN SAFHA (CHECK)
 ::s ࣢ ::t ::comment ARABIC DISPUTED END OF AYAH (CHECK)
 
-# Farsi
-::s ی ::t i ::t-alt y ::comment Contributed by Nima
+# Farsi/Persian
+::s ی ::t i ::t-alt y ::comment Farsi yeh, contributed by Nima
 ::s ای ::t i ::t-alt ai ::use-only-at-start-of-word ::comment Contributed by Nima
 ::s هٔ ::t eye ::use-only-at-end-of-word ::lcode fas ::comment Contributed by Nima
 ::s و ::t v ::t-alt o, u ::lcode fas ::comment Arabic letter waw
@@ -1324,7 +1421,7 @@
 ::s זש ::t zh ::lcode yid
 ::s ח ::t ch ::lcode yid
 ::s טש ::t tsh ::lcode yid
-::s יִ::t i ::lcode yid
+::s יִ ::t i ::lcode yid
 ::s יי ::t ey ::lcode yid ::comment maybe "yi" at beginning of word
 ::s ײַ ::t ay ::lcode yid
 ::s כּ ::t k ::lcode yid
@@ -1433,9 +1530,6 @@
 ::s ᢅ ::t ::comment MONGOLIAN LETTER ALI GALI BALUDA (CHECK) indicates assimilation
 ::s ᢆ ::t ::comment MONGOLIAN LETTER ALI GALI THREE BALUDA (CHECK) indicates assimilation
 
-# Tibetan
-::s ྅ ::t ::comment TIBETAN MARK PALUTA (CHECK) indicates assimilation
-
 # Limbu
 ::s ॽ ::t ' ::comment glottal stop (U+097D)
 
@@ -1480,29 +1574,55 @@
 ::s ሤ ::t see ::comment Ethiopic syllable szee
 ::s ሥ ::t se ::comment Ethiopic syllable sze
 ::s ሦ ::t so ::comment Ethiopic syllable szo
-::s ጠ ::t te ::comment Ethiopic syllable the with ejective 't'
+::s ጠ ::t ta ::comment Ethiopic syllable tha with ejective 't'
 ::s ጡ ::t tu ::comment Ethiopic syllable thu with ejective 't'
 ::s ጢ ::t ti ::comment Ethiopic syllable thi with ejective 't'
 ::s ጣ ::t taa ::comment Ethiopic syllable thaa with ejective 't'
 ::s ጤ ::t tee ::comment Ethiopic syllable thee with ejective 't'
 ::s ጥ ::t te ::comment Ethiopic syllable the with ejective 't'
 ::s ጦ ::t to ::comment Ethiopic syllable tho with ejective 't'
+::s ፻ ::num 100 ::is-large-power
+::s ፼ ::num 10000 ::is-large-power
 
 # Devanagari (Hindi etc.)
+::s क़ ::t q ::comment DEVANAGARI LETTER KA plus DEVANAGARI SIGN NUKTA
+::s ख़ ::t kh ::comment DEVANAGARI LETTER KHA plus DEVANAGARI SIGN NUKTA
+::s ग़ ::t g ::comment DEVANAGARI LETTER GA plus DEVANAGARI SIGN NUKTA
+::s ज़ ::t z ::comment DEVANAGARI LETTER JA plus DEVANAGARI SIGN NUKTA
+::s फ़ ::t f ::comment DEVANAGARI LETTER PHA plus DEVANAGARI SIGN NUKTA
+::s ड़ ::t dd ::t-alt r ::comment DEVANAGARI LETTER DDA plus DEVANAGARI SIGN NUKTA
+::s ढ़ ::t ddh ::t-alt rh ::comment DEVANAGARI LETTER DDHA plus DEVANAGARI SIGN NUKTA
 ::s ॺ ::t y ::comment DEVANAGARI LETTER HEAVY YA
 ::s । ::t . ::comment danda
 ::s ॥ ::t . ::comment double danda
 ::s ৷ ::t . ::comment Bengali currency numerator four; used as danda
 ::s ॰ ::t . ::comment Devanagari abbreviation sign
 # Bengali
+::s ড় ::t r ::comment BENGALI LETTER DDA plus BENGALI SIGN NUKTA
+::s ঢ় ::t rh ::comment BENGALI LETTER DDHA plus BENGALI SIGN NUKTA
+::s য় ::t y ::comment BENGALI LETTER YA plus BENGALI SIGN NUKTA
+::s ক় ::t q ::comment BENGALI LETTER KA plus BENGALI SIGN NUKTA
+::s ফ় ::t f ::comment BENGALI LETTER PHA plus BENGALI SIGN NUKTA
+::s ভ় ::t v ::comment BENGALI LETTER BHA plus BENGALI SIGN NUKTA
+::s জ় ::t z ::comment BENGALI LETTER JA plus BENGALI SIGN NUKTA
 ::s ৽ ::t . ::comment BENGALI ABBREVIATION SIGN
 ::s ৾ ::t ::comment BENGALI SANDHI MARK (CHECK)
 # Gurmukhi
+::s ੱ ::t ' ::comment GURMUKHI ADDAK U+0A71, which normally doubles following consonant; otherwise marked by '
 ::s ੶ ::t . ::comment GURMUKHI ABBREVIATION SIGN
 # Oriya/Odia (India)
 ::s ୤ ::t . ::comment danda (deprecated, should use Devanagari danda ।)
 ::s ୥ ::t . ::comment double danda (deprecated, should use Devanagari double danda ॥)
 # Tibetan
+::s ྅ ::t ::comment TIBETAN MARK PALUTA (CHECK) indicates assimilation
+::s འ ::t ' ::comment Tibetan letter -a (U+0F60)
+::s ྰ ::t ' ::comment Tibetan letter -a (U+0FB0)
+::s ཨཱ ::t aa ::comment TIBETAN LETTER A + TIBETAN VOWEL SIGN AA
+::s ཨེ ::t e ::comment TIBETAN LETTER A + TIBETAN VOWEL SIGN E
+::s ཨི ::t i ::comment TIBETAN LETTER A + TIBETAN VOWEL SIGN I
+::s ཨོ ::t o ::comment TIBETAN LETTER A + TIBETAN VOWEL SIGN O
+::s ཨུ ::t u ::comment TIBETAN LETTER A + TIBETAN VOWEL SIGN U
+::s ཪ ::t r ::comment TIBETAN LETTER FIXED-FORM RA (U+0F6A)
 ::s ། ::t ,
 ::s །: ::t :
 ::s ༏ ::t ;

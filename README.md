@@ -1,11 +1,111 @@
 # uroman
 
-*uroman* is a *universal romanizer*. It converts text in any script to the Latin alphabet.
+*uroman* is a *universal romanizer*. It converts text in any script to the standard Latin alphabet.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Example (Greek): Νεπάλ → Nepal<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Example (Hindi):&nbsp; नेपाल → nepaal<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Example (Urdu):&nbsp; نیپال → nypal<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Example (Chinese): 三万一 → 31000
 
-Version: 1.2.8
-Release date: April 23, 2021  
+* *uroman* enables the application of string-similarity metrics to texts from different scripts without the need and complexity of an intermediate phonetic representation.
+* *uroman* converts digital numbers in various scripts to Western Arabic numerals.
+* *uroman* uses m-to-n character mappings, context, and a user-provided language code (optional), i.e. *uroman* does not just replace characters one by one.
+* *uroman* expects all input to be encoded in UTF-8.
+
+New Python version: 1.3.1 (released on June 27, 2024)<br>
+Last Perl version: 1.2.8 (released on April 23, 2021)<br>
 Author: Ulf Hermjakob, USC Information Sciences Institute  
 
+## (New) Python version
+
+#### Installation
+```bash
+python3 -m pip install uroman
+```
+
+### Command Line Interface (CLI)
+#### Examples
+<sup>Note: Directories _text_ and _test_ are under _uroman_'s root directory on GitHub.</sup>
+```bash
+python3 -m uroman "Игорь Стравинский"
+python3 -m uroman Игорь -l ukr
+python3 -m uroman Ντέιβις Καπ -l ell
+python3 -m uroman "\u03C0\u03B9" -d
+python3 -m uroman -l hin -i text/hin.txt
+python3 -m uroman -l fas -i text/fas.txt -o text/fas-rom.jsonl -f edges
+python3 -m uroman < test/multi-script.txt > test/multi-script.uroman.txt
+python3 -m uroman -h
+```
+
+#### *uroman.py* &nbsp; Argument Structure Highlights 
+<table>
+  <tr><td><i>Direct inputs (zero&nbsp;or&nbsp;more)</i></td><td>such as ‘Игорь Стравинский’ and ‘Ντέιβις’ above.</td></tr>
+  <tr><td>-l<br>--lcode</td><td>language code according to <a href="https://en.wikipedia.org/wiki/List_of_ISO_639-3_codes" target="_LCODE">ISO-639-3</a>, e.g. <i>-l ukr</i> for Ukrainian, <i>-l hin</i> for Hindi, <i>-l fas</i> for Persian</td></tr>
+  <tr><td>-i<br>--input_filename</td><td>alternative:&nbsp;<i>stdin</i><br>Note: If both <i>direct inputs</i> and <i>input_filename</i> are given, the romanization results for <i>direct inputs</i> will be written to <i>stderr</i>.</td></tr>
+  <tr><td width="200">-o<br><nobr>--output_filename</nobr></td><td>alternative: <i>stdout</i></td></tr>
+  <tr><td>-f<br>--rom_format</td><td>Output format choices:
+        <ul>
+           <li> -f str &nbsp;&nbsp;&nbsp;&nbsp;&nbsp (best string, default, output format: string)
+           <li> -f edges (best edges, includes offset information, output format: JSONL)
+           <li> -f alts &nbsp;&nbsp;&nbsp;&nbsp; (lattice including alternative edges, output format: JSONL)
+           <li> -f lattice (lattice including alternative and superseded edges, output format: JSONL)
+        </ul></td></tr>
+  <tr><td>-d<br>--decode_unicode</td><td>Decode Unicode escape sequences such as ‘\u03C0\u03B9’ to ‘πι’ which in turn will be romanized to ‘pi’. This is useful for input formats such as JSON.</td></tr>
+  <tr><td>-h<br>--help</td><td>Use this option to see the full argument structure with all options.</td></tr>
+</table>
+
+### Using _uroman_ inside Python
+#### Examples
+
+```bash
+import uroman
+
+ur = uroman.uroman.Uroman()   # load uroman data into ur
+print(ur.romanize_string('Игорь Стравинский'))
+print(ur.romanize_string('Игорь', lcode='ukr'))
+ur.romanize_file(input_filename='test/multi-script.txt',
+                 output_filename='test/multi-script.uroman.jsonl',
+                 rom_format=RomFormat.LATTICE)
+```
+
+#### Methods
+__`ur = uroman.uroman.Uroman(data_dir)`__
+
+This constructor method loads data needed for the romanization of different languages.
+This constructor call might take about a second (real time) to load all of the romanization data, but it is necessary only once for multiple subsequent romanization calls.
+<table>
+  <tr><td>data_dir</td><td>data directory (optional, default: standard uroman data directory)</td></tr>
+</table>
+
+<hr>
+
+__`ur.romanize_string(s, lcode, rom_format)`__
+
+This method takes a string <i>s</i> and returns its romanization in the format according to <i>rom_format</i>: a string (default), or a list of edges.
+<table>
+  <tr><td>s</td><td>string to be romanized, e.g. "ایران"</td></tr>
+  <tr><td>lcode</td><td>language code, optional, a 3-letter code such as 'eng' for English (ISO-639-3)</td></tr>
+  <tr><td>rom_format</td><td>Output format choices:
+        <ul>
+           <li> RomFormat.STR &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(best string, default, output format: string)
+           <li> RomFormat.EDGES &nbsp;(best edges, includes offset information, output format: JSONL)
+           <li> RomFormat.ALTS &nbsp;&nbsp;&nbsp;&nbsp;(lattice including alternative edges, output format: JSONL)
+           <li> RomFormat.LATTICE (lattice including alternative and superseded edges, output format: JSONL)
+        </ul>
+</table>
+
+<hr>
+
+__`ur.romanize_file(input_filename, output_filename, lcode)`__
+
+This method romanizes a file <i>input_filename</i> to <i>output_filename</i>.
+<table>
+  <tr><td>input_filename</td><td>default: stdin&nbsp;(for input_filename value of <i>None</i>)</td></tr>
+  <tr><td width="200">output_filename</td><td>default: stdout&nbsp;(for output_filename value of <i>None</i>)</td></tr>
+  <tr><td>lcode</td><td>language code (optional), a 3-letter code such as 'eng' for English (ISO-639-3)</td></tr>
+</table>
+
+## Old Perl Version
+<sup>Old Perl Version included on GitHub, but not included on PyPI.</sup>
 
 ### Usage
 ```bash
@@ -16,25 +116,34 @@ $ uroman.pl [-l <lang-code>] [--chart] [--no-cache] < STDIN
        --no-cache disables caching.
 ```
 ### Examples
+<sup>Note: Directories _text_ and _test_ are under _uroman_'s root directory on GitHub.</sup>
 ```bash
-$ bin/uroman.pl < text/zho.txt
-$ bin/uroman.pl -l tur < text/tur.txt
-$ bin/uroman.pl -l heb --chart < text/heb.txt
-$ bin/uroman.pl < test/multi-script.txt > test/multi-script.uroman.txt
+uroman.pl < text/zho.txt
+uroman.pl -l tur < text/tur.txt
+uroman.pl -l heb --chart < text/heb.txt
+uroman.pl < test/multi-script.txt > test/multi-script.uroman-perl.txt
 ```
 
-Identifying the input as Arabic, Belarusian, Bulgarian, English, Farsi, German,
+Identifying the input as Arabic, Belarusian, Bulgarian, English, German,
 Ancient Greek, Modern Greek, Pontic Greek, Hebrew, Kazakh, Kyrgyz, Latvian,
-Lithuanian, Macedonian, Russian, Serbian, Turkish, Ukrainian, Uyghur or 
-Yiddish will improve romanization for those languages as some letters in those 
+Lithuanian, Macedonian, Ossetian, Persian, Russian, Serbian, Turkish, 
+Ukrainian, Uyghur or Yiddish 
+will improve romanization for those languages as some letters in those 
 languages have different sound values from other languages using the same script 
-(French, Russian, Hebrew respectively).
+(Arabic vs. Persian, Russian vs. Ukrainian, Hebrew vs. Yiddish).
 No effect for other languages in this version.
 
 ### Bibliography
 Ulf Hermjakob, Jonathan May, and Kevin Knight. 2018. Out-of-the-box universal romanization tool uroman. In Proceedings of the 56th Annual Meeting of Association for Computational Linguistics, Demo Track. ACL-2018 Best Demo Paper Award. [Paper in ACL Anthology](https://www.aclweb.org/anthology/P18-4003) | [Poster](https://www.isi.edu/~ulf/papers/poster-uroman-acl2018.pdf) | [BibTex](https://www.aclweb.org/anthology/P18-4003.bib)
 
 ### Change History
+
+Changes in version 1.3.0
+ * Added Python version.
+ * Initial dedicated support for Coptic (Egypt); significantly improved support for Thai; improved support for Khmer, Tibetan and several Indian languages incl. better final schwa deletion.
+ * Chinese fractions and percentages.
+ * Various small improvements.
+
 Changes in version 1.2.8
  * Updated to Unicode 13.0 (2021), which supports several new scripts (10% larger UnicodeData.txt).
  * Improved support for Georgian.
@@ -86,17 +195,17 @@ Changes in version 1.2
 
 Changes in version 1.1 (major upgrade)
  * Offers chart output (in JSON format) to represent alternative romanizations.
-   -- Location of first character is defined to be "line: 1, start:0, end:0".
+   * Location of first character is defined to be "line: 1, start:0, end:0".
  * Incremental improvements of Hebrew and Greek romanization; Chinese numbers.
- * Improved web-interface at http://www.isi.edu/~ulf/uroman.html
-   -- Shows corresponding original and romanization text in red
-      when hovering over a text segment.
-   -- Shows alternative romanizations when hovering over romanized text
-      marked by dotted underline.
-   -- Added right-to-left script detection and improved display for right-to-left
-      script text (as determined line by line).
-   -- On-page support for some scripts that are often not pre-installed on users'
-      computers (Burmese, Egyptian, Klingon).
+ * Improved web-interface (now) at https://uhermjakob.github.io/uroman.html
+   * Shows corresponding original and romanization text in red
+     when hovering over a text segment.
+   * Shows alternative romanizations when hovering over romanized text
+     marked by dotted underline.
+   * Added right-to-left script detection and improved display for right-to-left
+     script text (as determined line by line).
+   * On-page support for some scripts that are often not pre-installed on users'
+     computers (Burmese, Egyptian, Klingon).
 
 Changes in version 1.0 (major upgrade)
  * Upgraded principal internal data structure from string to lattice.
@@ -148,7 +257,7 @@ New features in version 0.3
  * Faster for South Asian languages
 
 ### Other features
- * Web interface: http://www.isi.edu/~ulf/uroman.html
+ * Web interface (old Perl): https://uhermjakob.github.io/uroman.html
  * Vowelization is provided when locally computable, e.g. for many South Asian languages and Tibetan.
 
 ### Limitations
@@ -162,4 +271,4 @@ New features in version 0.3
    normal text in Arabic and Hebrew (without diacritics/points).
 
 ### Acknowledgments
-This research is based upon work supported in part by the Office of the Director of National Intelligence (ODNI), Intelligence Advanced Research Projects Activity (IARPA), via contract # FA8650-17-C-9116, and by research sponsored by Air Force Research Laboratory (AFRL) under agreement number FA8750-19-1-1000. The views and conclusions contained herein are those of the authors and should not be interpreted as necessarily representing the official policies, either expressed or implied, of ODNI, IARPA, Air Force Laboratory, DARPA, or the U.S. Government. The U.S. Government is authorized to reproduce and distribute reprints for governmental purposes notwithstanding any copyright annotation therein.
+Earlier versions of this tool were based upon work supported in part by the Office of the Director of National Intelligence (ODNI), Intelligence Advanced Research Projects Activity (IARPA), via contract # FA8650-17-C-9116, and by research sponsored by Air Force Research Laboratory (AFRL) under agreement number FA8750-19-1-1000. The views and conclusions contained herein are those of the authors and should not be interpreted as necessarily representing the official policies, either expressed or implied, of ODNI, IARPA, Air Force Laboratory, DARPA, or the U.S. Government. The U.S. Government is authorized to reproduce and distribute reprints for governmental purposes notwithstanding any copyright annotation therein.
