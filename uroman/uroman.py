@@ -242,6 +242,8 @@ class Uroman:
                                  args.get('rebuild_ud_props', False),
                                  args.get('rebuild_num_props', False))
         gc.enable()
+        self.n_error_messages_output = 0
+        self.n_non_utf8_characters = 0
 
     @staticmethod
     def default_data_dir(**args) -> Path:
@@ -960,10 +962,13 @@ class Uroman:
             f_in = direct_input  # list of lines
         elif isinstance(input_filename, str):
             try:
-                f_in = open(input_filename, 'r', encoding='utf-8')
+                f_in = open(input_filename, 'r', encoding='utf-8', errors='surrogateescape')
                 f_in_to_be_closed = True
             except OSError:
                 sys.stderr.write(f'Error in romanize_file: Cannot open file {input_filename}\n')
+                f_in = None
+            except UnicodeDecodeError:
+                sys.stderr.write(f'Error in romanize_file: File not in UTF-8: {input_filename}\n')
                 f_in = None
         elif input_filename is None:
             f_in = sys.stdin
@@ -984,33 +989,58 @@ class Uroman:
             sys.stderr.write(f"Error in romanize_file: argument 'output_filename' {output_filename} "
                              f"is of wrong type: {type(output_filename)} (should be str)\n")
             f_out = None
+        self.n_non_utf8_characters = 0
         if f_in and f_out:
             max_lines = args.get('max_lines')
             progress_dots_output = False
-            for line_number, line in enumerate(f_in, 1):
-                if m := regex.match(r'(::lcode\s+)([a-z]{3})(\s+)(.*)$', line):
-                    lcode_kw, lcode2, space, snt = m.group(1, 2, 3, 4)
-                    rom_result = self.romanize_string(snt, lcode2 or lcode, **args)
-                    if args.get('rom_format', RomFormat.STR) == RomFormat.STR:
-                        lcode_prefix = f"{lcode_kw}{lcode2}{space}"
-                        f_out.write(lcode_prefix + rom_result + '\n')
-                    else:
-                        lcode_prefix = f'[0, 0, "", "lcode: {lcode2}"]'  # meta edge with lcode info
-                        prefixed_edges = [lcode_prefix] + self.romanize_string(snt, lcode2 or lcode, **args)
-                        f_out.write(Edge.json_str(prefixed_edges) + '\n')
-                else:
-                    f_out.write(Edge.json_str(self.romanize_string(line.rstrip('\n'), lcode, **args)) + '\n')
-                if not args.get('silent'):
-                    if line_number % 100 == 0:
-                        if line_number % 1000 == 0:
-                            sys.stderr.write(str(line_number))
+            try:
+                for line_number, line in enumerate(f_in, 1):
+                    if non_utf8_chars := regex.findall(r'[\uDC80-\uDCFF]', line):
+                        repl_char = '\uFFFD'
+                        line2 = regex.sub(r'[\uDC80-\uDCFF]', repl_char, line)
+                        n_non_utf8_chars = len(non_utf8_chars)
+                        self.n_non_utf8_characters += n_non_utf8_chars
+                        max_n_error_messages = 10
+                        if self.n_error_messages_output < max_n_error_messages:
+                            s_ending = '' if n_non_utf8_chars == 1 else 's'
+                            sys.stderr.write(f"Detected encoding error: file {input_filename} line {line_number} "
+                                             f"contains {n_non_utf8_chars} non-UTF-8 character{s_ending} "
+                                             f"(replaced by {repl_char}): {line2.rstrip()}\n")
+                            self.n_error_messages_output += 1
+                        elif self.n_error_messages_output == max_n_error_messages:
+                            sys.stderr.write(f"Too many errors. No further errors reported.\n")
+                            self.n_error_messages_output += 1
+                        line = line2
+                    if m := regex.match(r'(::lcode\s+)([a-z]{3})(\s+)(.*)$', line):
+                        lcode_kw, lcode2, space, snt = m.group(1, 2, 3, 4)
+                        rom_result = self.romanize_string(snt, lcode2 or lcode, **args)
+                        if args.get('rom_format', RomFormat.STR) == RomFormat.STR:
+                            lcode_prefix = f"{lcode_kw}{lcode2}{space}"
+                            f_out.write(lcode_prefix + rom_result + '\n')
                         else:
-                            sys.stderr.write('.')
-                        progress_dots_output = True
-                        sys.stderr.flush()
-                        gc.collect()
-                if max_lines and line_number >= max_lines:
-                    break
+                            lcode_prefix = f'[0, 0, "", "lcode: {lcode2}"]'  # meta edge with lcode info
+                            prefixed_edges = [lcode_prefix] + self.romanize_string(snt, lcode2 or lcode, **args)
+                            f_out.write(Edge.json_str(prefixed_edges) + '\n')
+                    else:
+                        f_out.write(Edge.json_str(self.romanize_string(line.rstrip('\n'), lcode, **args)) + '\n')
+                    if not args.get('silent'):
+                        if line_number % 100 == 0:
+                            if line_number % 1000 == 0:
+                                sys.stderr.write(str(line_number))
+                            else:
+                                sys.stderr.write('.')
+                            progress_dots_output = True
+                            sys.stderr.flush()
+                            gc.collect()
+                    if max_lines and line_number >= max_lines:
+                        break
+            except UnicodeDecodeError as error:
+                sys.stderr.write(f"UnicodeDecodeError: {error}\n")
+                sys.stderr.write(f"   Please make sure the input stream is in Unicode (UTF-8).\n")
+                sys.stderr.write(f"   Consider setting the encoding to UTF-8,"
+                                 f" e.g. set/export PYTHONIOENCODING=UTF-8\n")
+                sys.stderr.write(f"   Consider using uroman with -i/--input_filename option, "
+                                 f"which is more robust with respect to encoding errors than piping.\n")
             if progress_dots_output:
                 sys.stderr.write('\n')
                 sys.stderr.flush()
@@ -1018,6 +1048,9 @@ class Uroman:
             f_in.close()
         if f_out_to_be_closed:
             f_out.close()
+        if input_filename and self.n_non_utf8_characters:
+            sys.stderr.write(f"Total number of non-UTF-8 characters in {input_filename}: "
+                             f"{self.n_non_utf8_characters}\n")
 
     @staticmethod
     def apply_any_offset_to_cached_rom_result(cached_rom_result: str | List[Edge], offset: int = 0) \
