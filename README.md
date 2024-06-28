@@ -9,11 +9,13 @@
 * *uroman* enables the application of string-similarity metrics to texts from different scripts without the need and complexity of an intermediate phonetic representation.
 * *uroman* converts digital numbers in various scripts to Western Arabic numerals.
 * *uroman* uses m-to-n character mappings, context, and a user-provided language code (optional), i.e. *uroman* does not just replace characters one by one.
+* *uroman* is generally not fully reversible.
 * *uroman* expects all input to be encoded in UTF-8.
 
 New Python version: 1.3.1.1 (released on June 27, 2024)<br>
 Last Perl version: 1.2.8 (released on April 23, 2021)<br>
 Author: Ulf Hermjakob, USC Information Sciences Institute  
+Quick links (inside this doc): [uroman CLI](#cli), [import uroman](#package), [Old Perl version](#old_perl_version), [change history](#change_history), [reversibility](#reversibility), [limitations](#limitations)
 
 ## (New) Python version
 
@@ -22,6 +24,7 @@ Author: Ulf Hermjakob, USC Information Sciences Institute
 python3 -m pip install uroman
 ```
 
+<a name="cli"></a>
 ### Command Line Interface (CLI)
 #### Examples
 
@@ -59,6 +62,7 @@ You can compare your output mini-test/multi-script.uroman.txt with reference out
   <tr><td>-h<br>--help</td><td>Use this option to see the full argument structure with all options.</td></tr>
 </table>
 
+<a name="package"></a>
 ### Using _uroman_ inside Python
 #### Examples
 
@@ -110,6 +114,7 @@ This method romanizes a file <i>input_filename</i> to <i>output_filename</i>.
   <tr><td>lcode</td><td>language code (optional), a 3-letter code such as 'eng' for English (ISO-639-3)</td></tr>
 </table>
 
+<a name="old_perl_version"></a>
 ## Old Perl Version
 <sup>Old Perl Version included on GitHub, but not included on PyPI.</sup>
 
@@ -142,9 +147,10 @@ No effect for other languages in this version.
 ### Bibliography
 Ulf Hermjakob, Jonathan May, and Kevin Knight. 2018. Out-of-the-box universal romanization tool uroman. In Proceedings of the 56th Annual Meeting of Association for Computational Linguistics, Demo Track. ACL-2018 Best Demo Paper Award. [Paper in ACL Anthology](https://www.aclweb.org/anthology/P18-4003) | [Poster](https://www.isi.edu/~ulf/papers/poster-uroman-acl2018.pdf) | [BibTex](https://www.aclweb.org/anthology/P18-4003.bib)
 
+<a name="change_history"></a>
 ### Change History
 
-Changes in version 1.3.0
+Changes in version 1.3.1
  * Added Python version.
  * Initial dedicated support for Coptic (Egypt); significantly improved support for Thai; improved support for Khmer, Tibetan and several Indian languages incl. better final schwa deletion.
  * Chinese fractions and percentages.
@@ -266,6 +272,13 @@ New features in version 0.3
  * Web interface (old Perl): https://uhermjakob.github.io/uroman.html
  * Vowelization is provided when locally computable, e.g. for many South Asian languages and Tibetan.
 
+<a name="reversibility"></a>
+### Reversibility
+
+ * Romanization standards tend to prefer reversible mappings. For example, as standalone vowels, the Greek letters ι (iota) and υ (upsilon) are romanized to i and y respectively, even though they have the same pronunciation in Modern Greek.
+ * However, _uroman_ is not always fully reversible. For example, since _uroman_ maps letters to ASCII characters, the romanized text does not contain any diacritics, so the French word _ou_ (“or”) and its homophone _où_ (“where”) both map to romanized _ou_.
+
+<a name="limitations"></a>
 ### Limitations
  * The current version of uroman has a few limitations, some of which we plan to address in future versions.
    For Japanese, *uroman* currently romanizes hiragana and katakana as expected, but kanji are interpreted as Chinese characters and romanized as such. 
