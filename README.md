@@ -59,7 +59,7 @@ python3 -m uroman -h
 ```bash
 import uroman
 
-ur = uroman.uroman.Uroman()   # load uroman data into ur
+ur = uroman.Uroman()   # load uroman data into ur
 print(ur.romanize_string('Игорь Стравинский'))
 print(ur.romanize_string('Игорь', lcode='ukr'))
 ur.romanize_file(input_filename='test/multi-script.txt',
@@ -68,7 +68,7 @@ ur.romanize_file(input_filename='test/multi-script.txt',
 ```
 
 #### Methods
-__`ur = uroman.uroman.Uroman(data_dir)`__
+__`ur = uroman.Uroman(data_dir)`__
 
 This constructor method loads data needed for the romanization of different languages.
 This constructor call might take about a second (real time) to load all of the romanization data, but it is necessary only once for multiple subsequent romanization calls.
