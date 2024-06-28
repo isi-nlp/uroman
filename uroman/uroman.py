@@ -38,7 +38,7 @@ PROFILE_FLAG = "--profile"  # also used in argparse processing
 if PROFILE_FLAG in sys.argv:
     import cProfile
 
-__version__ = '1.3.0.34'
+__version__ = '1.3.1.1'
 __last_mod_date__ = 'June 27, 2024'
 __description__ = "uroman is a universal romanizer. It converts text in any script to the standard Latin alphabet."
 
@@ -247,11 +247,13 @@ class Uroman:
 
     @staticmethod
     def default_data_dir(**args) -> Path:
-        data_dir = Path(__file__).parent / "data"
-        data_dir_path = data_dir.resolve()
+        root_dir = Path(__file__).parent
+        data_dir = (root_dir / "data").resolve()
+        mini_test_dir = (root_dir / "mini-test").resolve()
         if args.get('verbose'):
-            sys.stderr.write(f"data_dir: {str(data_dir_path)}\n")
-        return data_dir_path
+            sys.stderr.write(f"data_dir: {str(data_dir)}\n")
+            sys.stderr.write(f"mini_test_dir: {str(mini_test_dir)}\n")
+        return data_dir
 
     def reset_cache(self, cache_size: int = DEFAULT_ROM_MAX_CACHE_SIZE):
         self.rom_cache = {}
@@ -2362,7 +2364,7 @@ def main():
     parser.add_argument(PROFILE_FLAG, type=argparse.FileType('w', encoding='utf-8', errors='ignore'),
                         default=None, metavar='PROFILE-FILENAME', help='(optional output for performance analysis)')
     parser.add_argument('--version', action='version',
-                        version=f'%(prog)s {__version__} last modified: {__last_mod_date__}')
+                        version=f'uroman {__version__}   last modified: {__last_mod_date__}')
     args = parser.parse_args()
     # copy selected (minor) args from argparse.Namespace to dict
     args_dict = {'rom_format': args.rom_format, 'load_log': args.load_log, 'test': args.test, 'stats': args.stats,
