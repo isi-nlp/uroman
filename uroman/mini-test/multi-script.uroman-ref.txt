@@ -1,0 +1,32 @@
+::lcode deu Gruesse aus Bordeaux
+::lcode tur Istanbul, Tuerkiye'de yer alan shehir ve uelkenin 81 ilinden biri.
+::lcode eng We hold these truths to be self-evident, that all men are created equal, that they are endowed by their Creator with certain unalienable Rights, that among these are Life, Liberty and the pursuit of Happiness.
+::lcode ell To Los Andzeles (sta ispanika Los Angeles = Oi Angeloi) e sten Amerikanike arngo L.A., el ei) einai e deutere megalutere pole ton Enomenon Politeion apo apopse plethysmou, kathos kai ena apo ta semandikotera oikonomika, politistika epistemonika kai psychagogika kendra tou kosmou.
+::lcode rus Germaniya (nem. Deutschland), ofitsialnoye nazvaniye — Federativnaya Respublika Germaniya (nem. Bundesrepublik Deutschland), FRG (nem. BRD) — gosudarstvo v Zapadnoy Yevrope. Ploshchad territorii — 357 021 km². Chislennost naseleniya po perepisi 2011 goda — boleye 80 millionov chelovek. [2][6].
+::lcode ukr Volodymyr Oleksandrovych Zelensky (nar. 25 sichnya 1978, Kryvy Rih) — ukrayinsky derzhavny diyach, polityk, shoumen, aktor, komik, rezhyser, prodyuser ta stsenaryst, shosty Prezydent Ukrayiny z 20 travnya 2019 roku.
+::lcode srp Sva ljudska bitsha radjaju se slobodna i jednaka u dostojanstvu i pravima. Ona su obdarena razumom i sveshtshu i treba jedni prema drugima da postupaju u duhu bratstva.
+::lcode ara knda (balinjlyzya: Canada) hy dwla fy amryka alshmalya ttalf mn 10 mqat'at wthlatha aqalym. tq' fy alqsm alshmaly mn alqara wtmtd mn almhyt alatlsy fy alshrq ila almhyt alhadye fy alghrb wtmtd shmalan fy almhyt almtjmd alshmaly. knda hy albld althany 'almyan mn hyth almsaha alklya. kma an hdwd knda almshtrka m' alwlayat almthda mn aljnwb walshmal alghrby hy alatwl fy al'alm.
+::lcode fas kalifrnia (be anglisi: California) ialti dr ghrb amrika br kraneye aqianvs aram ast. mrkz an sakramntv v shhrhai mhm an lsanjls, sn digv, sn khvze v sanfransiskv hstnd.hmchnin in ialt pr jmit trin ialt amrika ast.
+::lcode uig amerika qoshma shtatliri bolsa shimaliy amerikagha jaylashqan bir doelet. uning paytexti bolsa washington, eng chong shehiri bolsa nyuyork shehiri. doelet tili bolsa engliztili. hazirqi zungtung barak obama. bu doelet eslide engiliening mustemlikisi bolup washingitonning rehperlikide 1776 yili 7 ayning 4 kuni musteqil bolghan, er meydani 9 miliyon 826 ming 630 kwadirat klometir, nopusi 306 milliyon 142 ming, bularning assasliq dini xristian dini.
+::lcode amh iteyopheyaa kaaalame sosetu teleqe yaaberehaame hayemaanotoche gaare taarikaawi genenyunate alaate.
+::lcode hin kailiforniyaa shabda kaa pahalaa artha thaa jo kssetra jahaam aaj baahaa kailiforniyaa praayadviip, nevaaddaa, yuuttaa aur erizonaa, nayaa meksiko, aur vaayomimg ke kaii vibhaag sthit haim.
+::lcode mar lamddan (imglish: London ) he imglamddace va yunaayattedd kimgddamace raajadhaaniice va sarvaat motthe shahar tasec yuropiyan samghaamadhiil sarvaat motthe mahaanagar kssetra aahe.
+::lcode nep yasako ucaai samundra satahabaatt 8,848 miittar (29,028 phiitt) cha. yo nepaalako solukhumbu jillaako khumjungga gaa. vi. sa. maa parcha .
+::lcode tam tamilnaadu (Tamil Nadu) intiyaavin 29 maanilangkalil onraakum. tamilnaadu, tamilakam enrum paravalaaka alaikkappadukiratu.
+::lcode mal intyayutte tekkupattinynyaarre arrrrattulllla samsthaanamaann keerallam.
+::lcode ori oddishaa bhaaratara puurba upakuullare thibaa eka prashaasanika raajya . ehaara uttara-puurbare pashcimabangga, uttarare jhaaddakhanndda, pashcima o uttara-pashcimare chatishagadda, dakssinna o dakssinna-pashcimare aandhrapradesha abasthita . ehaa aayatana hisaabare nabama o janasamkhyaa hisaabare egaaratama raajya . oddiaa bhaassaa raajyara sarakaarii bhaassaa . 2001 janagannanaa anusaare raajyara praaya 33.2 niyuta loka oddiaa bhaassaa byabahaara karanti . 
+::lcode zho jianadazai14000nianqianjiyouyuanzhuminzaicishenghuo. 
+::lcode heb kol 'od balevav penimah nefesh yehudi homiyah ulefa'ate mizerach, qadimah, 'ayin letsiyon tsofiyah, 'od lo avedah tiqvatenu, hatiqvah bat shenot 'alepayim liheyot 'am chafeshiy be'aretsenu, erets tsiyon virushalayim.
+::lcode yid duuka yz an hebreysher zhurnal was bashreybt dy eydysh-shfrachyke kultur. es yz dershynen gewarn smuz h'sshs"z (yuly 2006).
+::lcode hye Talnoei shrjan (ukr., Talnivsky raion), shrjan Ukrainayi Cherkasii marzum. Steghtsvel e 1923 tvakanin. Varchakan kentrone, Talnoe. Ashkharhagrutyune Shrjani taratski makerese kazmum e 917 km². Bnakchutyun
+::lcode tai miiprathetitra 2 prathet khuee saanmaariinolaenkhanatwaatikan pendindaenthiilomroppaiduaiphueenthiikhongitaalii naiknathiimueangkampiionediitaalia pendindaensuanyaekkhongitaaliithiithuuklomropduaiphueenthiiprathetswitsoelaen
+bugjjogeneun indonesiawa dongtimoreu, papua nyugini, bugdongjjogeneun solromon jedowa banuatu, nubelkalredoni, geurigo namdongjjogeneun nyujilraendeuga issda.
+baa illi sambhavisu imdenna hrdayadali nityavuu avataripa satyaavataara mannnnaagi maravaagi migavaagi kagavaagii... mannnnaagi maravaagi migavaagi kagavaagi bhava bhavadi bhatisihee bhavati duura nityavuu avataripa satyaavataara || baa illi ||
+vepxis tqaosani shota rustaveli ghmertsi shemvedre, nutu kvla damxsnas sophlisa shromasa, tsetsxls, tsqalsa da mitsasa, haerta tana mromasa; momtsnes phrteni da aghvphrinde, mivhxvde mas chemsa ndomasa, dghisit da ghamit vhxedvide mzisa elvata krtomaasa.
+anm moilegoimrid maki vekumen
+ic mag glas eotan ond hit ne hearmiath me.
+ptolmys
+chekosurobakia
+lha·sa·grong·khyer
+saali safiaryok imminik nillirotiqasoongofoq taitsomanitatsayaonirarsoni. imminillotaoq nillirotiqasongommisoni ollominitatsayaonirarsoni.
+amagrad 1 ar d ttlalan middn gan ilellitn mgaddan gh waddur d izrfan, yili ak darsn unlli d ufrak, illa flla sn ad ttmyawasn ngratsn s tagmat.
