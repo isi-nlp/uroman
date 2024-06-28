@@ -24,17 +24,23 @@ python3 -m pip install uroman
 
 ### Command Line Interface (CLI)
 #### Examples
-<sup>Note: Directories _text_ and _test_ are under _uroman_'s root directory on GitHub.</sup>
+
 ```bash
 python3 -m uroman "Игорь Стравинский"
 python3 -m uroman Игорь -l ukr
 python3 -m uroman Ντέιβις Καπ -l ell
 python3 -m uroman "\u03C0\u03B9" -d
-python3 -m uroman -l hin -i text/hin.txt
-python3 -m uroman -l fas -i text/fas.txt -o text/fas-rom.jsonl -f edges
-python3 -m uroman < test/multi-script.txt > test/multi-script.uroman.txt
+python3 -m uroman -l hin -i mini-test/hin.txt
+python3 -m uroman -l fas -i mini-test/fas.txt -o mini-test/fas-rom.jsonl -f edges
+python3 -m uroman < mini-test/multi-script.txt > mini-test/multi-script.uroman.txt
 python3 -m uroman -h
 ```
+
+<b>Note:</b> Using the _uroman_ CLI for single strings can be useful for simple tests, 
+but it is inefficient at scale because data resources are loaded every time. It is more efficient to romanize entire files or to use _uroman_ inside Python as shown further below.<br>
+<b>Note:</b> The _mini-test_ directory is included in this release. 
+Use command &nbsp; <code>python3 -m uroman x --verbose</code> &nbsp; to find it.
+You can compare your output mini-test/multi-script.uroman.txt with reference output mini-test/multi-script.uroman-ref.txt
 
 #### *uroman.py* &nbsp; Argument Structure Highlights 
 <table>
@@ -57,18 +63,18 @@ python3 -m uroman -h
 #### Examples
 
 ```bash
-import uroman
+import uroman as ur
 
-ur = uroman.Uroman()   # load uroman data into ur
-print(ur.romanize_string('Игорь Стравинский'))
-print(ur.romanize_string('Игорь', lcode='ukr'))
-ur.romanize_file(input_filename='test/multi-script.txt',
-                 output_filename='test/multi-script.uroman.jsonl',
-                 rom_format=RomFormat.LATTICE)
+uroman = ur.Uroman()   # load uroman data (takes about a second or so)
+print(uroman.romanize_string('Игорь Стравинский'))
+print(uroman.romanize_string('Игорь', lcode='ukr'))
+uroman.romanize_file(input_filename='mini-test/multi-script.txt',
+                     output_filename='mini-test/multi-script.uroman.jsonl',
+                     rom_format=ur.RomFormat.LATTICE)
 ```
 
 #### Methods
-__`ur = uroman.Uroman(data_dir)`__
+__`uroman = ur.Uroman(data_dir)`__
 
 This constructor method loads data needed for the romanization of different languages.
 This constructor call might take about a second (real time) to load all of the romanization data, but it is necessary only once for multiple subsequent romanization calls.
@@ -78,7 +84,7 @@ This constructor call might take about a second (real time) to load all of the r
 
 <hr>
 
-__`ur.romanize_string(s, lcode, rom_format)`__
+__`uroman.romanize_string(s, lcode, rom_format)`__
 
 This method takes a string <i>s</i> and returns its romanization in the format according to <i>rom_format</i>: a string (default), or a list of edges.
 <table>
@@ -86,16 +92,16 @@ This method takes a string <i>s</i> and returns its romanization in the format a
   <tr><td>lcode</td><td>language code, optional, a 3-letter code such as 'eng' for English (ISO-639-3)</td></tr>
   <tr><td>rom_format</td><td>Output format choices:
         <ul>
-           <li> RomFormat.STR &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(best string, default, output format: string)
-           <li> RomFormat.EDGES &nbsp;(best edges, includes offset information, output format: JSONL)
-           <li> RomFormat.ALTS &nbsp;&nbsp;&nbsp;&nbsp;(lattice including alternative edges, output format: JSONL)
-           <li> RomFormat.LATTICE (lattice including alternative and superseded edges, output format: JSONL)
+           <li> ur.RomFormat.STR &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(best string, default, output format: string)
+           <li> ur.RomFormat.EDGES &nbsp;(best edges, includes offset information, output format: JSONL)
+           <li> ur.RomFormat.ALTS &nbsp;&nbsp;&nbsp;&nbsp;(lattice including alternative edges, output format: JSONL)
+           <li> ur.RomFormat.LATTICE (lattice including alternative and superseded edges, output format: JSONL)
         </ul>
 </table>
 
 <hr>
 
-__`ur.romanize_file(input_filename, output_filename, lcode)`__
+__`uroman.romanize_file(input_filename, output_filename, lcode)`__
 
 This method romanizes a file <i>input_filename</i> to <i>output_filename</i>.
 <table>
