@@ -1,2 +1,2 @@
-from .uroman import Uroman
-_all_ = [Uroman]
+from .uroman import Uroman, RomFormat
+_all_ = [Uroman, RomFormat]
