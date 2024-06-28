@@ -3,7 +3,7 @@
 Using twine : https://twine.readthedocs.io/en/latest/ 
 
 1. Update the `__version__` and `__last_mod_date__` in `uroman/uroman.py` and `pyproject.toml`
-2. Clear `rm -r dist`   if those dir exist.
+2. Clear :: `$ rm -r dist` if it exists.
 3. Build :: `$ python3 -m build`   
 4. Upload to **testpypi** ::  `$ python3 -m twine upload --repository testpypi dist/*`
 5. Upload to **pypi** ::  `$ python3 -m twine upload --repository pypi dist/*`
@@ -19,13 +19,13 @@ index-servers =
     testpypi
 
 [pypi]
-repository: https://upload.pypi.org/legacy/
-username: uhermjakob
-password: <password_here>
+repository = https://upload.pypi.org/legacy/
+username = __token__
+password = <pypi password_here>
 
 
 [testpypi]
 repository: https://test.pypi.org/legacy/
-username: uhermjakob
-password: <password_here>
+username = __token__
+password = <testpypi password_here>
 ```
