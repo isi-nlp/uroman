@@ -62,6 +62,8 @@ test/diff*
 test-large
 to-do*
 todo*
+old
+dist
 
 # old Perl uroman
 bin/uroman.py
