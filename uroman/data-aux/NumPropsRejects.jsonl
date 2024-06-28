@@ -1,0 +1,35 @@
+{"txt": "\u09f4", "rom": "\u09f4", "type": "other-num", "name": "BENGALI CURRENCY NUMERATOR ONE"}
+{"txt": "\u09f5", "rom": "\u09f5", "type": "other-num", "name": "BENGALI CURRENCY NUMERATOR TWO"}
+{"txt": "\u09f6", "rom": "\u09f6", "type": "other-num", "name": "BENGALI CURRENCY NUMERATOR THREE"}
+{"txt": "\u09f7", "rom": "\u09f7", "type": "other-num", "name": "BENGALI CURRENCY NUMERATOR FOUR"}
+{"txt": "\u09f8", "rom": "\u09f8", "type": "other-num", "name": "BENGALI CURRENCY NUMERATOR ONE LESS THAN THE DENOMINATOR"}
+{"txt": "\u0f2a", "rom": "\u0f2a", "type": "other-num", "script": "Tibetan", "name": "TIBETAN DIGIT HALF ONE"}
+{"txt": "\u0f2b", "rom": "\u0f2b", "type": "other-num", "script": "Tibetan", "name": "TIBETAN DIGIT HALF TWO"}
+{"txt": "\u0f2c", "rom": "\u0f2c", "type": "other-num", "script": "Tibetan", "name": "TIBETAN DIGIT HALF THREE"}
+{"txt": "\u0f2d", "rom": "\u0f2d", "type": "other-num", "script": "Tibetan", "name": "TIBETAN DIGIT HALF FOUR"}
+{"txt": "\u0f2e", "rom": "\u0f2e", "type": "other-num", "script": "Tibetan", "name": "TIBETAN DIGIT HALF FIVE"}
+{"txt": "\u0f2f", "rom": "\u0f2f", "type": "other-num", "script": "Tibetan", "name": "TIBETAN DIGIT HALF SIX"}
+{"txt": "\u0f30", "rom": "\u0f30", "type": "other-num", "script": "Tibetan", "name": "TIBETAN DIGIT HALF SEVEN"}
+{"txt": "\u0f31", "rom": "\u0f31", "type": "other-num", "script": "Tibetan", "name": "TIBETAN DIGIT HALF EIGHT"}
+{"txt": "\u0f32", "rom": "\u0f32", "type": "other-num", "script": "Tibetan", "name": "TIBETAN DIGIT HALF NINE"}
+{"txt": "\u0f33", "rom": "\u0f33", "type": "other-num", "script": "Tibetan", "name": "TIBETAN DIGIT HALF ZERO"}
+{"txt": "\ud800\udd40", "rom": "\ud800\udd40", "type": "other-num", "name": "GREEK ACROPHONIC ATTIC ONE QUARTER"}
+{"txt": "\ud800\udd41", "rom": "\ud800\udd41", "type": "other-num", "name": "GREEK ACROPHONIC ATTIC ONE HALF"}
+{"txt": "\ud800\udd75", "rom": "\ud800\udd75", "type": "other-num", "script": "Greek", "name": "GREEK ONE HALF SIGN"}
+{"txt": "\ud800\udd76", "rom": "\ud800\udd76", "type": "other-num", "script": "Greek", "name": "GREEK ONE HALF SIGN ALTERNATE FORM"}
+{"txt": "\ud800\udd77", "rom": "\ud800\udd77", "type": "other-num", "script": "Greek", "name": "GREEK TWO THIRDS SIGN"}
+{"txt": "\ud800\udd78", "rom": "\ud800\udd78", "type": "other-num", "script": "Greek", "name": "GREEK THREE QUARTERS SIGN"}
+{"txt": "\ud800\udd8b", "rom": "\ud800\udd8b", "type": "other-num", "script": "Greek", "name": "GREEK ONE QUARTER SIGN"}
+{"txt": "\ud809\udc5a", "rom": "\ud809\udc5a", "type": "other-num", "script": "Cuneiform", "name": "CUNEIFORM NUMERIC SIGN ONE THIRD DISH"}
+{"txt": "\ud809\udc5b", "rom": "\ud809\udc5b", "type": "other-num", "script": "Cuneiform", "name": "CUNEIFORM NUMERIC SIGN TWO THIRDS DISH"}
+{"txt": "\ud809\udc5c", "rom": "\ud809\udc5c", "type": "other-num", "script": "Cuneiform", "name": "CUNEIFORM NUMERIC SIGN FIVE SIXTHS DISH"}
+{"txt": "\ud809\udc5d", "rom": "\ud809\udc5d", "type": "other-num", "script": "Cuneiform", "name": "CUNEIFORM NUMERIC SIGN ONE THIRD VARIANT FORM A"}
+{"txt": "\ud809\udc5e", "rom": "\ud809\udc5e", "type": "other-num", "script": "Cuneiform", "name": "CUNEIFORM NUMERIC SIGN TWO THIRDS VARIANT FORM A"}
+{"txt": "\ud809\udc5f", "rom": "\ud809\udc5f", "type": "other-num", "script": "Cuneiform", "name": "CUNEIFORM NUMERIC SIGN ONE EIGHTH ASH"}
+{"txt": "\ud809\udc60", "rom": "\ud809\udc60", "type": "other-num", "script": "Cuneiform", "name": "CUNEIFORM NUMERIC SIGN ONE QUARTER ASH"}
+{"txt": "\ud809\udc61", "rom": "\ud809\udc61", "type": "other-num", "script": "Cuneiform", "name": "CUNEIFORM NUMERIC SIGN OLD ASSYRIAN ONE SIXTH"}
+{"txt": "\ud809\udc62", "rom": "\ud809\udc62", "type": "other-num", "script": "Cuneiform", "name": "CUNEIFORM NUMERIC SIGN OLD ASSYRIAN ONE QUARTER"}
+{"txt": "\ud809\udc63", "rom": "\ud809\udc63", "type": "other-num", "script": "Cuneiform", "name": "CUNEIFORM NUMERIC SIGN ONE QUARTER GUR"}
+{"txt": "\ud809\udc64", "rom": "\ud809\udc64", "type": "other-num", "script": "Cuneiform", "name": "CUNEIFORM NUMERIC SIGN ONE HALF GUR"}
+{"txt": "\ud809\udc65", "rom": "\ud809\udc65", "type": "other-num", "script": "Cuneiform", "name": "CUNEIFORM NUMERIC SIGN ELAMITE ONE THIRD"}
+{"txt": "\ud809\udc66", "rom": "\ud809\udc66", "type": "other-num", "script": "Cuneiform", "name": "CUNEIFORM NUMERIC SIGN ELAMITE TWO THIRDS"}
