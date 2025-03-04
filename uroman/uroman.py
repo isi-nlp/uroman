@@ -125,7 +125,7 @@ def any_not_none(*args) -> bool:
     return False
 
 
-def add_non_none_to_dict(d: dict, key: str, value) -> None:
+def add_non_nil_to_hash(d: dict, key: str, value) -> None:
     if value is not None:
         d[key] = value
 
@@ -765,23 +765,23 @@ class Uroman:
                 fraction_list = None if fraction is None else [fraction.numerator, fraction.denominator]
                 delimiter_s = ' ' if value_s and fraction_s else ''
                 rom = (value_s + delimiter_s + fraction_s) or orig_txt
-                add_non_none_to_dict(result_dict, 'txt', orig_txt)
-                add_non_none_to_dict(result_dict, 'rom', rom)
-                add_non_none_to_dict(result_dict, 'value', value)
-                add_non_none_to_dict(result_dict, 'fraction', fraction_list)
-                add_non_none_to_dict(result_dict, 'type', num_type)
+                add_non_nil_to_hash(result_dict, 'txt', orig_txt)
+                add_non_nil_to_hash(result_dict, 'rom', rom)
+                add_non_nil_to_hash(result_dict, 'value', value)
+                add_non_nil_to_hash(result_dict, 'fraction', fraction_list)
+                add_non_nil_to_hash(result_dict, 'type', num_type)
                 if is_large_power:
                     result_dict['is-large-power'] = True
-                add_non_none_to_dict(result_dict, 'base', num_base)
-                add_non_none_to_dict(result_dict, 'mult', base_multiplier)
-                add_non_none_to_dict(result_dict, 'script', script)
+                add_non_nil_to_hash(result_dict, 'base', num_base)
+                add_non_nil_to_hash(result_dict, 'mult', base_multiplier)
+                add_non_nil_to_hash(result_dict, 'script', script)
                 if num_type.startswith('other'):
-                    add_non_none_to_dict(result_dict, 'name', name)
+                    add_non_nil_to_hash(result_dict, 'name', name)
                     f_err.write(json.dumps(result_dict) + '\n')
                     n_err += 1
                 else:
                     if not script:
-                        add_non_none_to_dict(result_dict, 'name', name)
+                        add_non_nil_to_hash(result_dict, 'name', name)
                     f_out.write(json.dumps(result_dict) + '\n')
                     n_out += 1
         sys.stderr.write(f'Processed {codepoint} codepoints,\n  wrote {n_out} lines to {out_filename}\n'

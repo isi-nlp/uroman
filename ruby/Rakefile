@@ -1,0 +1,15 @@
+require 'bundler/gem_tasks'
+require 'rspec/core/rake_task'
+require 'fileutils'
+
+RSpec::Core::RakeTask.new(:spec)
+
+task :init do
+  FileUtils.cp_r('../LICENSE.txt', 'LICENSE.txt', verbose: true)
+  FileUtils.cp_r('../uroman/data', 'data', verbose: true)
+  # FileUtils.cp_r('../uroman/data-aux', 'data', verbose: true)
+end
+
+Rake::Task['spec'].enhance(['init'])
+
+task default: :spec
