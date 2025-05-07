@@ -31,7 +31,7 @@ from pathlib import Path
 import pstats
 import regex
 import sys
-from typing import List, Tuple
+from typing import List, Tuple, Union, Optional
 import unicodedata as ud
 DEFAULT_ROM_MAX_CACHE_SIZE = 65536
 PROFILE_FLAG = "--profile"  # also used in argparse processing
@@ -39,7 +39,7 @@ if PROFILE_FLAG in sys.argv:
     import cProfile
 
 __version__ = '1.3.1.1'
-__last_mod_date__ = 'June 27, 2024'
+__last_mod_date__ = 'May 7, 2025'
 __description__ = "uroman is a universal romanizer. It converts text in any script to the standard Latin alphabet."
 
 # UTILITIES
@@ -59,7 +59,7 @@ def timer(func):
     return wrapper
 
 
-def slot_value_in_double_colon_del_list(line: str, slot: str, default: str | list | None = None) -> str | list | None:
+def slot_value_in_double_colon_del_list(line: str, slot: str, default: Union[str, list, None] = None) -> Union[str, list, None]:
     """For a given slot, e.g. 'cost', get its value from a line such as '::s1 of course ::s2 ::cost 0.3' -> 0.3
     The value can be an empty string, as for ::s2 in the example above."""
     m = regex.match(fr'(?:.*\s)?::{slot}(|\s+\S.*?)(?:\s+::\S.*|\s*)$', line)
@@ -85,7 +85,7 @@ def last_chr(s: str) -> str:
         ''
 
 
-def ud_numeric(char: str) -> int | float | None:
+def ud_numeric(char: str) -> Union[int, float, None]:
     try:
         num_f = ud.numeric(char)
         return int(num_f) if num_f.is_integer() else num_f
@@ -93,8 +93,8 @@ def ud_numeric(char: str) -> int | float | None:
         return None
 
 
-def robust_str_to_num(num_s: str, filename: str = None, line_number: int | None = None, silent: bool = False) \
-        -> int | float | None:
+def robust_str_to_num(num_s: str, filename: str = None, line_number: Union[int, None] = None, silent: bool = False) \
+        -> Union[int, float, None]:
     if isinstance(num_s, str):
         try:
             return float(num_s) if "." in num_s else int(num_s)
@@ -130,8 +130,8 @@ def add_non_none_to_dict(d: dict, key: str, value) -> None:
         d[key] = value
 
 
-def fraction_char2fraction(fraction_char: str, fraction_value: float | None = None,
-                           uroman: Uroman | None = None) -> Fraction | None:
+def fraction_char2fraction(fraction_char: str, fraction_value: Union[float, None] = None,
+                           uroman: Optional[Uroman] = None) -> Optional[Fraction]:
     s = ''
     fraction = None
     for ud_decomp_elem in ud.decomposition(fraction_char).split():
@@ -162,7 +162,7 @@ def chr_name(char: str) -> str:
         return ''
 
 
-def args_get(key: str, args: argparse.Namespace | None = None):
+def args_get(key: str, args: Optional[argparse.Namespace] = None):
     return vars(args)[key] if args and (key in args) else None
 
 
@@ -214,7 +214,7 @@ class Uroman:
     Typically, only a single instance will be used. (In contrast to multiple lattice instances, one per text.)
     Methods include some testing. And finally methods to romanize a string (romanize_string()) or an entire file
     (romanize_file())."""
-    def __init__(self, data_dir: Path | None = None, **args):  # args: load_log, rebuild_ud_props
+    def __init__(self, data_dir: Optional[Path] = None, **args):  # args: load_log, rebuild_ud_props
         self.data_dir = data_dir or self.default_data_dir(**args)
         self.rom_rules = defaultdict(list)
         self.scripts = defaultdict(Script)
@@ -262,7 +262,7 @@ class Uroman:
         self.cache_p = (self.rom_max_cache_size != 0)
 
     # noinspection SpellCheckingInspection
-    def second_rom_filter(self, c: str, rom: str, name: str | None) -> Tuple[str | None, str]:
+    def second_rom_filter(self, c: str, rom: str, name: Optional[str]) -> Tuple[Optional[str], str]:
         """Much of this code will eventually move the old Perl code to generate cleaner primary data"""
         if rom and (' ' in rom):
             if name is None:
@@ -466,7 +466,7 @@ class Uroman:
             sys.stderr.write(f'Loaded {n_entries} script descriptions from {filename}'
                              f' (max_n_scripts_name_components: {max_n_script_name_components})\n')
 
-    def extract_script_name(self, script_name_plus: str, full_char_name: str = None) -> str | None:
+    def extract_script_name(self, script_name_plus: str, full_char_name: str = None) -> Optional[str]:
         """Using info from Scripts.txt, this script selects the script name from a Unicode,
         e.g. given "OLD HUNGARIAN CAPITAL LETTER A", extract "Old Hungarian"."""
         if full_char_name and script_name_plus == full_char_name:
@@ -696,94 +696,94 @@ class Uroman:
 
     def rebuild_num_props(self, out_filename: str, err_filename: str):
         n_out, n_err = 0, 0
-        with (open(out_filename, 'w', encoding='utf-8') as f_out,
-              open(err_filename, 'w', encoding='utf-8') as f_err):
-            codepoint = -1
-            while codepoint < 0xF0000:
-                codepoint += 1
-                char = chr(codepoint)
-                num = first_non_none(ud_numeric(char),  # robust ud.numeric
-                                     self.num_value(char))  # uroman table includes extra num values, e.g. for Egyptian
-                if num is None:
-                    continue
-                result_dict = {}
-                orig_txt = char
-                value: int | float | None = None  # non-fraction-value(3 1/2) = 3
-                fraction: Fraction | None = None  # fraction(3 1/2) = Fraction(1, 2)
-                num_base = None  # num_base(500) = 100
-                base_multiplier = None  # base_multiplier(500) = 5
-                script = None
-                is_large_power = self.dict_bool[('is-large-power', char)]
-                # num_base is typically a power of 10: 1, 10, 100, 1000, 10000, 100000, 1000000, ...
-                # exceptions might include 12 for the 'dozen' in popular English 'two dozen and one' (2*12+1=25)
-                # exceptions might include 20 for the 'score' in archaic English 'four score and seven' (4*20+7=87)
-                # noinspection SpellCheckingInspection   exceptions might include 20 for the 'vingt'
-                # noinspection SpellCheckingInspection   as in standard French 'quatre-vingt-treize' (4*20+13=93)
-                if script_name := self.chr_script_name(char):
-                    script = script_name
-                elif char in '0123456789':
-                    script = 'ascii-digit'
-                name = self.chr_name(char)
-                exclude_from_number_processing = False
-                for scrypt_type in ('SUPERSCRIPT', 'SUBSCRIPT',
-                                    'CIRCLED', 'PARENTHESIZED', 'SEGMENTED', 'MATHEMATICAL', 'ROMAN NUMERAL',
-                                    'FULL STOP', 'COMMA'):
-                    if scrypt_type in name:
-                        script = '*' + scrypt_type.lower().replace(' ', '-')
-                        exclude_from_number_processing = True
-                        break
-                for scrypt_type in ('VULGAR FRACTION',):
-                    if scrypt_type in name:
-                        script = scrypt_type.lower().replace(' ', '-')
-                        break
-                if exclude_from_number_processing:
-                    continue
-                if isinstance(num, int):
-                    value = num
-                    if 0 <= num <= 9:
-                        num_base = 1
-                        base_multiplier = num
-                        if "DIGIT" in name:
-                            num_type = 'digit'
+        with open(out_filename, 'w', encoding='utf-8') as f_out:
+              with open(err_filename, 'w', encoding='utf-8') as f_err:
+                codepoint = -1
+                while codepoint < 0xF0000:
+                    codepoint += 1
+                    char = chr(codepoint)
+                    num = first_non_none(ud_numeric(char),  # robust ud.numeric
+                                        self.num_value(char))  # uroman table includes extra num values, e.g. for Egyptian
+                    if num is None:
+                        continue
+                    result_dict = {}
+                    orig_txt = char
+                    value: Optional[Union[int, float]] = None  # non-fraction-value(3 1/2) = 3
+                    fraction: Optional[Fraction] = None  # fraction(3 1/2) = Fraction(1, 2)
+                    num_base = None  # num_base(500) = 100
+                    base_multiplier = None  # base_multiplier(500) = 5
+                    script = None
+                    is_large_power = self.dict_bool[('is-large-power', char)]
+                    # num_base is typically a power of 10: 1, 10, 100, 1000, 10000, 100000, 1000000, ...
+                    # exceptions might include 12 for the 'dozen' in popular English 'two dozen and one' (2*12+1=25)
+                    # exceptions might include 20 for the 'score' in archaic English 'four score and seven' (4*20+7=87)
+                    # noinspection SpellCheckingInspection   exceptions might include 20 for the 'vingt'
+                    # noinspection SpellCheckingInspection   as in standard French 'quatre-vingt-treize' (4*20+13=93)
+                    if script_name := self.chr_script_name(char):
+                        script = script_name
+                    elif char in '0123456789':
+                        script = 'ascii-digit'
+                    name = self.chr_name(char)
+                    exclude_from_number_processing = False
+                    for scrypt_type in ('SUPERSCRIPT', 'SUBSCRIPT',
+                                        'CIRCLED', 'PARENTHESIZED', 'SEGMENTED', 'MATHEMATICAL', 'ROMAN NUMERAL',
+                                        'FULL STOP', 'COMMA'):
+                        if scrypt_type in name:
+                            script = '*' + scrypt_type.lower().replace(' ', '-')
+                            exclude_from_number_processing = True
+                            break
+                    for scrypt_type in ('VULGAR FRACTION',):
+                        if scrypt_type in name:
+                            script = scrypt_type.lower().replace(' ', '-')
+                            break
+                    if exclude_from_number_processing:
+                        continue
+                    if isinstance(num, int):
+                        value = num
+                        if 0 <= num <= 9:
+                            num_base = 1
+                            base_multiplier = num
+                            if "DIGIT" in name:
+                                num_type = 'digit'
+                            else:
+                                # Chinese numbers 零 (0), 一 (1), ... 九 (9) have numeric values,
+                                # but are NOT (full) digits
+                                num_type = 'digit-like'
+                        elif m := regex.match(r'([0-9]+?)(0*)$', str(num)):
+                            base_multiplier = int(m.group(1))  # non_base_value(500) = 5
+                            num_base = int('1' + m.group(2))
+                            num_type = 'base' if base_multiplier == 1 else 'multi'
                         else:
-                            # Chinese numbers 零 (0), 一 (1), ... 九 (9) have numeric values,
-                            # but are NOT (full) digits
-                            num_type = 'digit-like'
-                    elif m := regex.match(r'([0-9]+?)(0*)$', str(num)):
-                        base_multiplier = int(m.group(1))  # non_base_value(500) = 5
-                        num_base = int('1' + m.group(2))
-                        num_type = 'base' if base_multiplier == 1 else 'multi'
+                            num_type = 'other-int'  # Do such cases exist?
+                    elif ("FRACTION" in name) and (fraction := fraction_char2fraction(char, num, self)):
+                        fraction = fraction
+                        num_type = 'fraction'
                     else:
-                        num_type = 'other-int'  # Do such cases exist?
-                elif ("FRACTION" in name) and (fraction := fraction_char2fraction(char, num, self)):
-                    fraction = fraction
-                    num_type = 'fraction'
-                else:
-                    num_type = 'other-num'  # Do such cases exist? Yes. Bengali currency numerators, ...
-                value_s = '' if value is None else str(value)
-                fraction_s = '' if fraction is None else f'{fraction.numerator}/{fraction.denominator}'
-                fraction_list = None if fraction is None else [fraction.numerator, fraction.denominator]
-                delimiter_s = ' ' if value_s and fraction_s else ''
-                rom = (value_s + delimiter_s + fraction_s) or orig_txt
-                add_non_none_to_dict(result_dict, 'txt', orig_txt)
-                add_non_none_to_dict(result_dict, 'rom', rom)
-                add_non_none_to_dict(result_dict, 'value', value)
-                add_non_none_to_dict(result_dict, 'fraction', fraction_list)
-                add_non_none_to_dict(result_dict, 'type', num_type)
-                if is_large_power:
-                    result_dict['is-large-power'] = True
-                add_non_none_to_dict(result_dict, 'base', num_base)
-                add_non_none_to_dict(result_dict, 'mult', base_multiplier)
-                add_non_none_to_dict(result_dict, 'script', script)
-                if num_type.startswith('other'):
-                    add_non_none_to_dict(result_dict, 'name', name)
-                    f_err.write(json.dumps(result_dict) + '\n')
-                    n_err += 1
-                else:
-                    if not script:
+                        num_type = 'other-num'  # Do such cases exist? Yes. Bengali currency numerators, ...
+                    value_s = '' if value is None else str(value)
+                    fraction_s = '' if fraction is None else f'{fraction.numerator}/{fraction.denominator}'
+                    fraction_list = None if fraction is None else [fraction.numerator, fraction.denominator]
+                    delimiter_s = ' ' if value_s and fraction_s else ''
+                    rom = (value_s + delimiter_s + fraction_s) or orig_txt
+                    add_non_none_to_dict(result_dict, 'txt', orig_txt)
+                    add_non_none_to_dict(result_dict, 'rom', rom)
+                    add_non_none_to_dict(result_dict, 'value', value)
+                    add_non_none_to_dict(result_dict, 'fraction', fraction_list)
+                    add_non_none_to_dict(result_dict, 'type', num_type)
+                    if is_large_power:
+                        result_dict['is-large-power'] = True
+                    add_non_none_to_dict(result_dict, 'base', num_base)
+                    add_non_none_to_dict(result_dict, 'mult', base_multiplier)
+                    add_non_none_to_dict(result_dict, 'script', script)
+                    if num_type.startswith('other'):
                         add_non_none_to_dict(result_dict, 'name', name)
-                    f_out.write(json.dumps(result_dict) + '\n')
-                    n_out += 1
+                        f_err.write(json.dumps(result_dict) + '\n')
+                        n_err += 1
+                    else:
+                        if not script:
+                            add_non_none_to_dict(result_dict, 'name', name)
+                        f_out.write(json.dumps(result_dict) + '\n')
+                        n_out += 1
         sys.stderr.write(f'Processed {codepoint} codepoints,\n  wrote {n_out} lines to {out_filename}\n'
                          f'    and {n_err} lines to {err_filename}\n')
 
@@ -862,7 +862,7 @@ class Uroman:
                 return name
         return ''
 
-    def num_value(self, s: str) -> int | float | Fraction | None:
+    def num_value(self, s: str) -> Optional[Union[int | float | Fraction]]:
         """rom_rules include numeric values beyond UnicodeData.txt, e.g. for Egyptian numerals"""
         for rom_rule in self.rom_rules[s]:
             if (num := rom_rule['num']) is not None:
@@ -875,7 +875,7 @@ class Uroman:
                 return value
         return None
 
-    def unicode_float2fraction(self, num: float, precision: float = 0.000001) -> Tuple[int, int] | None:
+    def unicode_float2fraction(self, num: float, precision: float = 0.000001) -> Optional[Tuple[int, int]]:
         """only for common unicode fractions"""
         if cached_value := self.float2fraction.get(num, None):
             return cached_value
@@ -955,8 +955,8 @@ class Uroman:
                 n_alerts += 1
         sys.stderr.write(f'{n_alerts} alerts for roms with spaces\n')
 
-    def romanize_file(self, input_filename: str | None = None, output_filename: str | None = None,
-                      lcode: str | None = None, direct_input: List[str] = None, **args):
+    def romanize_file(self, input_filename: Optional[str] = None, output_filename: Optional[str] = None,
+                      lcode: Optional[str] = None, direct_input: List[str] = None, **args):
         """Script to apply romanization to an entire file. Input and output files needed.
         Language code (lcode) recommended."""
         f_in_to_be_closed, f_out_to_be_closed = False, False
@@ -1055,8 +1055,8 @@ class Uroman:
                              f"{self.n_non_utf8_characters}\n")
 
     @staticmethod
-    def apply_any_offset_to_cached_rom_result(cached_rom_result: str | List[Edge], offset: int = 0) \
-            -> str | List[Edge]:
+    def apply_any_offset_to_cached_rom_result(cached_rom_result: Union[str, List[Edge]], offset: int = 0) \
+            -> Union[str, List[Edge]]:
         if isinstance(cached_rom_result, str):
             return cached_rom_result
         elif offset == 0:
@@ -1082,8 +1082,8 @@ class Uroman:
         else:
             return s
 
-    def romanize_string_core(self, s: str, lcode: str | None, rom_format: RomFormat, offset: int = 0, **args) \
-            -> str | List[Edge]:
+    def romanize_string_core(self, s: str, lcode: Optional[str], rom_format: RomFormat, offset: int = 0, **args) \
+            -> Union[str, List[Edge]]:
         """Script to support token-by-token romanization with caching for higher speed."""
         if self.cache_p:
             cached_rom = self.rom_cache.get((s, lcode, rom_format))
@@ -1121,8 +1121,8 @@ class Uroman:
                 result = rom
         return result
 
-    def romanize_string(self, s: str, lcode: str | None = None, rom_format: RomFormat = RomFormat.STR, **args) \
-            -> str | List[Edge]:
+    def romanize_string(self, s: str, lcode: Optional[str] = None, rom_format: RomFormat = RomFormat.STR, **args) \
+            -> Union[str, List[Edge]]:
         """Main entry point for romanizing a string. Recommended argument: lcode (language code).
         recursive only used for development.
         Method returns a string or a list of edges (with start and end offsets)."""
@@ -1167,7 +1167,7 @@ class Edge:
         return json.dumps([self.start, self.end, self.txt, self.type])
 
     @staticmethod
-    def json_str(rom_result: List[Edge] | str) -> str:
+    def json_str(rom_result: Union[List[Edge], str]) -> str:
         if isinstance(rom_result, str):
             return rom_result
         else:
@@ -1206,15 +1206,15 @@ class NumEdge(Edge):
                 self.update()
 
     def update(self,
-               value: int | float | None = None,
-               value_s: str | None = None,
-               fraction: Fraction | None = None,
-               n_decimals: int | None = None,
-               num_base: int | None = None,
-               base_multiplier: int | float | None = None,
-               script: str | None = None,
-               e_type: str | None = None,
-               orig_txt: str | None = None) -> str:
+               value: Optional[Union[int, float]] = None,
+               value_s: Optional[str] = None,
+               fraction: Optional[Fraction] = None,
+               n_decimals: Optional[int] = None,
+               num_base: Optional[int] = None,
+               base_multiplier: Optional[Union[int, float]] = None,
+               script: Optional[str] = None,
+               e_type: Optional[str] = None,
+               orig_txt: Optional[str] = None) -> str:
         self.value = first_non_none(value, self.value)
         self.value_s = first_non_none(value_s, self.value_s)
         self.fraction = first_non_none(fraction, self.fraction)
@@ -1402,14 +1402,14 @@ class Lattice:
                 return True, 'o-ang-followed-by-vowel'  # In that context Thai char. "o ang" is considered a consonant
         return False, 'not-at-syllable-end-by-default'
 
-    def romanization_by_first_rule(self, s) -> str | None:
+    def romanization_by_first_rule(self, s) -> Optional[str]:
         try:
             return self.uroman.rom_rules[s][0]['t']
         except IndexError:
             return None
 
     def expand_rom_with_special_chars(self, rom: str, start: int, end: int, **args) \
-            -> Tuple[str, int, int, str | None]:
+            -> Tuple[str, int, int, Optional[str]]:
         """This method contains a number of special romanization heuristics that typically modify
         an existing or preliminary edge based on context."""
         orig_start = start
@@ -1771,7 +1771,7 @@ class Lattice:
         rom_rule_candidates.sort(reverse=True)
         return [x[1] for x in rom_rule_candidates]
 
-    def simple_top_romanization_candidate_for_span(self, start, end, simple_search: bool = False) -> str | None:
+    def simple_top_romanization_candidate_for_span(self, start, end, simple_search: bool = False) -> Optional[str]:
         if (start < 0) or (end > self.max_vertex):
             return None
         span_range = (start, end)
@@ -1799,7 +1799,7 @@ class Lattice:
         #     sys.stderr.write(f'   Cancel {self.s} ({start}-{end}) {prov} {self.s[start:end]}\n')
         return best_cand
 
-    def decomp_rom(self, char_position: int) -> str | None:
+    def decomp_rom(self, char_position: int) -> Optional[str]:
         """Input: decomposable character such as ﻼ or ½
         Output: la or 1/2"""
         full_string = self.s
@@ -1888,7 +1888,7 @@ class Lattice:
         return result
 
     @staticmethod
-    def edge_is_digit(edge: Edge | None) -> bool:
+    def edge_is_digit(edge: Optional[Edge]) -> bool:
         return (isinstance(edge, NumEdge)
                 and (edge.value is not None)
                 and isinstance(edge.value, int)
@@ -1901,7 +1901,7 @@ class Lattice:
         return isinstance(edge, NumEdge) and (edge.orig_txt in ('零', '〇'))
 
     @staticmethod
-    def braille_digit(char: str) -> str | None:
+    def braille_digit(char: str) -> Optional[str]:
         position = '\u281A\u2801\u2803\u2809\u2819\u2811\u280B\u281B\u2813\u280A'.find(char)  # Braille 0-9
         return str(position) if position >= 0 else None
 
@@ -2196,7 +2196,7 @@ class Lattice:
                 self.add_edge(Edge(start, end, rom, edge_annotation))
 
     @staticmethod
-    def add_new_edge(old_edges: List[Edge], start: int, end: int, new_rom: str, new_type: str, position: int | None,
+    def add_new_edge(old_edges: List[Edge], start: int, end: int, new_rom: str, new_type: str, position: Optional[int],
                      old_edge_dict: dict)\
             -> None:
         if (start, end, new_rom) not in old_edge_dict:
@@ -2250,7 +2250,7 @@ class Lattice:
                     break
         return result
 
-    def best_edge_in_span(self, start: int, end: int, skip_num_edge: bool = False) -> Edge | None:
+    def best_edge_in_span(self, start: int, end: int, skip_num_edge: bool = False) -> Optional[Edge]:
         edges = self.lattice[(start, end)]
         # if len(edges) >= 2: print('Multi edge', start2, end2, self.s[start2:end2], edges)
         decomp_edge, other_edge, rom_edge = None, None, None
@@ -2270,13 +2270,13 @@ class Lattice:
                 other_edge = edge  # plan D
         return rom_edge or decomp_edge or other_edge
 
-    def best_right_neighbor_edge(self, start: int, skip_num_edge: bool = False) -> Edge | None:
+    def best_right_neighbor_edge(self, start: int, skip_num_edge: bool = False) -> Optional[Edge]:
         for end in sorted(list(self.lattice[(start, 'right')]), reverse=True):
             if best_edge := self.best_edge_in_span(start, end, skip_num_edge=skip_num_edge):
                 return best_edge
         return None
 
-    def best_left_neighbor_edge(self, end: int, skip_num_edge: bool = False) -> Edge | None:
+    def best_left_neighbor_edge(self, end: int, skip_num_edge: bool = False) -> Optional[Edge]:
         for start in sorted(list(self.lattice[(end, 'left')])):
             if best_edge := self.best_edge_in_span(start, end, skip_num_edge=skip_num_edge):
                 return best_edge
@@ -2295,8 +2295,8 @@ class Lattice:
                 start2 += 1
         return result
 
-    def find_rom_edge_path_backwards(self, start: int, end: int, min_char: int | None = None,
-                                     return_str: bool = False, skip_num_edge: bool = False) -> List[Edge] | str:
+    def find_rom_edge_path_backwards(self, start: int, end: int, min_char: Optional[int] = None,
+                                     return_str: bool = False, skip_num_edge: bool = False) -> Union[List[Edge], str]:
         """Finds a partial best path on the left from a start position to provide left contexts for
         romanization rules. Can return a string or a list of edges. Is typically used for a short context,
         as specified by min_char."""
